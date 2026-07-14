@@ -1,0 +1,287 @@
+.composer {
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-rule);
+  border-radius: 10px;
+  padding: 22px;
+  margin-top: 24px;
+  /* Clear the sticky CockpitActionBar's height when anchor-jumped to. */
+  scroll-margin-top: 80px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ck-ink);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.confidence {
+  padding: 4px 10px;
+  background: var(--ck-blue-tint);
+  color: var(--ck-blue);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--ck-rule);
+}
+
+.field {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ck-rule);
+}
+
+.field:last-child {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.value {
+  flex: 1;
+  font-size: 14px;
+  color: var(--ck-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty {
+  color: var(--ck-ink-3);
+  font-style: italic;
+}
+
+.tag {
+  padding: 2px 8px;
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.input {
+  flex: 1;
+  border: 1px solid var(--ck-rule-2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ck-ink);
+  background: var(--ck-surface-2);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--ck-blue);
+  background: var(--ck-surface);
+}
+
+.textarea {
+  border: 1px solid var(--ck-rule-2);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ck-ink);
+  background: var(--ck-surface-2);
+  resize: vertical;
+  min-height: 200px;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--ck-blue);
+  background: var(--ck-surface);
+}
+
+.bodyPreview {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ck-ink);
+  white-space: pre-wrap;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.meta {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ck-rule);
+}
+
+.attribution {
+  font-size: 12px;
+  color: var(--ck-ink-3);
+  font-style: italic;
+}
+
+.banner {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.bannerSuccess {
+  background: var(--ck-good-tint);
+  border: 1px solid var(--ck-good-tint);
+  color: var(--ck-good);
+}
+
+.bannerInfo {
+  background: var(--ck-blue-tint);
+  border: 1px solid var(--ck-blue-tint);
+  color: var(--ck-blue);
+}
+
+.bannerError {
+  background: var(--ck-crit-tint);
+  border: 1px solid var(--ck-crit-tint);
+  color: var(--ck-crit);
+}
+
+.bannerWarn {
+  background: var(--ck-warn-tint);
+  border: 1px solid var(--ck-warn-tint);
+  color: var(--ck-warn);
+}
+
+.banner code {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+}
+
+.link {
+  color: var(--ck-blue);
+  text-decoration: underline;
+  font-weight: 500;
+}
+.link:hover {
+  color: var(--ck-blue);
+}
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  padding: 10px 18px;
+  background: var(--ck-action);
+  color: var(--ck-action-ink);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnPrimary:hover:not(:disabled) {
+  background: var(--ck-action);
+}
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  padding: 10px 16px;
+  background: var(--ck-surface);
+  color: var(--ck-ink);
+  border: 1px solid var(--ck-rule-2);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnSecondary:hover:not(:disabled) {
+  background: var(--ck-surface-2);
+}
+.btnSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnTertiary {
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--ck-ink-4);
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnTertiary:hover {
+  color: var(--ck-ink);
+}
+
+.btnQueue {
+  padding: 10px 16px;
+  background: var(--ck-warn-tint);
+  color: var(--ck-warn);
+  border: 1px solid var(--ck-warn-tint);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnQueue:hover:not(:disabled) {
+  background: var(--ck-warn-tint);
+}
+.btnQueue:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.never {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--ck-ink-3);
+  font-style: italic;
+}

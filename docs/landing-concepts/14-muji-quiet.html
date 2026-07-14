@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>mallin</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --off-white: #f4f3ef;
+    --paper:     #ebeae5;
+    --ink:       #1f1e1c;
+    --ink-2:     #4a4845;
+    --ink-3:     #8a8884;
+    --ink-4:     #b8b6b1;
+    --rule:      rgba(31,30,28,0.1);
+    --rule-2:    rgba(31,30,28,0.22);
+    --accent:    #826a4d;     /* clay / kinari brown */
+    --mincho:    "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --sans:      "Noto Sans JP", "Helvetica Neue", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--off-white);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--ink); color: var(--off-white); }
+
+  /* ── Nav: nearly invisible ───────────────────────────── */
+  nav.top {
+    position: fixed;
+    top: 32px; left: 32px; right: 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 10;
+    mix-blend-mode: multiply;
+  }
+  .mark {
+    font-family: var(--mincho);
+    font-size: 14px;
+    color: var(--ink-2);
+    letter-spacing: 0.32em;
+  }
+  .menu {
+    display: flex; gap: 32px;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--ink-3);
+    text-transform: lowercase;
+  }
+  .menu a { font-weight: 400; }
+  .menu a:hover { color: var(--ink); }
+
+  /* ── Hero: vast emptiness ────────────────────────────── */
+  .hero {
+    height: 100vh;
+    min-height: 720px;
+    display: grid;
+    grid-template-rows: 1fr auto 1fr;
+    padding: 120px 96px 64px;
+  }
+  .hero-spacer {}
+  .hero-center {
+    text-align: center;
+  }
+  .hero-mark {
+    display: inline-block;
+    margin-bottom: 56px;
+  }
+  .hero-mark svg {
+    display: block;
+    margin: 0 auto;
+  }
+  .hero-title-jp {
+    font-family: var(--mincho);
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: 0.5em;
+    color: var(--ink-3);
+    margin-bottom: 28px;
+    text-transform: lowercase;
+  }
+  .hero-title {
+    font-family: var(--mincho);
+    font-weight: 400;
+    font-size: clamp(36px, 4.4vw, 56px);
+    line-height: 1.35;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    margin: 0 auto;
+    max-width: 720px;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-footer {
+    align-self: end;
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.32em;
+    text-transform: lowercase;
+  }
+  .hero-footer-line {
+    display: inline-block;
+    width: 48px; height: 1px;
+    background: var(--ink-3);
+    vertical-align: middle;
+    margin: 0 16px;
+  }
+
+  /* ── Definition row ─────────────────────────────────── */
+  .definition {
+    padding: 160px 96px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 96px;
+    align-items: start;
+  }
+  .definition-label {
+    font-family: var(--mincho);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.32em;
+    text-transform: lowercase;
+    margin-bottom: 24px;
+  }
+  .definition-jp {
+    font-family: var(--mincho);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.4em;
+    margin-bottom: 16px;
+  }
+  .definition h2 {
+    font-family: var(--mincho);
+    font-weight: 400;
+    font-size: clamp(24px, 2.6vw, 36px);
+    line-height: 1.45;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    margin: 0 0 40px;
+  }
+  .definition h2 em { font-style: italic; color: var(--accent); }
+  .definition-right p {
+    font-size: 14.5px;
+    line-height: 1.95;
+    color: var(--ink-2);
+    margin: 0 0 24px;
+    max-width: 480px;
+  }
+  .definition-right p strong { color: var(--ink); font-weight: 500; }
+  .definition-right p:last-child { margin-bottom: 0; }
+
+  /* ── Single image at the center ─────────────────────── */
+  .image-band {
+    padding: 0 96px 160px;
+  }
+  .image-band img {
+    display: block;
+    width: 100%;
+    height: 480px;
+    object-fit: cover;
+    filter: grayscale(0.7) brightness(1.02) contrast(0.94);
+  }
+  .image-caption {
+    margin-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mincho);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--ink-3);
+    text-transform: lowercase;
+  }
+  .image-caption .right {
+    font-family: var(--sans);
+    font-style: italic;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Three-line principles, almost no styling ───────── */
+  .principles {
+    padding: 120px 96px 160px;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 96px;
+  }
+  .principles-label {
+    font-family: var(--mincho);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.32em;
+    text-transform: lowercase;
+  }
+  .principles-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+  .pri {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 32px;
+  }
+  .pri-num {
+    font-family: var(--mincho);
+    font-size: 12px;
+    color: var(--ink-3);
+    letter-spacing: 0.2em;
+    padding-top: 8px;
+  }
+  .pri h3 {
+    font-family: var(--mincho);
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+    margin: 0 0 12px;
+  }
+  .pri p {
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 540px;
+  }
+
+  /* ── Quiet stats — one line each, no boxes ─────────── */
+  .ledger {
+    padding: 120px 96px;
+    border-top: 1px solid var(--rule);
+  }
+  .ledger-label {
+    font-family: var(--mincho);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.32em;
+    text-transform: lowercase;
+    margin-bottom: 56px;
+  }
+  .ledger-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 120px;
+    gap: 32px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .ledger-num {
+    font-family: var(--mincho);
+    font-weight: 400;
+    font-size: 32px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .ledger-label-text {
+    font-size: 14px;
+    color: var(--ink-2);
+    line-height: 1.5;
+    max-width: 480px;
+  }
+  .ledger-jp {
+    font-family: var(--mincho);
+    font-size: 11px;
+    color: var(--ink-3);
+    text-align: right;
+    letter-spacing: 0.32em;
+    text-transform: lowercase;
+  }
+
+  /* ── Final — quiet invitation ───────────────────────── */
+  .final {
+    padding: 200px 96px;
+    text-align: center;
+  }
+  .final-line {
+    width: 1px; height: 64px;
+    background: var(--ink-3);
+    margin: 0 auto 56px;
+  }
+  .final h2 {
+    font-family: var(--mincho);
+    font-weight: 400;
+    font-size: clamp(28px, 3.4vw, 42px);
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    margin: 0 auto 32px;
+    max-width: 600px;
+  }
+  .final p {
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--ink-2);
+    max-width: 480px;
+    margin: 0 auto 48px;
+  }
+  .final-contact {
+    display: inline-block;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--ink-2);
+    font-family: var(--mincho);
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+  }
+
+  footer {
+    padding: 32px 96px;
+    border-top: 1px solid var(--rule);
+    display: flex; justify-content: space-between;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--ink-3);
+    text-transform: lowercase;
+  }
+  footer .jp { font-family: var(--mincho); }
+
+  @media (max-width: 900px) {
+    nav.top { top: 20px; left: 20px; right: 20px; }
+    .menu { gap: 18px; font-size: 10px; letter-spacing: 0.18em; }
+    .hero { padding: 96px 24px 48px; min-height: 600px; }
+    .definition { padding: 96px 24px; grid-template-columns: 1fr; gap: 32px; }
+    .image-band { padding: 0 24px 96px; }
+    .image-band img { height: 280px; }
+    .principles { padding: 80px 24px 96px; grid-template-columns: 1fr; gap: 40px; }
+    .ledger { padding: 80px 24px; }
+    .ledger-row { grid-template-columns: 48px 1fr; gap: 16px; }
+    .ledger-jp { display: none; }
+    .final { padding: 120px 24px; }
+    footer { padding: 24px; flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="mark">mallin</div>
+  <div class="menu">
+    <a href="#">about</a>
+    <a href="#">system</a>
+    <a href="#">contact</a>
+  </div>
+</nav>
+
+<!-- ── Hero ────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-spacer"></div>
+
+  <div class="hero-center">
+    <div class="hero-mark">
+      <svg viewBox="0 0 64 64" width="40" height="40" fill="none">
+        <path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#1f1e1c" stroke-width="2" stroke-linecap="round"/>
+        <line x1="22" y1="22" x2="22" y2="17" stroke="#1f1e1c" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="32" y1="22" x2="32" y2="14" stroke="#1f1e1c" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="42" y1="22" x2="42" y2="17" stroke="#1f1e1c" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#826a4d" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="hero-title-jp">— an operating layer —</div>
+
+    <h1 class="hero-title">
+      what sustains the surface<br/>
+      <em>is what flows beneath.</em>
+    </h1>
+  </div>
+
+  <div class="hero-footer">
+    <span class="hero-footer-line"></span>
+    mallin &nbsp;·&nbsp; mmxxvi &nbsp;·&nbsp; design partner cohort
+    <span class="hero-footer-line"></span>
+  </div>
+</section>
+
+<!-- ── Definition ──────────────────────────────────────── -->
+<section class="definition">
+  <div>
+    <div class="definition-label">— i. the name</div>
+    <div class="definition-jp">マ ジ ン &nbsp;·&nbsp; mallín, n.</div>
+    <h2>
+      a wetland sustained<br/>
+      by an underground<br/>
+      <em>current.</em>
+    </h2>
+  </div>
+  <div class="definition-right">
+    <p>
+      a <strong>mallín</strong> is a kind of patagonian wetland that
+      looks like ordinary grassland from above, but is sustained by an
+      underground current flowing slowly beneath it. pull the grass
+      back and the water is right there, holding everything up.
+    </p>
+    <p>
+      we took the name because it described, with no embellishment,
+      the thing we kept finding inside enterprise sales cycles. the
+      surface activity that gets typed into the crm is real, but it
+      is not what sustains the deal. the underground flow does.
+    </p>
+  </div>
+</section>
+
+<!-- ── Image band ──────────────────────────────────────── -->
+<div class="image-band">
+  <img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=2000&q=85" alt="A Patagonian wetland — the namesake mallín." />
+  <div class="image-caption">
+    <span>— ｉ. patagonia &nbsp;·&nbsp; surface &amp; current</span>
+    <span class="right">i / iv</span>
+  </div>
+</div>
+
+<!-- ── Principles ──────────────────────────────────────── -->
+<section class="principles">
+  <div class="principles-label">— ii. the system</div>
+
+  <div class="principles-list">
+    <div class="pri">
+      <div class="pri-num">i.</div>
+      <div>
+        <h3>read.</h3>
+        <p>every call, every email, every slack thread, every calendar invite on every active deal — taken in as substrate, without asking the rep to log anything new.</p>
+      </div>
+    </div>
+    <div class="pri">
+      <div class="pri-num">ii.</div>
+      <div>
+        <h3>interpret.</h3>
+        <p>behavior is the signal. activity is the noise. signer disengagement, champion airtime decay, procurement entered late, competitor introduced during pricing. what the deal is actually doing — not what was typed.</p>
+      </div>
+    </div>
+    <div class="pri">
+      <div class="pri-num">iii.</div>
+      <div>
+        <h3>act.</h3>
+        <p>verification alerts post into the deal slack thread the manager is already in, gap named in plain language, verbatim next question attached. the agent decides what is a gap. the team decides the response.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Ledger ──────────────────────────────────────────── -->
+<section class="ledger">
+  <div class="ledger-label">— iii. the ledger</div>
+
+  <div class="ledger-row">
+    <div class="ledger-num">5</div>
+    <div class="ledger-label-text">enterprise cycles tested — closed-won, stalled, closed-lost.</div>
+    <div class="ledger-jp">— cycles</div>
+  </div>
+  <div class="ledger-row">
+    <div class="ledger-num">12</div>
+    <div class="ledger-label-text">verification alerts fired on the most recent closed-lost retrospective.</div>
+    <div class="ledger-jp">— alerts</div>
+  </div>
+  <div class="ledger-row">
+    <div class="ledger-num">0</div>
+    <div class="ledger-label-text">false-positive escalations across the retrospective set.</div>
+    <div class="ledger-jp">— errors</div>
+  </div>
+  <div class="ledger-row">
+    <div class="ledger-num">4</div>
+    <div class="ledger-label-text">fields the system never auto-writes &nbsp;·&nbsp; stage, amount, close date, forecast.</div>
+    <div class="ledger-jp">— invariant</div>
+  </div>
+</section>
+
+<!-- ── Final ───────────────────────────────────────────── -->
+<section class="final">
+  <div class="final-line"></div>
+  <h2>
+    if your last forecast call<br/>
+    felt like guesswork —<br/>
+    <em>write to us.</em>
+  </h2>
+  <p>
+    five design-partner slots in the current cohort. two remain. we
+    will run mallin on your last quarter inside twenty-four hours and
+    bring back a substrate built from your own activity.
+  </p>
+  <a class="final-contact" href="mailto:hello@mallin.io">hello@mallin.io</a>
+</section>
+
+<footer>
+  <span>© mallin &nbsp;·&nbsp; mmxxvi</span>
+  <span class="jp">マ ジ ン &nbsp;·&nbsp; the operating layer</span>
+  <span>san francisco</span>
+</footer>
+
+</body>
+</html>

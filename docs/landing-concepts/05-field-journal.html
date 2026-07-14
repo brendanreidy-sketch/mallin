@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin · field notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;700&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Special+Elite&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f0eadb;
+    --paper-2: #e5dec9;
+    --paper-shade: rgba(85,65,40,0.07);
+    --ink: #2c2418;
+    --ink-2: #5a4d3a;
+    --ink-3: #8b7d65;
+    --rule: rgba(44,36,24,0.22);
+    --red: #963f2a;
+    --blue: #2e4d6b;
+    --serif: "Newsreader", "Times New Roman", serif;
+    --hand: "Caveat", "Bradley Hand", cursive;
+    --type: "Special Elite", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { background: #c9bfa4; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(ellipse at 18% 12%, rgba(255,250,235,0.5), transparent 50%),
+      radial-gradient(ellipse at 82% 88%, rgba(120,90,60,0.18), transparent 60%),
+      var(--paper);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Subtle paper grain via CSS noise */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(44,36,24,0.018) 0, rgba(44,36,24,0.018) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(90deg, rgba(44,36,24,0.014) 0, rgba(44,36,24,0.014) 1px, transparent 1px, transparent 4px);
+    mix-blend-mode: multiply;
+    z-index: 100;
+  }
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 80px 64px 96px;
+    position: relative;
+  }
+  /* Margin ruling line, like notebook paper */
+  .page::after {
+    content: "";
+    position: absolute;
+    left: 130px; top: 0; bottom: 0;
+    width: 1px;
+    background: var(--red);
+    opacity: 0.35;
+  }
+
+  .masthead {
+    text-align: left;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 24px;
+    margin-bottom: 56px;
+  }
+  .masthead-top {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--type);
+    font-size: 12px;
+    color: var(--ink-2);
+    margin-bottom: 12px;
+    letter-spacing: 0.06em;
+  }
+  .masthead-stamp {
+    display: inline-block;
+    padding: 4px 10px;
+    border: 2px solid var(--red);
+    color: var(--red);
+    font-family: var(--type);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    transform: rotate(-2deg);
+  }
+  h1.title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-style: italic;
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--ink-2);
+    font-style: italic;
+  }
+  .annotation {
+    font-family: var(--hand);
+    font-size: 24px;
+    color: var(--red);
+    line-height: 1.1;
+    position: absolute;
+    transform: rotate(-3deg);
+  }
+  .annotation .arrow { display: inline-block; transform: rotate(8deg); }
+
+  .opening {
+    margin: 48px 0 56px;
+    font-size: 19px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .opening::first-letter {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 84px;
+    line-height: 0.85;
+    float: left;
+    margin: 6px 12px 0 0;
+    color: var(--red);
+  }
+  .opening em { font-style: italic; color: var(--ink); }
+
+  .specimen {
+    margin: 64px -32px 64px;
+    padding: 24px 32px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    background: rgba(255,250,235,0.4);
+    position: relative;
+  }
+  .specimen img {
+    width: 100%;
+    height: 360px;
+    object-fit: cover;
+    filter: sepia(0.18) contrast(0.96) saturate(0.85);
+    box-shadow: 0 2px 0 var(--ink-3);
+  }
+  .specimen-caption {
+    margin-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--type);
+    font-size: 12px;
+    color: var(--ink-2);
+    letter-spacing: 0.06em;
+  }
+  .specimen-caption b { color: var(--ink); font-weight: 400; }
+  .specimen-caption .fig {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .field-note {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 24px;
+    padding: 24px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .field-note:first-of-type { border-top: 1px dashed var(--rule); }
+  .field-note-date {
+    font-family: var(--type);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink-2);
+    text-align: right;
+    padding-top: 4px;
+  }
+  .field-note-date b { display: block; color: var(--red); margin-bottom: 4px; }
+  .field-note-body {
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  .field-note-body h3 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 19px;
+    margin: 0 0 6px;
+  }
+  .field-note-body em { font-style: italic; color: var(--ink); }
+  .underline { text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+
+  .signoff {
+    margin-top: 72px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1px solid var(--rule);
+    padding-top: 32px;
+  }
+  .signoff-left { max-width: 460px; }
+  .signoff-left p {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin: 0 0 16px;
+  }
+  .signoff-cta {
+    display: inline-block;
+    padding: 10px 18px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--type);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+  }
+  .sig {
+    font-family: var(--hand);
+    font-size: 32px;
+    color: var(--blue);
+    transform: rotate(-2deg);
+    line-height: 1;
+  }
+  .sig-meta {
+    font-family: var(--type);
+    font-size: 11px;
+    color: var(--ink-2);
+    margin-top: 8px;
+    letter-spacing: 0.06em;
+  }
+
+  @media (max-width: 720px) {
+    .page { padding: 48px 28px 64px; }
+    .page::after { display: none; }
+    h1.title { font-size: 44px; }
+    .specimen { margin: 32px -16px; padding: 16px; }
+    .specimen img { height: 240px; }
+    .annotation { display: none; }
+    .signoff { flex-direction: column; gap: 32px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<article class="page">
+
+  <header class="masthead">
+    <div class="masthead-top">
+      <span>Vol. I &nbsp;·&nbsp; № 03</span>
+      <span>Issued · 18 May 2026</span>
+    </div>
+    <h1 class="title">Mallin — field notes.</h1>
+    <p class="subtitle">A notebook on revenue execution, kept in the open.</p>
+    <span class="masthead-stamp">PRIVATE PRINTING · DESIGN-PARTNER COHORT</span>
+  </header>
+
+  <p class="opening">
+    The name <em>mallín</em> belongs to a kind of Patagonian wetland that
+    looks like ordinary grassland from above, but is sustained by an
+    underground current flowing slowly beneath it. Pull the grass back
+    and the water is right there, holding everything up. We took the
+    name because it described, with no embellishment, the thing we kept
+    finding inside enterprise sales cycles: <em>the surface activity
+    that gets typed into the CRM is real, but it is not what sustains
+    the deal. The underground flow does.</em>
+  </p>
+
+  <figure class="specimen">
+    <img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1600&q=80" alt="Stream and wetland landscape" />
+    <figcaption class="specimen-caption">
+      <span class="fig">Fig. I.</span>
+      <span><b>Surface and current</b> &nbsp;·&nbsp; what is visible above the grass is sustained by what flows beneath.</span>
+    </figcaption>
+  </figure>
+
+  <p style="position: relative;">
+    <span class="annotation" style="top: -28px; left: -110px;">↘ here<br/>the gap</span>
+    What the CRM stores is what a rep <em>typed</em>. What the deal is
+    actually doing — signer disengagement, champion airtime decay,
+    procurement entered late, a competitor introduced during pricing —
+    sits fragmented across calls, email, Slack, calendar invites, and
+    stakeholder behavior. By the time forecast day arrives, leadership
+    is looking at one signal and the deal is being run on another.
+  </p>
+
+  <p>
+    Mallin reads the second one. Every artifact on every deal becomes
+    substrate; the substrate gets interpreted into <span class="underline">verification
+    alerts</span> the manager sees in the deal Slack thread before the
+    rep can quietly skirt the conversation. Three primitives, read /
+    interpret / act. Approval gate on every CRM write. <em>Stage, amount,
+    close date, and forecast category are never auto-written.</em>
+  </p>
+
+  <h2 style="font-family: var(--serif); font-weight: 600; font-style: italic; font-size: 32px; margin: 56px 0 24px; letter-spacing: -0.01em;">
+    Five entries from the field.
+  </h2>
+
+  <div class="field-note">
+    <div class="field-note-date">
+      <b>May 9</b>
+      Cipher · call 4
+    </div>
+    <div class="field-note-body">
+      <h3>The CFO stopped asking questions.</h3>
+      Two consecutive calls. Champion carried 92% of buyer-side airtime
+      while the signer sat present-but-quiet. Alert fired the same
+      afternoon. Manager looped into the deal thread. Recommendation:
+      <em>ask Nathan directly what would make him commit to a
+      signature date — and if he can't name conditions, the deal isn't
+      real.</em>
+    </div>
+  </div>
+
+  <div class="field-note">
+    <div class="field-note-date">
+      <b>May 12</b>
+      Industrial Logistics
+    </div>
+    <div class="field-note-body">
+      <h3>The champion has never introduced anyone above their manager.</h3>
+      Six calls. Zero second-level introductions. Power-map gap entering
+      closing motion — a pattern the retrospective set marked as
+      load-bearing across three of five tested cycles.
+    </div>
+  </div>
+
+  <div class="field-note">
+    <div class="field-note-date">
+      <b>May 15</b>
+      Holdco · call 7
+    </div>
+    <div class="field-note-body">
+      <h3>Procurement template out. Signature date still vague.</h3>
+      Verbatim audit across six calls: the champion has not used a
+      commitment phrase. <em>"We're choosing you"</em> is not in the
+      transcript. Forecast watch raised, manager notified.
+    </div>
+  </div>
+
+  <div class="field-note">
+    <div class="field-note-date">
+      <b>May 17</b>
+      PE Portfolio
+    </div>
+    <div class="field-note-body">
+      <h3>New name on the calendar invite.</h3>
+      Director of FP&amp;A — not in the stakeholder map until 08:30 this
+      morning. Reports to CFO. Triangulated against RocketReach,
+      verified, added with low confidence and a verify-on-next-call
+      cue.
+    </div>
+  </div>
+
+  <div class="field-note">
+    <div class="field-note-date">
+      <b>May 18</b>
+      Retrospective
+    </div>
+    <div class="field-note-body">
+      <h3>The closed-lost — replayed.</h3>
+      Twelve verification alerts across calls 2–6. Three on call 5:
+      signer commitment warning, competitive escalation without a
+      head-to-head plan, power-map gap. The team that ran the original
+      cycle, on reviewing the system's read: <em>"It would have
+      provided a way for us to address it head-on versus skirting
+      around it."</em>
+    </div>
+  </div>
+
+  <div class="signoff">
+    <div class="signoff-left">
+      <p>
+        If your team is in the middle of a quarter where the pipeline
+        looks healthy but the forecast call feels like guesswork,
+        write to us. We're taking five design partners.
+      </p>
+      <a class="signoff-cta" href="mailto:hello@mallin.io">→ hello@mallin.io</a>
+    </div>
+    <div style="text-align: right;">
+      <div class="sig">Mallin.</div>
+      <div class="sig-meta">From the founders · May 2026</div>
+    </div>
+  </div>
+
+</article>
+
+</body>
+</html>

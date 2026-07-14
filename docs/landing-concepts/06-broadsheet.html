@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>The Mallin Broadsheet — Vol. I, № 1</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f5f1e8;
+    --ink: #1a1814;
+    --ink-2: #3a3530;
+    --ink-3: #6b655c;
+    --rule: rgba(26,24,20,0.4);
+    --rule-soft: rgba(26,24,20,0.2);
+    --red: #8a2a18;
+    --display: "Playfair Display", "Times New Roman", serif;
+    --body: "Source Serif 4", Georgia, serif;
+    --classical: "Old Standard TT", "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 8% 4%, rgba(70,55,30,0.06), transparent 40%),
+      radial-gradient(ellipse at 95% 96%, rgba(70,55,30,0.05), transparent 40%);
+    z-index: 100;
+  }
+  .paper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 36px 64px;
+  }
+
+  /* ── Masthead ────────────────────────────────────────────────── */
+  .ear {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--classical);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .nameplate {
+    text-align: center;
+    padding: 18px 0 8px;
+    border-bottom: 3px double var(--ink);
+  }
+  .nameplate-title {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: clamp(56px, 9vw, 124px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .nameplate-deck {
+    font-family: var(--classical);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-2);
+    margin: 6px 0 0;
+  }
+  .dateline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--classical);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    padding: 8px 4px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--rule);
+  }
+  .dateline b { font-weight: 700; letter-spacing: 0.08em; }
+  .dateline span { color: var(--ink-2); }
+
+  /* ── Front page columns ─────────────────────────────────────── */
+  .lead-section {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap: 36px;
+    padding: 28px 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  .lead-headline {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(38px, 4.8vw, 64px);
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    margin: 0 0 12px;
+  }
+  .lead-deck {
+    font-family: var(--display);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--ink-2);
+    margin: 0 0 24px;
+    max-width: 720px;
+  }
+  .byline {
+    font-family: var(--classical);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 8px 0;
+    border-top: 1px solid var(--rule-soft);
+    border-bottom: 1px solid var(--rule-soft);
+    margin-bottom: 18px;
+  }
+  .byline b { color: var(--ink); font-weight: 700; }
+
+  .lead-body {
+    column-count: 2;
+    column-gap: 28px;
+    column-rule: 1px solid var(--rule-soft);
+    font-size: 15px;
+    line-height: 1.55;
+    text-align: justify;
+    hyphens: auto;
+  }
+  .lead-body p { margin: 0 0 14px; }
+  .lead-body p:first-child::first-letter {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 64px;
+    line-height: 0.85;
+    float: left;
+    margin: 6px 8px 0 0;
+  }
+  .lead-body em { font-style: italic; }
+  .lead-body strong { font-weight: 700; }
+  .pullquote {
+    break-inside: avoid;
+    margin: 20px 0;
+    padding: 16px 0;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.3;
+    text-align: center;
+  }
+  .pullquote-attr {
+    text-align: center;
+    font-family: var(--classical);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-style: normal;
+    margin-top: 6px;
+  }
+
+  /* Sidebar (right column) */
+  .sidebar { padding-left: 28px; border-left: 1px solid var(--rule); }
+  .sidebar-kicker {
+    font-family: var(--classical);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 6px;
+  }
+  .sidebar h2 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 24px;
+    line-height: 1.1;
+    margin: 0 0 10px;
+  }
+  .sidebar h2.alt { font-style: italic; font-weight: 400; }
+  .sidebar p {
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0 0 12px;
+    text-align: justify;
+    hyphens: auto;
+  }
+  .sidebar-rule {
+    border-top: 1px solid var(--rule-soft);
+    margin: 20px 0;
+  }
+  .sidebar-table {
+    font-family: var(--classical);
+    font-size: 13px;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .sidebar-table th, .sidebar-table td {
+    text-align: left;
+    padding: 5px 0;
+    border-bottom: 1px dotted var(--rule-soft);
+  }
+  .sidebar-table th {
+    font-weight: 700;
+    border-bottom: 1px solid var(--ink);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  .sidebar-table td.r { text-align: right; }
+
+  /* ── Below the fold ─────────────────────────────────────────── */
+  .below {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+    padding-top: 28px;
+  }
+  .below h3 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.15;
+    margin: 0 0 12px;
+  }
+  .below .kicker {
+    font-family: var(--classical);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 4px;
+  }
+  .below p {
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0 0 12px;
+    text-align: justify;
+    hyphens: auto;
+  }
+  .below em { font-style: italic; }
+  .below figure {
+    margin: 0 0 12px;
+  }
+  .below img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    filter: grayscale(0.5) contrast(0.94) sepia(0.1);
+  }
+  .below figcaption {
+    font-family: var(--classical);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    padding-top: 4px;
+    border-top: 1px solid var(--rule-soft);
+    margin-top: 4px;
+  }
+
+  /* ── Classified strip ───────────────────────────────────────── */
+  .classified {
+    margin-top: 48px;
+    border-top: 3px double var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 16px 0;
+    display: grid;
+    grid-template-columns: 180px 1fr 240px;
+    gap: 24px;
+    font-family: var(--classical);
+    font-size: 13px;
+  }
+  .classified b { font-weight: 700; }
+  .classified-head {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--red);
+  }
+  .classified-body { font-style: italic; line-height: 1.5; }
+  .classified-cta {
+    text-align: right;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .classified-cta a {
+    color: var(--ink);
+    border-bottom: 2px solid var(--red);
+    text-decoration: none;
+    padding-bottom: 2px;
+  }
+
+  footer.colophon {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+    font-family: var(--classical);
+    font-size: 11.5px;
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 900px) {
+    .lead-section, .below, .classified { grid-template-columns: 1fr; gap: 24px; }
+    .lead-body { column-count: 1; }
+    .sidebar { padding-left: 0; border-left: none; border-top: 1px solid var(--rule); padding-top: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="paper">
+
+  <div class="ear">
+    <span>Vol. I &nbsp;·&nbsp; № 1</span>
+    <span>Mallin · Operating Layer · Est. 2026</span>
+    <span>Twelve pages · One section</span>
+  </div>
+
+  <div class="nameplate">
+    <h1 class="nameplate-title">The Mallin</h1>
+    <p class="nameplate-deck">An occasional broadsheet for the operators of revenue.</p>
+  </div>
+
+  <div class="dateline">
+    <span><b>San Francisco</b> &nbsp;·&nbsp; Monday, May 18, 2026</span>
+    <span>"What sustains the surface is what flows beneath."</span>
+    <span>Price · No charge to design partners</span>
+  </div>
+
+  <section class="lead-section">
+
+    <div>
+      <h2 class="lead-headline">The forecast is the report. The truth is somewhere else.</h2>
+      <p class="lead-deck">Pipelines look healthy. Forecast categories say yes. Then the quarter slips on three deals nobody saw collapsing. A new operating layer reads what the CRM cannot.</p>
+
+      <div class="byline">By <b>The Editors</b> &nbsp;·&nbsp; Filed under: Operating Layers, Revenue, Verification</div>
+
+      <div class="lead-body">
+        <p>Every quarter, leadership sits down on a Friday morning and asks the same question about a handful of deals: <em>is this real?</em> The CRM says 75 percent, commit, advancing. The rep says the champion is engaged. The forecast category says yes.</p>
+
+        <p>Meanwhile the actual signals — the CFO has not joined a call in six weeks, the champion's airtime collapsed from forty percent to eight, procurement entered late, a competitor was introduced during pricing — sit fragmented across calls, Slack, email, calendar invites, and stakeholder behavior. The data exists. It is not synthesized. <strong>It does not reach the forecast call.</strong></p>
+
+        <div class="pullquote">
+          "It would have provided a way for us to address it head‑on versus skirting around it."
+          <div class="pullquote-attr">— From the team that ran the closed‑lost cycle, after replaying it through Mallin</div>
+        </div>
+
+        <p>Mallin is built to do one thing well: read every artifact on a deal — calls, emails, Slack threads, calendar invites, CRM activity — and reconstruct the operational state from what is already there. No new logging. No new workflow. The substrate the rep produced by doing the deal is the substrate Mallin runs on.</p>
+
+        <p>From that substrate, verification alerts surface before forecast day. Signer disengagement. Champion airtime collapse. Procurement entered late. Competitor introduced during pricing. The agent decides what is a gap; the team decides the response. <em>The manager being in the deal Slack thread means the rep cannot quietly skirt the conversation.</em></p>
+
+        <p>Five enterprise cycles tested in retrospect. Twelve alerts fired on the closed‑lost. Zero false‑positive escalations. Approval gate on every CRM write. Stage, amount, close date, and forecast category never auto‑written — even after trust is earned.</p>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="sidebar-kicker">— In this issue</div>
+      <h2 class="alt">A note on the name.</h2>
+      <p>A <em>mallín</em> is a kind of Patagonian wetland that looks like ordinary grassland from above but is sustained by an underground current flowing beneath it. Pull the grass back and the water is right there. We took the name because it described, with no embellishment, the thing we kept finding inside enterprise sales cycles: the surface gets typed into the CRM; the underground flow is what actually sustains the deal.</p>
+
+      <div class="sidebar-rule"></div>
+
+      <div class="sidebar-kicker">— By the numbers</div>
+      <table class="sidebar-table">
+        <tr><th>Metric</th><th class="r">Result</th></tr>
+        <tr><td>Cycles tested</td><td class="r">5</td></tr>
+        <tr><td>Alerts on closed‑lost</td><td class="r">12</td></tr>
+        <tr><td>False‑positive escalations</td><td class="r">0</td></tr>
+        <tr><td>Design‑partner slots</td><td class="r">5</td></tr>
+        <tr><td>Never‑auto fields</td><td class="r">4</td></tr>
+      </table>
+
+      <div class="sidebar-rule"></div>
+
+      <div class="sidebar-kicker">— From the doctrine</div>
+      <p style="font-style: italic; font-size: 15px;">"The rep is not delegating thinking. They are delegating synthesis labor."</p>
+    </aside>
+
+  </section>
+
+  <section class="below">
+
+    <article>
+      <figure>
+        <img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1200&q=80" alt="Stream and wetland" />
+        <figcaption>The Mallin namesake — Patagonian wetland sustained by underground water flow.</figcaption>
+      </figure>
+      <div class="kicker">— Section II · Mechanism</div>
+      <h3>Three primitives. No chatbot.</h3>
+      <p><strong>Read.</strong> Every artifact on the deal — calls, email, Slack, calendar, CRM — becomes substrate. <strong>Interpret.</strong> Behavior is the signal; activity is the noise. <strong>Act.</strong> The manager is in the thread before the rep can skirt.</p>
+    </article>
+
+    <article>
+      <div class="kicker">— Section III · Trust contract</div>
+      <h3>Earned reliance, not assumed reliance.</h3>
+      <p>Every CRM field passes through three stages. <em>Suggest</em> shows the read with no write. <em>Apply</em> earns one‑click approve only after confirm‑rate data clears. <em>Auto + Confirm</em> writes first and surfaces an undo — unlocked only after Stage 2 hesitation data clears.</p>
+      <p><strong>Never auto-written.</strong> Stage. Amount. Close date. Forecast category. The cost of getting these wrong is a missed quarter, not a deleted record.</p>
+    </article>
+
+    <article>
+      <div class="kicker">— Section IV · Who it's for</div>
+      <h3>VP Sales, CRO, Head of RevOps at mid-market B2B.</h3>
+      <p>Fifty to five hundred employees. Five to twenty AEs. Three buying triggers recur: a quarter where they missed the number and could not explain why; a scale moment where RevOps cannot be hired fast enough; a continuity moment where deal context is lost across reps and quarters.</p>
+      <p><em>Five design-partner slots taken in the current cohort. Two open.</em></p>
+    </article>
+
+  </section>
+
+  <div class="classified">
+    <div>
+      <div class="classified-head">Wanted</div>
+    </div>
+    <div class="classified-body">
+      Two design-partner teams. Mid-market B2B. Five to twenty AEs. Just missed a number, or are about to scale and cannot hire RevOps fast enough. Salesforce or HubSpot. Will run on your Gong library + CRM for 24 hours and present a knowledge base built from eighteen months of your own activity.
+    </div>
+    <div class="classified-cta"><a href="mailto:hello@mallin.io">Apply → hello@mallin.io</a></div>
+  </div>
+
+  <footer class="colophon">
+    Printed in San Francisco · © 2026 Mallin · Set in Playfair Display, Source Serif, &amp; Old Standard · SOC 2 in scope
+  </footer>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+import { Client } from 'pg';
+const c = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+await c.connect();
+const dealId = 'cc103c04-62cc-420a-94e3-d5b1e54119d5';
+const opp = await c.query(`SELECT amount, currency, close_date, last_activity_at FROM opportunities WHERE id = $1`, [dealId]);
+console.log('opp:', opp.rows[0]);
+const acts = await c.query(`SELECT type, occurred_at FROM activities WHERE opportunity_id = $1 ORDER BY occurred_at DESC LIMIT 5`, [dealId]);
+const tch = await c.query(`SELECT occurred_at FROM touches WHERE opportunity_id = $1 ORDER BY occurred_at DESC LIMIT 5`, [dealId]);
+console.log('latest activities:', acts.rows.slice(0, 3));
+console.log('latest touches:', tch.rows.slice(0, 3));
+const art = await c.query(`SELECT artifact->'critical_risks' as risks FROM execution_artifacts WHERE opportunity_id = $1 AND is_current = true LIMIT 1`, [dealId]);
+const risks = art.rows[0]?.risks ?? [];
+console.log('risk titles:', risks.map(r => r.title));
+await c.end();

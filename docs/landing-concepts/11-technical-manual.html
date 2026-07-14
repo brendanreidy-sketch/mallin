@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin — A Field Manual · First Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --book:   #f1ead8;          /* aged book paper */
+    --book-2: #e4ddc9;
+    --ink:    #1a1812;
+    --ink-2:  #3e3a30;
+    --ink-3:  #6f6a5d;
+    --rule:   rgba(26,24,18,0.4);
+    --rule-light: rgba(26,24,18,0.15);
+    --red:    #8b2a1c;          /* old book red */
+    --cyan:   #2e5d6f;
+    --serif:  "Crimson Pro", "Iowan Old Style", Georgia, serif;
+    --mono:   "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--book-2);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 10% 6%, rgba(80,60,30,0.08), transparent 50%),
+      radial-gradient(ellipse at 92% 94%, rgba(80,60,30,0.06), transparent 50%);
+    z-index: 100;
+  }
+
+  /* ── The book itself, centered ────────────────────────── */
+  .book {
+    max-width: 880px;
+    margin: 48px auto;
+    background: var(--book);
+    box-shadow:
+      0 1px 0 rgba(0,0,0,0.05),
+      0 2px 14px rgba(0,0,0,0.18),
+      0 30px 60px -20px rgba(0,0,0,0.25);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  /* ── Cover ─────────────────────────────────────────────── */
+  .cover {
+    background: var(--red);
+    color: var(--book);
+    padding: 80px 56px 56px;
+    position: relative;
+    border-bottom: 8px double var(--book);
+  }
+  .cover::before {
+    content: "";
+    position: absolute; top: 24px; bottom: 24px; left: 24px; right: 24px;
+    border: 1px solid var(--book);
+    pointer-events: none;
+  }
+  .cover-frame {
+    position: absolute; top: 32px; bottom: 32px; left: 32px; right: 32px;
+    border: 1px solid var(--book);
+    pointer-events: none;
+    opacity: 0.55;
+  }
+  .cover-press {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 64px;
+    color: rgba(241,234,216,0.75);
+  }
+  .cover-press b { color: var(--book); }
+  .cover-title {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(40px, 5.4vw, 64px);
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+  .cover-title em { font-style: italic; font-weight: 500; }
+  .cover-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    margin: 0 0 96px;
+    color: rgba(241,234,216,0.88);
+  }
+  .cover-author {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--book);
+    margin-bottom: 6px;
+  }
+  .cover-edition {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(241,234,216,0.65);
+  }
+  .cover-mark {
+    position: absolute;
+    bottom: 40px; right: 56px;
+    text-align: right;
+  }
+  .cover-mark-svg {
+    margin-bottom: 8px;
+  }
+  .cover-mark-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(241,234,216,0.6);
+  }
+
+  /* ── Title page ───────────────────────────────────────── */
+  .titlepage {
+    padding: 96px 80px 80px;
+    text-align: center;
+    border-bottom: 1px solid var(--rule);
+  }
+  .titlepage-line { color: var(--rule); border: none; border-top: 1px solid var(--rule); width: 80px; margin: 24px auto; }
+  .titlepage h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 40px;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .titlepage h1 em { font-style: italic; font-weight: 500; }
+  .titlepage .deck {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-2);
+    margin: 0 0 48px;
+  }
+  .titlepage .by {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-top: 16px;
+  }
+  .titlepage .edition {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ── Body pages ─────────────────────────────────────── */
+  .pages { padding: 64px 80px; }
+  .running-head {
+    display: flex; justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-bottom: 12px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .running-head b { color: var(--ink); }
+
+  h2.chapter-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--red);
+    font-weight: 600;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+  }
+  h2.chapter-title {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-style: italic;
+    font-size: 36px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 28px;
+  }
+  .standfirst {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.45;
+    color: var(--ink-2);
+    border-left: 3px solid var(--red);
+    padding: 4px 0 4px 20px;
+    margin: 0 0 32px;
+  }
+
+  .body-section { margin-bottom: 48px; }
+  .body-section p {
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0 0 14px;
+    text-align: justify;
+    hyphens: auto;
+  }
+  .body-section p:first-of-type::first-letter {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 56px;
+    line-height: 0.85;
+    float: left;
+    margin: 6px 8px 0 0;
+    color: var(--red);
+  }
+  .body-section p em { font-style: italic; }
+  .body-section p strong { font-weight: 600; }
+  .body-section h3 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 20px;
+    margin: 32px 0 10px;
+  }
+
+  /* Marginalia — small notes on the side */
+  .margin-note {
+    float: right;
+    width: 200px;
+    margin: 4px -180px 16px 24px;
+    padding: 12px 0 12px 14px;
+    border-left: 2px solid var(--red);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--ink-3);
+  }
+  .margin-note b { color: var(--ink); font-weight: 600; display: block; margin-bottom: 4px; font-family: var(--serif); font-size: 13px; }
+
+  /* Inline plate (with photo) */
+  .plate {
+    margin: 32px -16px;
+    padding: 16px;
+    background: var(--book-2);
+    border: 1px solid var(--rule-light);
+  }
+  .plate img {
+    display: block;
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    filter: sepia(0.15) contrast(0.95);
+  }
+  .plate-caption {
+    margin-top: 12px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+  }
+  .plate-caption .lbl {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Code/spec block */
+  .spec {
+    background: var(--book-2);
+    border: 1px solid var(--rule);
+    padding: 18px 22px;
+    margin: 24px 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .spec .kw { color: var(--red); }
+  .spec .com { color: var(--ink-3); font-style: italic; }
+  .spec .num { color: var(--cyan); }
+
+  /* Table */
+  table.fig {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+  }
+  table.fig caption {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--red);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  table.fig th, table.fig td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px dotted var(--rule-light);
+  }
+  table.fig th {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--rule);
+    background: var(--book-2);
+  }
+  table.fig td.r { text-align: right; font-family: var(--mono); }
+
+  /* Footnotes */
+  .footnotes {
+    margin-top: 64px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .footnotes ol { padding-left: 18px; margin: 0; }
+  .footnotes li { margin-bottom: 8px; }
+
+  sup.fn {
+    font-family: var(--mono);
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  /* ── Colophon ─────────────────────────────────────────── */
+  .colophon {
+    padding: 56px 80px;
+    background: var(--book-2);
+    border-top: 1px solid var(--rule);
+    text-align: center;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+  .colophon-rule {
+    width: 60px; border: none; border-top: 1px solid var(--rule);
+    margin: 24px auto;
+  }
+  .colophon a {
+    color: var(--red);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .colophon .mono {
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-top: 24px;
+  }
+
+  @media (max-width: 720px) {
+    .book { margin: 16px; }
+    .cover, .titlepage, .pages, .colophon { padding-left: 28px; padding-right: 28px; }
+    .margin-note {
+      float: none;
+      width: auto;
+      margin: 16px 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="book">
+
+  <!-- ── COVER ─────────────────────────────────────────── -->
+  <section class="cover">
+    <div class="cover-frame"></div>
+    <div class="cover-press">FROM THE PRESS · <b>MALLIN · SAN FRANCISCO</b></div>
+    <h1 class="cover-title">Mallin</h1>
+    <p class="cover-sub">A field manual for the operators of revenue.</p>
+    <div class="cover-author">BY THE EDITORS · MAY MMXXVI</div>
+    <div class="cover-edition">FIRST EDITION · DESIGN-PARTNER PRINTING</div>
+    <div class="cover-mark">
+      <svg class="cover-mark-svg" viewBox="0 0 64 64" width="42" height="42" fill="none">
+        <path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#f1ead8" stroke-width="3" stroke-linecap="round"/>
+        <line x1="22" y1="22" x2="22" y2="17" stroke="#f1ead8" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="32" y1="22" x2="32" y2="14" stroke="#f1ead8" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="42" y1="22" x2="42" y2="17" stroke="#f1ead8" stroke-width="1.75" stroke-linecap="round"/>
+        <path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#f1ead8" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+      </svg>
+      <div class="cover-mark-label">Mallín · Patagonia</div>
+    </div>
+  </section>
+
+  <!-- ── TITLE PAGE ────────────────────────────────────── -->
+  <section class="titlepage">
+    <hr class="titlepage-line" />
+    <h1>Mallin <em>—</em> A Field Manual</h1>
+    <p class="deck">on the operating layer for revenue execution</p>
+    <hr class="titlepage-line" />
+    <div class="by">An occasional volume · prepared for the design-partner cohort</div>
+    <hr class="titlepage-line" />
+    <div class="edition">First Edition · May MMXXVI</div>
+  </section>
+
+  <!-- ── PAGES ─────────────────────────────────────────── -->
+  <section class="pages">
+
+    <div class="running-head">
+      <span>Mallin · A Field Manual</span>
+      <span><b>I.</b> The Substrate Problem</span>
+    </div>
+
+    <h2 class="chapter-num">— Chapter I</h2>
+    <h2 class="chapter-title">The substrate problem.</h2>
+
+    <p class="standfirst">
+      Why every existing system that tries to answer the question
+      <em>is this deal real?</em> answers it with the wrong material.
+    </p>
+
+    <div class="body-section">
+
+      <p>
+        Every quarter, leadership sits down on a Friday morning and asks
+        the same question about a handful of deals: <em>is this real?</em>
+        The CRM says 75 percent, commit, advancing. The rep says the
+        champion is engaged. The forecast category says yes.
+        <sup class="fn">1</sup>
+      </p>
+
+      <p>
+        <span class="margin-note"><b>Definition (mallín, n.).</b> A Patagonian wetland sustained by an underground current. The surface looks like grassland. Pull the grass back: water is right there.</span>
+        Meanwhile the actual signals — the CFO has not joined a call in
+        six weeks, the champion's airtime collapsed from forty percent
+        to eight, procurement entered late, a competitor was introduced
+        during pricing — sit fragmented across calls, Slack, email,
+        calendar invites, and stakeholder behavior. <strong>The data
+        exists. It is not synthesized.</strong> It does not reach the
+        forecast call.
+      </p>
+
+      <p>
+        The conventional response to this gap is more dashboards. More
+        scoring. More AI features bolted onto a system whose job was
+        never to interpret behavior in the first place. We treat this
+        as a category error, and we begin from a different premise:
+        the substrate that matters is not the database, it is the
+        <em>artifacts</em> the deal produced as it was being done.
+      </p>
+
+      <div class="plate">
+        <img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1400&q=80" alt="A Patagonian mallín — stream and grassland." />
+        <div class="plate-caption">
+          <span class="lbl">Plate I. <em>The mallín, after which the system is named.</em></span>
+          <span>FIG · I · MMXXVI</span>
+        </div>
+      </div>
+
+      <h3>§ 1.1 — The three primitives</h3>
+
+      <p>
+        Mallin operates by three primitives, applied in sequence to every
+        deal. They are stated here in the form a future operator will
+        encounter them.
+      </p>
+
+      <div class="spec">
+<span class="com">// the three primitives of the operating layer</span>
+<span class="kw">read</span>       every artifact on the deal becomes substrate
+<span class="kw">interpret</span>  behavior is the signal · activity is the noise
+<span class="kw">act</span>        the manager is in the thread before the rep can skirt
+
+<span class="com">// approval gate · invariant</span>
+<span class="kw">never_auto</span> = [Stage, Amount, Close_Date, Forecast_Category]<sup class="fn">2</sup>
+      </div>
+
+      <p>
+        Each of these primitives carries weight that is not obvious until
+        the system is run against a deal that lost. We treat the
+        <em>closed-lost retrospective</em> as the central empirical
+        instrument of this first edition, and Chapter IV walks through
+        the most recent case at length.
+      </p>
+
+      <h3>§ 1.2 — What the system refuses to do</h3>
+
+      <p>
+        Half the agentic AI shipping in 2026 is irresponsible: blind
+        CRM auto-writes, browser agents that hallucinate, "let me handle
+        your email" pitches. Sales leaders are correctly suspicious.
+        Mallin is agentic where it should be and human where it must be.
+        The distinction is encoded in the product, not promised in the
+        marketing.
+      </p>
+
+      <table class="fig">
+        <caption>Table 1.1 · Trust progression · earned reliance by stage</caption>
+        <thead><tr><th>Stage</th><th>Behavior</th><th>Unlocks</th></tr></thead>
+        <tbody>
+          <tr><td>I · Suggest</td><td>Agent shows its read. Looks right / wrong / edit.</td><td>Default</td></tr>
+          <tr><td>II · Apply</td><td>One-click approve. Earned only after confirm-rate clears.</td><td>By field, by tenant</td></tr>
+          <tr><td>III · Auto + Confirm</td><td>Writes first; surfaces Confirm/Undo.</td><td>After Stage II hesitation clears</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        The constraint on <em>never-auto fields</em> — Stage, Amount,
+        Close Date, Forecast Category — is structural, not configurable.
+        There is no per-tenant override. The cost of getting these
+        wrong is a missed quarter, not a deleted record.
+      </p>
+
+      <div class="footnotes">
+        <ol>
+          <li>The framing here is borrowed from twenty years of forecast-call observation; for the empirical retrospective on five enterprise cycles see <em>Chapter IV. The closed-lost replay.</em></li>
+          <li>This is the doctrine the rest of the manual will return to. On the human-factors basis for this invariant, see <em>Appendix B. Automation bias under load.</em></li>
+        </ol>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- ── Colophon / contact ────────────────────────────── -->
+  <section class="colophon">
+    <p>
+      This volume is set in Crimson Pro &amp; JetBrains Mono and<br/>
+      printed for the design-partner cohort of the Mallin Press.
+    </p>
+    <hr class="colophon-rule" />
+    <p>
+      For inquiries about subsequent chapters or the design-partner
+      programme, write to <a href="mailto:hello@mallin.io">hello@mallin.io</a>.
+    </p>
+    <div class="mono">© MMXXVI MALLIN · SAN FRANCISCO · TWO SLOTS REMAIN</div>
+  </section>
+
+</div>
+
+</body>
+</html>

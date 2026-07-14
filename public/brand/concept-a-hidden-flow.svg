@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">
+  <title>Mallin — Concept A: Hidden Flow</title>
+  <desc>Two horizontal currents: the visible surface line above, the deeper underground flow beneath. The literal mallín — what you see, and what sustains it.</desc>
+
+  <!-- Surface line: gentle rolling steppe -->
+  <path d="M 8 24 Q 20 20, 32 24 T 56 24"
+        fill="none"
+        stroke="#1a2230"
+        stroke-width="3"
+        stroke-linecap="round" />
+
+  <!-- Hidden underground flow: longer, deeper, in stream-blue -->
+  <path d="M 4 40 Q 16 34, 32 40 T 60 40"
+        fill="none"
+        stroke="#4a7186"
+        stroke-width="3"
+        stroke-linecap="round" />
+
+  <!-- Subtle vegetation marks above surface -->
+  <line x1="22" y1="20" x2="22" y2="16" stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="32" y1="20" x2="32" y2="14" stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="42" y1="20" x2="42" y2="16" stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+</svg>

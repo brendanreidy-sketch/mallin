@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin · A Map of the Operating Layer</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+DW+Pica:ital@0;1&family=Inria+Serif:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:   #e9dfc4;   /* aged map paper */
+    --paper-2: #d9cda9;
+    --paper-3: #c5b78e;
+    --ink:     #2a2114;
+    --ink-2:   #4a3a22;
+    --ink-3:   #7a6a4a;
+    --rule:    rgba(42,33,20,0.5);
+    --rule-2:  rgba(42,33,20,0.22);
+    --red:     #963a25;
+    --water:   #6e8aa0;
+    --water-2: #8aa6bc;
+    --moss:    #6b7a4a;
+    --moss-2:  #95a26a;
+    --fell:    "IM Fell English", "Times New Roman", serif;
+    --pica:    "IM Fell DW Pica", "Times New Roman", serif;
+    --inria:   "Inria Serif", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--inria);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Paper tone overlay */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 8% 5%, rgba(120,80,30,0.18), transparent 35%),
+      radial-gradient(ellipse at 92% 8%, rgba(120,80,30,0.14), transparent 40%),
+      radial-gradient(ellipse at 5% 95%, rgba(120,80,30,0.22), transparent 40%),
+      radial-gradient(ellipse at 95% 95%, rgba(120,80,30,0.16), transparent 40%);
+    mix-blend-mode: multiply;
+    z-index: 90;
+  }
+  /* Paper grain noise */
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(42,33,20,0.018) 0, rgba(42,33,20,0.018) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(90deg, rgba(42,33,20,0.014) 0, rgba(42,33,20,0.014) 1px, transparent 1px, transparent 4px);
+    mix-blend-mode: multiply;
+    z-index: 91;
+  }
+
+  .sheet {
+    max-width: 1280px;
+    margin: 32px auto;
+    padding: 36px 48px 64px;
+    border: 1.5px solid var(--ink);
+    box-shadow: 0 2px 0 var(--ink-3), 0 6px 24px rgba(0,0,0,0.18);
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(180,160,110,0.08) 0%, transparent 30%),
+      var(--paper);
+  }
+  .sheet::before {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border: 1px solid var(--rule);
+    pointer-events: none;
+  }
+  .sheet::after {
+    content: "";
+    position: absolute;
+    inset: 22px;
+    border: 1px solid var(--rule-2);
+    pointer-events: none;
+  }
+
+  /* ── Cartouche header ───────────────────────────────── */
+  .cartouche {
+    text-align: center;
+    padding: 28px 0 32px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 32px;
+  }
+  .cartouche-eyebrow {
+    font-family: var(--pica);
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    color: var(--ink-2);
+    text-transform: lowercase;
+    margin-bottom: 8px;
+  }
+  .cartouche h1 {
+    font-family: var(--fell);
+    font-weight: 400;
+    font-size: clamp(40px, 5.4vw, 76px);
+    line-height: 1;
+    letter-spacing: 0.005em;
+    margin: 0 0 6px;
+  }
+  .cartouche h1 .small-cap {
+    font-feature-settings: "smcp" on;
+    color: var(--red);
+  }
+  .cartouche-sub {
+    font-family: var(--fell);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--ink-2);
+    margin: 0 0 18px;
+  }
+  .cartouche-rule {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px;
+    color: var(--ink-3);
+    font-size: 14px;
+    font-family: var(--pica);
+  }
+  .cartouche-rule .line {
+    flex: 0 1 160px; height: 1px; background: var(--ink-3);
+  }
+  .cartouche-rule .star {
+    color: var(--ink); font-size: 18px;
+  }
+
+  /* ── Map area ──────────────────────────────────────── */
+  .map-wrap {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 32px;
+    margin: 16px 0;
+  }
+  .map-frame {
+    position: relative;
+    background: var(--paper-2);
+    border: 1.5px solid var(--ink);
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+  }
+  .map-svg { display: block; width: 100%; height: 100%; }
+
+  /* ── Legend ───────────────────────────────────────── */
+  .legend {
+    border: 1.5px solid var(--ink);
+    background: rgba(217,205,169,0.5);
+    padding: 18px 18px 16px;
+  }
+  .legend h3 {
+    font-family: var(--fell);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 22px;
+    margin: 0 0 14px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 8px;
+  }
+  .legend-row {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .legend-row:last-child { margin-bottom: 0; }
+  .legend-icon {
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--fell);
+    font-size: 14px;
+    color: var(--red);
+  }
+  .legend-icon svg { display: block; }
+  .legend-text {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .legend-text b {
+    display: block;
+    font-family: var(--fell);
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .legend-text em { font-style: italic; color: var(--ink-2); }
+
+  .legend-rule {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 14px 0;
+  }
+  .compass {
+    text-align: center;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+  }
+  .compass-rose { display: inline-block; margin-bottom: 4px; }
+  .compass-label {
+    font-family: var(--pica);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  /* ── Editorial below the map ─────────────────────── */
+  .editorial {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+  .editorial h2 {
+    font-family: var(--fell);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 32px;
+    line-height: 1.1;
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+  .editorial h2 .small-cap {
+    font-feature-settings: "smcp" on;
+    color: var(--red);
+    font-style: normal;
+  }
+  .editorial p {
+    font-size: 15.5px;
+    line-height: 1.6;
+    margin: 0 0 14px;
+    text-align: justify;
+    hyphens: auto;
+  }
+  .editorial p:first-of-type::first-letter {
+    font-family: var(--fell);
+    font-size: 48px;
+    font-weight: 400;
+    line-height: 0.85;
+    float: left;
+    margin: 4px 8px 0 0;
+    color: var(--red);
+  }
+  .editorial em { font-style: italic; }
+  .editorial strong { font-weight: 700; }
+
+  /* ── Gazetteer (table of places + meaning) ─────── */
+  .gazetteer {
+    margin-top: 40px;
+    border: 1.5px solid var(--ink);
+    padding: 24px 28px 24px;
+  }
+  .gazetteer h2 {
+    font-family: var(--fell);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 24px;
+    margin: 0 0 16px;
+    text-align: center;
+  }
+  .gazetteer h2 .star {
+    color: var(--red);
+    font-style: normal;
+    margin: 0 14px;
+  }
+  table.gaz {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--inria);
+    font-size: 14px;
+  }
+  table.gaz th, table.gaz td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px dotted var(--rule);
+    vertical-align: top;
+  }
+  table.gaz th {
+    font-family: var(--pica);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--ink);
+    color: var(--red);
+  }
+  table.gaz td.coord {
+    font-family: var(--pica);
+    font-style: italic;
+    color: var(--ink-3);
+    width: 90px;
+    white-space: nowrap;
+  }
+  table.gaz td.place {
+    font-family: var(--fell);
+    font-size: 16px;
+    width: 230px;
+    color: var(--ink);
+  }
+  table.gaz td.reading {
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+  table.gaz td.reading em { font-style: italic; color: var(--ink); }
+
+  /* ── Closing ───────────────────────────────────── */
+  .imprint {
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+    font-family: var(--pica);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .imprint a {
+    color: var(--red);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .imprint b { color: var(--ink); font-style: normal; }
+
+  @media (max-width: 900px) {
+    .sheet { padding: 24px 16px 32px; }
+    .map-wrap { grid-template-columns: 1fr; }
+    .editorial { grid-template-columns: 1fr; gap: 24px; }
+    table.gaz td.coord { display: none; }
+    table.gaz td.place { width: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <!-- ── Cartouche header ───────────────────────────── -->
+  <header class="cartouche">
+    <p class="cartouche-eyebrow">— a chart, prepared for the operators of revenue —</p>
+    <h1>A Map of the <span class="small-cap">Mallin</span></h1>
+    <p class="cartouche-sub">Operating layer for the modern sales cycle, showing the substrate beneath.</p>
+    <div class="cartouche-rule">
+      <span class="line"></span>
+      <span class="star">✦</span>
+      <span>Plate I &nbsp;·&nbsp; Drawn from observation &nbsp;·&nbsp; MMXXVI</span>
+      <span class="star">✦</span>
+      <span class="line"></span>
+    </div>
+  </header>
+
+  <!-- ── Map area ───────────────────────────────────── -->
+  <div class="map-wrap">
+
+    <!-- ── The map itself (SVG) ─────────────────────── -->
+    <div class="map-frame">
+      <svg class="map-svg" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+        <!-- Base paper -->
+        <rect width="800" height="600" fill="#d9cda9" />
+
+        <!-- Faint topographic lines -->
+        <g stroke="#8a7a52" stroke-width="0.6" fill="none" opacity="0.4">
+          <path d="M -20 120 Q 200 100, 400 130 T 820 110" />
+          <path d="M -20 180 Q 200 160, 400 195 T 820 175" />
+          <path d="M -20 240 Q 200 215, 400 255 T 820 235" />
+          <path d="M -20 380 Q 200 360, 400 400 T 820 380" />
+          <path d="M -20 460 Q 200 440, 400 490 T 820 465" />
+          <path d="M -20 530 Q 200 510, 400 555 T 820 525" />
+        </g>
+
+        <!-- Grassland hatching (mallín surface) — light moss strokes -->
+        <g stroke="#95a26a" stroke-width="0.6" opacity="0.55">
+          <line x1="80" y1="320" x2="84" y2="312" />
+          <line x1="100" y1="330" x2="104" y2="320" />
+          <line x1="120" y1="324" x2="124" y2="316" />
+          <line x1="140" y1="335" x2="144" y2="326" />
+          <line x1="160" y1="328" x2="164" y2="319" />
+          <line x1="180" y1="338" x2="184" y2="329" />
+          <line x1="200" y1="330" x2="204" y2="321" />
+          <line x1="240" y1="342" x2="244" y2="333" />
+          <line x1="280" y1="335" x2="284" y2="326" />
+          <line x1="320" y1="346" x2="324" y2="337" />
+          <line x1="360" y1="338" x2="364" y2="329" />
+          <line x1="400" y1="350" x2="404" y2="341" />
+          <line x1="440" y1="342" x2="444" y2="333" />
+          <line x1="480" y1="354" x2="484" y2="345" />
+          <line x1="520" y1="346" x2="524" y2="337" />
+          <line x1="560" y1="358" x2="564" y2="349" />
+          <line x1="600" y1="350" x2="604" y2="341" />
+          <line x1="640" y1="362" x2="644" y2="353" />
+          <line x1="680" y1="354" x2="684" y2="345" />
+          <line x1="720" y1="365" x2="724" y2="356" />
+          <line x1="90" y1="450" x2="94" y2="442" />
+          <line x1="150" y1="460" x2="154" y2="451" />
+          <line x1="210" y1="455" x2="214" y2="446" />
+          <line x1="270" y1="465" x2="274" y2="456" />
+          <line x1="330" y1="458" x2="334" y2="449" />
+          <line x1="410" y1="468" x2="414" y2="459" />
+          <line x1="490" y1="463" x2="494" y2="454" />
+          <line x1="570" y1="472" x2="574" y2="463" />
+          <line x1="650" y1="465" x2="654" y2="456" />
+          <line x1="710" y1="478" x2="714" y2="469" />
+        </g>
+
+        <!-- Underground current — the river, in blue -->
+        <path d="M -20 220 Q 120 240, 200 230 T 400 245 T 600 235 T 820 250"
+              fill="none" stroke="#6e8aa0" stroke-width="3" opacity="0.85" />
+        <path d="M -20 220 Q 120 240, 200 230 T 400 245 T 600 235 T 820 250"
+              fill="none" stroke="#8aa6bc" stroke-width="6" opacity="0.35" />
+        <!-- Tributaries -->
+        <path d="M 200 230 Q 220 280, 240 360 T 260 510"
+              fill="none" stroke="#6e8aa0" stroke-width="1.8" opacity="0.75" />
+        <path d="M 400 245 Q 420 300, 410 380"
+              fill="none" stroke="#6e8aa0" stroke-width="1.8" opacity="0.75" />
+        <path d="M 600 235 Q 620 290, 640 360 T 660 480"
+              fill="none" stroke="#6e8aa0" stroke-width="1.8" opacity="0.75" />
+
+        <!-- Place markers · Deals as places on the chart -->
+        <!-- Cipher Mining -->
+        <g transform="translate(150, 200)">
+          <circle r="6" fill="#963a25" stroke="#2a2114" stroke-width="1.5" />
+          <circle r="11" fill="none" stroke="#963a25" stroke-width="0.8" opacity="0.4" />
+        </g>
+        <text x="168" y="194" font-family="IM Fell English, serif" font-size="14" fill="#2a2114">Cipher Mining</text>
+        <text x="168" y="208" font-family="IM Fell DW Pica, serif" font-size="11" font-style="italic" fill="#7a6a4a">$450K · stage iv</text>
+
+        <!-- Industrial Logistics -->
+        <g transform="translate(350, 160)">
+          <circle r="6" fill="#963a25" stroke="#2a2114" stroke-width="1.5" />
+        </g>
+        <text x="368" y="154" font-family="IM Fell English, serif" font-size="14" fill="#2a2114">Industrial Logistics</text>
+        <text x="368" y="168" font-family="IM Fell DW Pica, serif" font-size="11" font-style="italic" fill="#7a6a4a">$280K · stage v</text>
+
+        <!-- Multi-brand Holdco -->
+        <g transform="translate(540, 195)">
+          <rect x="-5" y="-5" width="10" height="10" fill="#a38c30" stroke="#2a2114" stroke-width="1.5" transform="rotate(45)" />
+        </g>
+        <text x="558" y="190" font-family="IM Fell English, serif" font-size="14" fill="#2a2114">Multi-brand Holdco</text>
+        <text x="558" y="204" font-family="IM Fell DW Pica, serif" font-size="11" font-style="italic" fill="#7a6a4a">$620K · stage vi</text>
+
+        <!-- PE Portfolio -->
+        <g transform="translate(680, 410)">
+          <circle r="5" fill="#6b7a4a" stroke="#2a2114" stroke-width="1.5" />
+        </g>
+        <text x="624" y="430" font-family="IM Fell English, serif" font-size="14" fill="#2a2114">PE Portfolio Holding</text>
+        <text x="635" y="444" font-family="IM Fell DW Pica, serif" font-size="11" font-style="italic" fill="#7a6a4a">$180K · stage iii</text>
+
+        <!-- Treasury Platform (mid) -->
+        <g transform="translate(420, 380)">
+          <circle r="5" fill="#6b7a4a" stroke="#2a2114" stroke-width="1.5" />
+        </g>
+        <text x="438" y="375" font-family="IM Fell English, serif" font-size="14" fill="#2a2114">Treasury Platform</text>
+        <text x="438" y="389" font-family="IM Fell DW Pica, serif" font-size="11" font-style="italic" fill="#7a6a4a">$340K · stage iv</text>
+
+        <!-- The closed-lost — marked with a cross -->
+        <g transform="translate(250, 470)">
+          <line x1="-8" y1="-8" x2="8" y2="8" stroke="#2a2114" stroke-width="2" />
+          <line x1="-8" y1="8" x2="8" y2="-8" stroke="#2a2114" stroke-width="2" />
+        </g>
+        <text x="268" y="468" font-family="IM Fell English, serif" font-size="14" fill="#963a25">The Closed-Lost</text>
+        <text x="268" y="482" font-family="IM Fell DW Pica, serif" font-size="11" font-style="italic" fill="#7a6a4a">12 alerts · cycle 04–06</text>
+
+        <!-- Compass region label -->
+        <text x="80" y="80" font-family="IM Fell English, serif" font-style="italic" font-size="20" fill="#2a2114" opacity="0.7">— region of —</text>
+        <text x="80" y="106" font-family="IM Fell English, serif" font-size="32" fill="#2a2114" opacity="0.85">Revenue Execution</text>
+
+        <!-- Water labels -->
+        <text x="40" y="216" font-family="IM Fell DW Pica, serif" font-style="italic" font-size="13" fill="#6e8aa0">— the underground current —</text>
+        <text x="35" y="345" font-family="IM Fell DW Pica, serif" font-style="italic" font-size="11" fill="#7a6a4a">grassland</text>
+        <text x="35" y="480" font-family="IM Fell DW Pica, serif" font-style="italic" font-size="11" fill="#7a6a4a">grassland</text>
+
+        <!-- Scale -->
+        <g transform="translate(580, 555)">
+          <line x1="0" y1="0" x2="160" y2="0" stroke="#2a2114" stroke-width="1.5" />
+          <line x1="0" y1="-4" x2="0" y2="4" stroke="#2a2114" stroke-width="1.5" />
+          <line x1="80" y1="-4" x2="80" y2="4" stroke="#2a2114" stroke-width="1.5" />
+          <line x1="160" y1="-4" x2="160" y2="4" stroke="#2a2114" stroke-width="1.5" />
+          <text x="80" y="20" font-family="IM Fell DW Pica, serif" font-style="italic" font-size="11" fill="#2a2114" text-anchor="middle">0 — 1 — 2 quarters</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- ── Legend ─────────────────────────────────── -->
+    <aside class="legend">
+      <h3>— Legend —</h3>
+
+      <div class="legend-row">
+        <div class="legend-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="5" fill="#963a25" stroke="#2a2114" stroke-width="1.5" />
+            <circle cx="10" cy="10" r="9" fill="none" stroke="#963a25" stroke-width="0.8" opacity="0.45" />
+          </svg>
+        </div>
+        <div class="legend-text">
+          <b>High alert</b>
+          <em>Active verification fired in last 24 hours</em>
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <div class="legend-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <rect x="3" y="3" width="14" height="14" fill="#a38c30" stroke="#2a2114" stroke-width="1.5" transform="rotate(45 10 10)" />
+          </svg>
+        </div>
+        <div class="legend-text">
+          <b>Forecast watch</b>
+          <em>Stage 6 deal · signature date unconfirmed</em>
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <div class="legend-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="4" fill="#6b7a4a" stroke="#2a2114" stroke-width="1.5" />
+          </svg>
+        </div>
+        <div class="legend-text">
+          <b>Under observation</b>
+          <em>No active alert; substrate accumulating</em>
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <div class="legend-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <line x1="3" y1="3" x2="17" y2="17" stroke="#2a2114" stroke-width="2" />
+            <line x1="3" y1="17" x2="17" y2="3" stroke="#2a2114" stroke-width="2" />
+          </svg>
+        </div>
+        <div class="legend-text">
+          <b>Closed-lost</b>
+          <em>Retrospective deal used to validate the system</em>
+        </div>
+      </div>
+
+      <hr class="legend-rule" />
+
+      <div class="legend-row">
+        <div class="legend-icon">
+          <svg width="22" height="14">
+            <path d="M 0 7 Q 6 4, 11 7 T 22 7" stroke="#6e8aa0" stroke-width="2.5" fill="none" />
+          </svg>
+        </div>
+        <div class="legend-text">
+          <b>Underground current</b>
+          <em>Calls, email, Slack — the substrate beneath</em>
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <div class="legend-icon">
+          <svg width="22" height="14">
+            <line x1="2" y1="11" x2="4" y2="6" stroke="#95a26a" stroke-width="1" />
+            <line x1="8" y1="11" x2="10" y2="6" stroke="#95a26a" stroke-width="1" />
+            <line x1="14" y1="11" x2="16" y2="6" stroke="#95a26a" stroke-width="1" />
+          </svg>
+        </div>
+        <div class="legend-text">
+          <b>Grassland</b>
+          <em>The CRM surface · what was typed</em>
+        </div>
+      </div>
+
+      <div class="compass">
+        <svg class="compass-rose" width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="22" fill="none" stroke="#2a2114" stroke-width="1" />
+          <circle cx="32" cy="32" r="14" fill="none" stroke="#2a2114" stroke-width="0.5" />
+          <line x1="32" y1="6" x2="32" y2="58" stroke="#2a2114" stroke-width="0.8" />
+          <line x1="6" y1="32" x2="58" y2="32" stroke="#2a2114" stroke-width="0.8" />
+          <path d="M 32 6 L 36 30 L 32 32 L 28 30 Z" fill="#963a25" stroke="#2a2114" stroke-width="0.6" />
+          <path d="M 32 58 L 36 34 L 32 32 L 28 34 Z" fill="#2a2114" />
+          <text x="32" y="4" font-family="IM Fell English, serif" font-size="9" fill="#2a2114" text-anchor="middle">N</text>
+        </svg>
+        <div class="compass-label">orientation of inquiry</div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ── Editorial below the map ─────────────────────── -->
+  <section class="editorial">
+    <div>
+      <h2><span class="small-cap">On Reading This Chart.</span></h2>
+      <p>
+        A <em>mallín</em> is a Patagonian wetland sustained by an
+        underground current. From above it appears as ordinary
+        grassland; pull back the surface and the water is right there,
+        holding up everything visible. We took the name because it
+        described, with no embellishment, the thing we kept finding
+        inside enterprise sales cycles.
+      </p>
+      <p>
+        On this chart, the grassland is the CRM — what was typed, what
+        was logged, what the forecast call sees. The blue line is the
+        substrate beneath: calls, email, Slack, calendar invites,
+        stakeholder behavior. <em>The deals are placed where the
+        current actually runs, not where the CRM says they are.</em>
+      </p>
+    </div>
+    <div>
+      <h2><span class="small-cap">What This System Refuses To Do.</span></h2>
+      <p>
+        Mallin <em>never</em> auto-writes Stage, Amount, Close Date, or
+        Forecast Category. Not after trust is earned. Not when
+        statistically safe. The constraint is structural, not
+        configurable. Every other field passes through three stages of
+        earned reliance before anything writes itself.
+      </p>
+      <p>
+        Verification alerts post into the deal Slack thread the manager
+        is already in. The agent decides what is a gap. The team
+        decides the response. <strong>The manager being in the thread
+        means the rep cannot quietly skirt the conversation.</strong>
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Gazetteer ──────────────────────────────────── -->
+  <section class="gazetteer">
+    <h2><span class="star">✦</span>Gazetteer of Active Deals<span class="star">✦</span></h2>
+    <table class="gaz">
+      <thead>
+        <tr>
+          <th>Coordinates</th>
+          <th>Place</th>
+          <th>Reading taken — what the substrate says</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="coord">38°N / 17°W</td>
+          <td class="place">Cipher Mining</td>
+          <td class="reading">Signer (CFO) has not asked a question in two consecutive calls. Champion airtime collapsed forty to eight percent. <em>Manager looped into the thread on the same afternoon.</em></td>
+        </tr>
+        <tr>
+          <td class="coord">41°N / 22°W</td>
+          <td class="place">Industrial Logistics</td>
+          <td class="reading">Champion has never introduced anyone above their direct manager. Power-map gap entering closing motion across six calls. <em>One action queued.</em></td>
+        </tr>
+        <tr>
+          <td class="coord">36°N / 41°W</td>
+          <td class="place">Multi-brand Holdco</td>
+          <td class="reading">Procurement template sent; signature date unconfirmed. Champion has not used a commitment phrase across the audit. <em>Forecast watch raised.</em></td>
+        </tr>
+        <tr>
+          <td class="coord">29°N / 14°W</td>
+          <td class="place">Treasury Platform</td>
+          <td class="reading">New stakeholder identified via calendar invite — Director of FP&amp;A, reports to CFO. Triangulated, added with low confidence, <em>verify on next call.</em></td>
+        </tr>
+        <tr>
+          <td class="coord">12°N / 27°W</td>
+          <td class="place" style="color: var(--red);">The Closed-Lost</td>
+          <td class="reading">Twelve verification alerts across calls two through six. Three at once on call five — signer commitment warning, competitive escalation without a head-to-head plan, power-map gap. <em>The retrospective on which the system was calibrated.</em></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── Imprint ────────────────────────────────────── -->
+  <div class="imprint">
+    Drawn from observation &nbsp;·&nbsp; <b>Mallin Cartography</b> &nbsp;·&nbsp; San Francisco &nbsp;·&nbsp; <a href="mailto:hello@mallin.io">hello@mallin.io</a> &nbsp;·&nbsp; Two design-partner berths remain
+  </div>
+
+</div>
+
+</body>
+</html>

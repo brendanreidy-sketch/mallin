@@ -1,0 +1,1919 @@
+/* ============================================================================
+   Pre-call brief — dark theme, scannable, hierarchy-driven.
+
+   Design principles:
+   - Typography hierarchy: distinct size + weight + color for each level
+   - Generous whitespace between sections; tight within them
+   - Section headers use uppercase mono labels (small, tracked)
+   - Long-form content gets line-height 1.55-1.65 for readability
+   - Cards have visible borders so the eye finds structure quickly
+   - Color is rare and load-bearing: orange = primary action, red = risk,
+     green = advancing, blue = post-call signal, amber = decision-pending
+   ========================================================================== */
+
+.page {
+  min-height: 100vh;
+  /* Deep navy base — May 16 2026 per Gianna feedback. Subtle warmth shift
+     from pure black (#0a0a0d) to muted navy (#0a0e16). Softens the
+     terminal severity without violating monochrome-plus-one-accent. */
+  background: var(--ck-paper);
+  color: var(--ck-ink);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* Density-scaled top/bottom padding so the customizer's compact/
+     comfortable/spacious choice produces a visible delta at the page
+     edges (sides stay fixed so the centered shell doesn't drift). */
+  padding: calc(32px * var(--density-scale, 1)) 16px
+    calc(120px * var(--density-scale, 1));
+}
+
+.shell {
+  width: 100%;
+  max-width: min(1360px, 94vw);
+  margin: 0 auto;
+  background: var(--ck-surface);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 0.5px solid var(--ck-rule);
+  box-shadow: 0 16px 48px var(--ck-shadow);
+}
+
+/* ── Command-center shell ──────────────────────────────────────────────
+   Two-column cockpit below the full-width chrome. The 1.7fr primary
+   column resolves to ~820px at max width so the existing components keep
+   their current design width; the rail (1fr) holds the deck controls now
+   and stakeholder-engagement / commercial / timeline panels later. */
+.cockpitGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.cockpitMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+@media (max-width: 1000px) {
+  .cockpitGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Saved-touch banner (shown after a successful touch save) ──────── */
+.savedBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(
+    180deg,
+    var(--ck-good-tint) 0%,
+    var(--ck-good-tint) 100%
+  );
+  border-bottom: 0.5px solid var(--ck-good);
+  font-size: 13px;
+  color: var(--ck-good);
+}
+.savedBannerCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ck-good);
+  color: var(--ck-surface-3);
+  font-size: 11px;
+  font-weight: 700;
+}
+.savedBannerText {
+  flex: 1;
+}
+.savedBannerLink {
+  color: var(--ck-good);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+.savedBannerLink:hover {
+  color: var(--ck-good);
+}
+/* The echoed touch body — what the rep just captured. Reads as "this
+   is what you saved" rather than system narration. */
+.savedBannerEcho {
+  font-style: normal;
+  color: var(--ck-ink);
+  font-weight: 500;
+}
+/* Trailing system-meta on the banner (e.g. " · updating brief…" or
+   " · brief didn't regenerate — refresh to retry"). Recedes against
+   the echoed body so the body stays the foreground. */
+.savedBannerSubtle {
+  color: var(--ck-ink-3);
+  font-weight: 400;
+}
+/* Progress variant — regen is currently in flight, page meta-refreshes */
+.savedBannerProgress {
+  background: linear-gradient(
+    180deg,
+    var(--ck-blue-tint) 0%,
+    var(--ck-blue-tint) 100%
+  );
+  border-bottom-color: var(--ck-blue-2);
+  color: var(--ck-blue-2);
+}
+.savedBannerSpinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+  color: var(--ck-blue-2);
+  animation: savedBannerSpin 1.4s linear infinite;
+}
+@keyframes savedBannerSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Warn variant — regen failed but touch was saved */
+.savedBannerWarn {
+  background: linear-gradient(
+    180deg,
+    var(--ck-warn-tint) 0%,
+    var(--ck-warn-tint) 100%
+  );
+  border-bottom-color: var(--ck-warn);
+  color: var(--ck-warn);
+}
+.savedBannerCheckWarn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ck-warn);
+  color: var(--ck-surface-3);
+  font-size: 11px;
+  font-weight: 700;
+}
+/* Inline pill inside the success banner ("● updated") to mirror the
+   per-section pills below, so the rep knows what the marker looks like. */
+.savedBannerInlinePill {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ── Updated pill (rendered next to a section label after regeneration
+   when that section's content has changed vs the prior artifact) ──── */
+.updatedPill {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
+
+/* ── Top bar ───────────────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: transparent;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.topbarSpacer {
+  flex: 1;
+}
+/* Mallín mark + wordmark, top-left of every brief. Grounds the surface
+   as a Mallín product; themes via --ck-ink / --ck-blue-2 so it reads in
+   both cream and dark. */
+.topbarBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ck-ink);
+}
+/* The next-step CTA — keeps the rep advancing THIS deal call-by-call
+   instead of dead-ending or spinning up a new (slot-burning) deal. */
+.topbarAddCall {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ck-blue);
+  border: 1px solid var(--ck-blue);
+  border-radius: 7px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
+}
+.topbarAddCall:hover {
+  background: var(--ck-blue);
+  color: var(--ck-paper);
+}
+.brand {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--ck-action);
+  color: var(--ck-action-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+}
+.crumb {
+  font-size: 12px;
+  color: var(--ck-ink-4);
+}
+.crumbActive {
+  color: var(--ck-ink);
+  font-weight: 500;
+}
+.crumbSep {
+  margin: 0 6px;
+  opacity: 0.5;
+}
+.kbd {
+  margin-left: auto;
+  padding: 2px 6px;
+  background: var(--ck-rule);
+  border-radius: 3px;
+  color: var(--ck-ink-4);
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+.header {
+  padding: 32px 36px 8px;
+}
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.posturePill {
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.posturePill.advancing {
+  background: var(--ck-good-tint);
+  border: 0.5px solid var(--ck-good);
+  color: var(--ck-good);
+}
+.posturePill.atRisk {
+  background: var(--ck-crit-tint);
+  border: 0.5px solid var(--ck-crit);
+  color: var(--ck-crit);
+}
+.posturePill.stalled {
+  background: var(--ck-warn-tint);
+  border: 0.5px solid var(--ck-warn);
+  color: var(--ck-warn);
+}
+.posturePill.indeterminate {
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  color: var(--ck-ink-3);
+}
+.metaItem {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ck-ink-4);
+}
+.metaSep {
+  color: var(--ck-rule-2);
+}
+
+/* ── Brief freshness chip — answers "can I trust this?" at a glance ──── */
+.freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 7px;
+  border-radius: 10px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  color: var(--ck-ink-3);
+  cursor: default;
+}
+.freshnessDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ck-rule-2);
+  flex-shrink: 0;
+}
+/* Fresh variant — < 5min old, rep's recent action is reflected */
+.freshnessFresh {
+  background: var(--ck-good-tint);
+  border-color: var(--ck-good);
+  color: var(--ck-good);
+}
+.freshnessFresh .freshnessDot {
+  background: var(--ck-good);
+  box-shadow: 0 0 6px var(--ck-good-tint);
+}
+
+.h1 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ck-ink);
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+.stakes {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+  margin-bottom: 10px;
+  max-width: 680px;
+}
+.sub {
+  font-size: 12.5px;
+  color: var(--ck-ink-4);
+  line-height: 1.5;
+}
+.subStrong {
+  color: var(--ck-ink-3);
+  font-weight: 500;
+}
+
+/* ── Decision frame disclosure — quiet expandable under the risk pills
+       (replaces the old full-width "WHAT DECIDES THIS DEAL" hero) ──── */
+.decisionDisclosure {
+  margin: 12px 36px 0;
+  padding: 0;
+  border-top: 0.5px solid var(--ck-rule);
+}
+.decisionSummary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0;
+  font-size: 13px;
+  color: var(--ck-ink-3);
+  transition: color 0.15s ease;
+}
+.decisionSummary::-webkit-details-marker { display: none; }
+.decisionSummary:hover { color: var(--ck-ink); }
+.decisionSummaryText {
+  font-weight: 500;
+}
+.decisionChevron {
+  transition: transform 0.2s ease;
+  margin-left: auto;
+  color: var(--ck-ink-4);
+  font-size: 14px;
+}
+.decisionDisclosure[open] .decisionChevron {
+  transform: rotate(90deg);
+  color: var(--ck-ink);
+}
+.decisionBody {
+  padding: 4px 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 680px;
+}
+.decisionFrame {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ck-ink);
+  line-height: 1.45;
+}
+.decisionWhy {
+  font-size: 13.5px;
+  color: var(--ck-ink-3);
+  line-height: 1.6;
+}
+
+/* ── Deal signal flags (R/Y/G strip under top_line) ───────────────────
+   Three composite flags — stakeholder / commercial / momentum. Each chip
+   = color dot + label + one-line reason. Read-only; no interaction. */
+.flagStrip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.flagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 6px;
+  background: var(--ck-rule);
+  border: 0.5px solid var(--ck-rule-2);
+  font-size: 12px;
+  cursor: default;
+}
+.flagDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.flagLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ck-ink-2);
+}
+.flagReason {
+  color: var(--ck-ink-3);
+  font-size: 12px;
+  line-height: 1.3;
+}
+/* Color variants — asymmetric illumination by design.
+   Green/Grey = resolved or no-signal: visible but subdued, recedes from
+   attention. Yellow = issue, illuminated. Red = critical, max
+   illumination. The cognitive load follows the issues, not the OK
+   states — so a rep glancing at the strip pulls eye-attention only
+   where action might be needed. */
+
+/* Green — resolved. Visible (so the rep knows the dimension exists)
+   but does not draw the eye. No dot glow; muted background; faded
+   label/reason text. */
+.flagGreen .flagDot {
+  background: var(--ck-good);
+  box-shadow: none;
+  opacity: 0.7;
+}
+.flagGreen {
+  background: var(--ck-good-tint);
+  border-color: var(--ck-good-tint);
+}
+.flagGreen .flagLabel,
+.flagGreen .flagReason {
+  opacity: 0.65;
+}
+
+/* Yellow — issue. Illuminated dot, slightly stronger background, full
+   text opacity. The eye lands here. */
+.flagYellow .flagDot {
+  background: var(--ck-warn);
+  box-shadow:
+    0 0 8px var(--ck-warn-tint),
+    0 0 1px var(--ck-warn-tint);
+}
+.flagYellow {
+  background: var(--ck-warn-tint);
+  border-color: var(--ck-warn);
+}
+/* Bump reason prominence on yellow/red so the "why" reads as a flag,
+   not a footnote. */
+.flagYellow .flagReason {
+  color: var(--ck-warn);
+  font-weight: 500;
+}
+
+/* Red — critical. Maximum illumination. Larger glow + saturated
+   background. */
+.flagRed .flagDot {
+  background: var(--ck-crit);
+  box-shadow:
+    0 0 12px var(--ck-crit-tint),
+    0 0 2px var(--ck-crit);
+}
+.flagRed {
+  background: var(--ck-crit-tint);
+  border-color: var(--ck-crit);
+}
+
+/* Grey — no signal. Same recede treatment as green; the dimension is
+   still visible so the rep knows it's tracked, but it doesn't claim
+   attention. */
+.flagGrey .flagDot {
+  background: var(--ck-rule-2);
+  box-shadow: none;
+  opacity: 0.7;
+}
+.flagGrey .flagLabel,
+.flagGrey .flagReason {
+  opacity: 0.6;
+}
+
+/* ── Pre-mortem (situational anticipation) ───────────────────────────
+   Sits between Decision Frame and Walk-in-with. Visually distinct from
+   the brief surfaces because it's action-forcing, not informational.
+   Slightly warmer/redder accent so the eye treats it differently than
+   the green "advancing" surfaces. */
+/* ── Account intelligence — minimal line (felt, not seen) ───────────
+   Strategic_priority is intentionally NOT rendered as a block here;
+   Pass 4 weaves it into top_line. This section is just a quiet line
+   with a count, timestamp, and on-demand source list. */
+.intelLine {
+  margin-top: 12px;
+  padding: 6px 36px 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--ck-ink-3);
+}
+.intelLineMeta {
+  color: var(--ck-ink-3);
+}
+.intelLineEmpty {
+  color: var(--ck-ink-4);
+  font-style: italic;
+}
+.intelDetails {
+  flex-basis: 100%;
+  margin-top: 4px;
+}
+.intelDetailsSummary {
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--ck-blue-2);
+  list-style: none;
+  user-select: none;
+  letter-spacing: 0.01em;
+}
+.intelDetailsSummary::-webkit-details-marker {
+  display: none;
+}
+.intelDetailsSummary:hover {
+  color: var(--ck-blue-2);
+}
+.intelDetails[open] .intelDetailsSummary {
+  color: var(--ck-blue-2);
+}
+.intelDetails[open] .intelList {
+  margin-top: 8px;
+  padding: 12px 14px;
+  background: var(--ck-blue-tint);
+  border: 0.5px solid var(--ck-blue-tint);
+  border-radius: 4px;
+}
+.intelList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.intelFinding {
+  padding-top: 4px;
+  border-top: 0.5px solid var(--ck-blue-tint);
+}
+.intelFinding:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.intelSummary {
+  margin: 0 0 6px 0;
+  font-size: 13.5px;
+  color: var(--ck-ink);
+  line-height: 1.5;
+}
+.intelImplication {
+  margin: 0 0 8px 0;
+  font-size: 12.5px;
+  color: var(--ck-ink-2);
+  line-height: 1.5;
+}
+.intelImplLabel {
+  color: var(--ck-blue-2);
+  font-weight: 500;
+}
+.intelMeta {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 11px;
+}
+.intelSource {
+  color: var(--ck-blue-2);
+  text-decoration: none;
+  letter-spacing: 0.01em;
+}
+.intelSource:hover {
+  color: var(--ck-blue-2);
+  text-decoration: underline;
+}
+.intelConfidence {
+  color: var(--ck-ink-4);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+.intelRefreshWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.intelRefreshBtn {
+  background: var(--ck-blue-tint);
+  border: 0.5px solid var(--ck-blue);
+  color: var(--ck-blue-2);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.intelRefreshBtn:hover:not(:disabled) {
+  background: var(--ck-blue-tint);
+  border-color: var(--ck-blue);
+}
+.intelRefreshBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.intelRefreshError {
+  font-size: 11px;
+  color: var(--ck-warn);
+}
+
+/* ── Manager note (RVP/exec-level coaching) ─────────────────────────── */
+.managerNoteWrap {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--ck-warn-tint);
+  border: 0.5px solid var(--ck-warn);
+  border-left: 2px solid var(--ck-warn);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.managerNoteLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ck-warn);
+}
+.managerNoteBody {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ck-ink-2);
+  line-height: 1.55;
+}
+
+/* ── Competing priorities (buyer-side commercial reality) ───────────── */
+.competingWrap {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--ck-blue-tint);
+  border: 0.5px solid var(--ck-blue-tint);
+  border-left: 2px solid var(--ck-blue);
+  border-radius: 6px;
+}
+.competingHead {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.competingLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ck-blue-2);
+}
+.competingBody {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ck-ink-2);
+  line-height: 1.55;
+}
+
+/* ── LITE CUT (?v=lite) — strategic frame + 1 path + dot signals ─────
+   Brendan's spec. Above-the-fold, phone-first, no scroll for the
+   essentials. Everything else (DecisionFrameHero, CompetingPriorities,
+   ManagerNote, WalkInWith, ContextDisclosure) hidden by feature flag
+   in page.tsx. */
+
+.headerLite {
+  padding: 32px 36px 16px;
+}
+.h1Lite {
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ck-ink);
+  letter-spacing: -0.01em;
+}
+.stakesLite {
+  margin: 0 0 18px 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+  max-width: 64ch;
+}
+
+.flagStripLite {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.flagChipLite {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: default;
+}
+.flagLabelLite {
+  font-size: 12px;
+  color: var(--ck-ink-2);
+  letter-spacing: 0.01em;
+}
+
+.askBarSticky {
+  position: sticky;
+  bottom: 0;
+  background: var(--ck-surface-3);
+  padding: 12px 0 16px;
+  margin-top: 24px;
+  border-top: 0.5px solid var(--ck-rule);
+  z-index: 10;
+  /* Clear the sticky CockpitActionBar's height when anchor-jumped to. */
+  scroll-margin-top: 80px;
+}
+
+/* Non-sticky anchor target for the AskBar when not in liteMode.
+ * Same scroll-margin so the anchor-jump from CockpitActionBar lands
+ * with the AskBar clearly below the sticky bar. */
+.askBarAnchor {
+  scroll-margin-top: 80px;
+}
+
+/* ── Pre-mortem section — stripped: no boxes, no labels, prose-first ─
+   Hierarchy is felt, not shown. Whitespace + font-weight do the work. */
+.preMortemWrap {
+  padding: 4px 36px 28px;
+}
+.preMortemHint {
+  font-size: 11px;
+  color: var(--ck-ink-4);
+  letter-spacing: 0.02em;
+  margin-bottom: 14px;
+  font-style: italic;
+}
+.preMortemList {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.preMortemRow {
+  display: block;
+}
+.preMortemActor {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ck-ink-3);
+  margin-bottom: 6px;
+}
+.preMortemPath {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ck-ink);
+}
+.preMortemMove {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ck-warn);
+  font-weight: 500;
+}
+.preMortemCoach {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+  font-style: italic;
+}
+
+/* ── Walk in with (asymmetric: primary HUGE, supporting tiny) ─────── */
+.walkWrap {
+  padding: 24px 36px 28px;
+}
+.walk {
+  background: linear-gradient(
+    180deg,
+    var(--ck-warn-tint) 0%,
+    var(--ck-warn-tint) 100%
+  );
+  border: 0.5px solid var(--ck-warn);
+  border-radius: 8px;
+  padding: 24px 28px 22px;
+}
+.walkLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ck-warn);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 18px;
+}
+
+/* Primary item — the one thing the rep should do */
+.walkPrimary {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 14px;
+  padding-bottom: 18px;
+}
+.walkPrimaryN {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ck-warn);
+  padding-top: 4px;
+}
+.walkPrimaryBody {
+  font-size: 16.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ck-ink);
+  letter-spacing: -0.005em;
+}
+.walkBecause {
+  display: block;
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--ck-warn);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+}
+.walkBecauseLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--ck-warn);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-right: 6px;
+}
+
+/* Secondary divider */
+.walkDivider {
+  height: 0.5px;
+  background: var(--ck-warn-tint);
+  margin: 0 0 14px;
+}
+
+/* Secondary items — much smaller, lighter */
+.walkSecondaryLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--ck-ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+.walkSecondary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.walkSecondaryItem {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-3);
+}
+.walkSecondaryN {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ck-ink-4);
+  padding-top: 2px;
+}
+
+/* ── Insight cards ─────────────────────────────────────────────────── */
+.insights {
+  padding: 0 36px 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 720px) {
+  .insights {
+    grid-template-columns: 1fr;
+  }
+}
+.insight {
+  padding: 16px 18px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule);
+  border-radius: 6px;
+}
+.insightLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ck-ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+.insightAccent {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ck-warn);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+.insightBody {
+  font-size: 13px;
+  color: var(--ck-ink-2);
+  line-height: 1.55;
+}
+.insightSubtle {
+  color: var(--ck-ink-3);
+}
+
+/* ── Context expand control (replaces passive Reference divider) ─── */
+.contextWrap {
+  padding: 24px 36px 0;
+}
+.contextSummary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  cursor: pointer;
+  list-style: none;
+  border-top: 0.5px solid var(--ck-rule);
+  border-bottom: 0.5px solid var(--ck-rule);
+  transition: background 120ms ease;
+}
+.contextSummary::-webkit-details-marker {
+  display: none;
+}
+.contextSummary:hover {
+  background: var(--ck-surface-2);
+}
+.contextLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ck-ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+.contextHint {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ck-ink-4);
+  flex: 1;
+}
+.contextChevron {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ck-ink-4);
+  transition: transform 160ms ease;
+}
+.contextOpen[open] .contextChevron {
+  transform: rotate(90deg);
+  color: var(--ck-ink-3);
+}
+.contextBody {
+  padding: 18px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Reference blocks ──────────────────────────────────────────────── */
+.refList {
+  padding: 0 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.block {
+  padding: 18px 20px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule);
+  border-radius: 6px;
+}
+.blockHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.blockTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ck-ink);
+}
+.blockMeta {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ck-ink-4);
+}
+
+/* Prior call block (2-col) */
+.priorAnchor {
+  font-size: 12.5px;
+  color: var(--ck-ink-3);
+  line-height: 1.55;
+  margin-bottom: 16px;
+  font-style: italic;
+}
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+@media (max-width: 720px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+}
+.colHead {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.colHead.surfaced {
+  color: var(--ck-blue-2);
+}
+.colHead.thinkThrough {
+  color: var(--ck-warn);
+}
+.colList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.colItem {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+  padding-left: 12px;
+  position: relative;
+}
+.colItem::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+.colItem.surfaced::before {
+  background: var(--ck-blue-2);
+}
+.colItem.thinkThrough::before {
+  background: var(--ck-warn);
+}
+
+/* Questions ranked */
+.qList {
+  display: flex;
+  flex-direction: column;
+}
+.qRow {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 12px;
+  padding: 10px 0;
+  align-items: baseline;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.qRow:last-child {
+  border-bottom: none;
+}
+.qN {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ck-ink-4);
+}
+.qText {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ck-ink-2);
+}
+.qTag {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+/* Stakeholders */
+.sList {
+  display: flex;
+  flex-direction: column;
+}
+.sRow {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 14px;
+  padding: 10px 0;
+  align-items: center;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.sRow:last-child {
+  border-bottom: none;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.sInfo {
+  font-size: 13px;
+  line-height: 1.4;
+  min-width: 0;
+}
+.sName {
+  color: var(--ck-ink);
+  font-weight: 500;
+}
+/* Brief history picker — pill row of all PrepArtifact versions for this
+   deal. Lets the rep navigate between "after first call" vs "after second
+   call" briefs without losing the prior one. Renders only when there are
+   ≥2 versions. */
+.versionPicker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 28px;
+  border-bottom: 0.5px solid var(--ck-rule);
+  flex-wrap: wrap;
+}
+.versionPickerLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ck-ink-4);
+}
+.versionPickerRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.versionPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  background: var(--ck-rule);
+  border: 0.5px solid var(--ck-rule-2);
+  border-radius: 4px;
+  color: var(--ck-ink-3);
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.versionPill:hover {
+  background: var(--ck-rule-2);
+  color: var(--ck-ink);
+  border-color: var(--ck-rule-2);
+}
+.versionPillActive {
+  background: var(--ck-good-tint);
+  border-color: var(--ck-good);
+  color: var(--ck-ink);
+}
+.versionPillLabel {
+  font-variant-numeric: tabular-nums;
+}
+.versionPillCurrent {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ck-good);
+  padding: 1px 4px;
+  background: var(--ck-good-tint);
+  border-radius: 2px;
+}
+
+.linkedInBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  border-radius: 3px;
+  background: var(--ck-rule);
+  color: var(--ck-ink-4);
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-decoration: none;
+  vertical-align: 1px;
+  transition: background 0.12s ease, color 0.12s ease;
+  border: 0.5px solid var(--ck-rule);
+}
+.linkedInBtn:hover {
+  background: rgba(10, 102, 194, 0.15);
+  color: #4a9eff;
+  border-color: rgba(74, 158, 255, 0.4);
+}
+.sRole {
+  color: var(--ck-ink-3);
+  font-weight: 400;
+}
+.sStrategy {
+  color: var(--ck-ink-4);
+  font-size: 11.5px;
+  line-height: 1.45;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sTag {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+/* Company context */
+.ctxGrid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px 16px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.ctxLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ck-ink-4);
+}
+.ctxVal {
+  color: var(--ck-ink-2);
+}
+
+/* Risks */
+.riskList {
+  display: flex;
+  flex-direction: column;
+}
+.risk {
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.risk:last-child {
+  border-bottom: none;
+}
+.riskHead {
+  display: grid;
+  /* severity · title · reasoning hint · chevron */
+  grid-template-columns: auto 1fr auto auto;
+  gap: 10px;
+  align-items: baseline;
+  cursor: pointer;
+  list-style: none;
+}
+.riskHead::-webkit-details-marker {
+  display: none;
+}
+.riskTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ck-ink);
+  line-height: 1.45;
+}
+.riskSeverity {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  /* Severity badge leads the row — color-coded, scan-first. */
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--ck-rule);
+}
+.riskReasoningHint {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ck-ink-4);
+  transition: color 0.12s ease;
+}
+.risk[open] .riskReasoningHint {
+  color: var(--ck-ink-2);
+}
+.riskReasoningChevron {
+  font-size: 14px;
+  color: var(--ck-ink-4);
+  transition: transform 0.15s ease, color 0.12s ease;
+  line-height: 1;
+}
+.risk[open] .riskReasoningChevron {
+  transform: rotate(90deg);
+  color: var(--ck-ink-2);
+}
+/* One-line consequence — always visible under the head, mid-tier
+   prominence: brighter than muted detail rows, softer than the title.
+   This is the "what breaks" line — the operator-attention answer
+   immediately after the headline. */
+.riskConsequence {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+  margin-top: 6px;
+  font-weight: 400;
+}
+.riskSeverity.blocking {
+  color: var(--ck-crit);
+}
+.riskSeverity.high {
+  color: var(--ck-warn);
+}
+.riskSeverity.medium {
+  color: var(--ck-ink-3);
+}
+.riskDesc {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+  margin-top: 6px;
+}
+.riskDetail {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--ck-surface-2);
+  border-radius: 4px;
+  display: grid;
+  gap: 10px;
+  line-height: 1.5;
+}
+.riskFailureRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: baseline;
+  padding-bottom: 8px;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.riskFailureLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ck-crit);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.riskFailureBody {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ck-ink);
+  line-height: 1.5;
+}
+.riskMutedRow {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 10px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ck-ink-4);
+}
+.riskMutedLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ck-ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* "💡 Explain this risk" affordance inside each expanded risk details
+ * panel. Dashed border + muted color reads as a secondary intent —
+ * doesn't compete with the risk's own content. Clicking it sets the
+ * URL hash that AskBar listens to. */
+.riskAskRow {
+  margin-top: 6px;
+  display: flex;
+  justify-content: flex-end;
+}
+.riskAskBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--ck-ink-3);
+  border: 1px dashed var(--ck-rule-2);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.riskAskBtn:hover {
+  background: var(--ck-surface-2);
+  border-color: var(--ck-rule-2);
+  color: var(--ck-ink);
+  border-style: solid;
+}
+
+/* Off-platform touches list */
+.touchList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.touch {
+  padding: 12px 14px;
+  background: var(--ck-warn-tint);
+  border: 0.5px solid var(--ck-warn-tint);
+  border-radius: 6px;
+}
+.touchMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.touchWith {
+  color: var(--ck-warn);
+  font-weight: 600;
+}
+.touchWithMissing {
+  color: var(--ck-ink-4);
+  font-style: italic;
+}
+.touchDot {
+  color: var(--ck-rule-2);
+}
+.touchWhen {
+  color: var(--ck-ink-3);
+}
+.touchSource {
+  margin-left: auto;
+  color: var(--ck-ink-4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.syncBadge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  cursor: help;
+}
+.syncBadgeOk {
+  background: var(--ck-good-tint);
+  border: 0.5px solid var(--ck-good);
+  color: var(--ck-good);
+}
+.syncBadgeFail {
+  background: var(--ck-crit-tint);
+  border: 0.5px solid var(--ck-crit);
+  color: var(--ck-crit);
+}
+.syncBadgePending {
+  background: var(--ck-warn-tint);
+  border: 0.5px solid var(--ck-warn);
+  color: var(--ck-warn);
+}
+.syncBadgeIdle {
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  color: var(--ck-ink-3);
+}
+.touchBody {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+  white-space: pre-wrap;
+}
+.touchHint {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 0.5px dashed var(--ck-warn-tint);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-4);
+  font-style: italic;
+}
+
+/* Notes */
+.notesWrap {
+  padding: 28px 36px 24px;
+}
+.notesLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ck-ink);
+  margin-bottom: 10px;
+}
+.notesPrivate {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ck-ink-4);
+  font-weight: 400;
+  margin-left: 6px;
+}
+.notes {
+  padding: 14px 16px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule);
+  border-radius: 6px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ck-ink-4);
+  font-style: italic;
+}
+
+/* Ask bar */
+.askbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--ck-surface-2);
+  border-top: 0.5px solid var(--ck-rule);
+}
+.askLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ck-warn);
+  padding-left: 4px;
+}
+.askInput {
+  flex: 1;
+  padding: 8px 14px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--ck-ink-4);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.askEnter {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ck-ink-4);
+}
+
+/* ── Rail panels (stakeholder engagement) — v5 command-center ──────────── */
+.railPanel {
+  background: var(--ck-surface);
+  border: 0.5px solid var(--ck-rule);
+  border-radius: 12px;
+  padding: 12px 13px 13px;
+}
+.railPanelHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 11px;
+}
+.railPanelTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ck-ink-3);
+}
+.railPanelCount {
+  font-size: 11px;
+  color: var(--ck-ink-4);
+  text-align: right;
+}
+
+/* ── Stakeholder engagement map (v5: flat list, per-row tier) ──────────── */
+.engList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.engRow {
+  display: flex;
+  gap: 8px;
+}
+.engRowNeeds {
+  background: var(--ck-warn-tint);
+  margin: 0 -7px;
+  padding: 8px 7px;
+  border-radius: 8px;
+}
+.engIcon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  line-height: 0;
+}
+.engIconGood {
+  color: var(--ck-good);
+}
+.engIconWarn {
+  color: var(--ck-warn);
+}
+.engIconMuted {
+  color: var(--ck-ink-4);
+}
+.engBody {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.engTopLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+.engName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ck-ink);
+  /* min-width:0 lets a long name truncate instead of shoving the badge out
+     of the row (the latent collision case). flex-shrink keeps the badge's
+     reserved column intact. */
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.engBadge {
+  flex: 0 0 auto;
+  max-width: 45%;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.engBadgeGood {
+  color: var(--ck-good);
+}
+.engBadgeWarn {
+  color: var(--ck-warn);
+  font-weight: 600;
+}
+.engBadgeMuted {
+  color: var(--ck-ink-4);
+}
+.engRole {
+  font-size: 11px;
+  color: var(--ck-ink-3);
+  line-height: 1.4;
+  margin: 1px 0 2px;
+}
+.engRowNeeds .engRole {
+  color: var(--ck-ink-2);
+}
+.engEmailLink {
+  display: block;
+  max-width: 100%;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ck-blue);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.engEmailLink:hover {
+  color: var(--ck-blue-2);
+  text-decoration: underline;
+}
+
+/* ── Stakeholder correction loop (feature D) ──────────────────────────── */
+/* "Not the right person?" — a quiet control; the brief best-guessed, so
+   any row can be corrected. */
+.flagCtl {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--ck-ink-4);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.flagCtl:hover {
+  color: var(--ck-warn);
+}
+
+/* Reason chips revealed on click. */
+.flagReasons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.flagReason {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ck-ink-2);
+  background: var(--ck-surface-2);
+  border: 1px solid var(--ck-rule);
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.flagReason:hover {
+  border-color: var(--ck-warn);
+  color: var(--ck-warn);
+  background: var(--ck-warn-tint);
+}
+.flagCancel {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--ck-ink-4);
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+}
+.flagCancel:hover {
+  color: var(--ck-ink-2);
+}
+
+/* Post-flag confirmation + the dimmed row. */
+.flaggedNote {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ck-warn);
+}
+.engRowFlagged {
+  opacity: 0.5;
+}
+
+/* ── Deliverables checklist (v5: "what {buyer} is waiting on") ─────────── */
+.delivCard {
+  margin: 0 22px 14px;
+  background: var(--ck-surface);
+  border: 0.5px solid var(--ck-rule);
+  border-radius: 12px;
+  padding: 13px 16px;
+}
+.delivHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+.delivTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ck-ink);
+}
+.delivProgress {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--ck-ink-4);
+}
+.delivProgressDone {
+  color: var(--ck-good);
+  font-weight: 600;
+}
+.delivList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.delivLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.delivCheck {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  accent-color: var(--ck-good);
+  cursor: pointer;
+}
+.delivText {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ck-ink);
+}
+.delivTextDone {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ck-ink-4);
+  text-decoration: line-through;
+}
+.delivDetail {
+  color: var(--ck-ink-4);
+}
+.delivRoute {
+  color: var(--ck-ink-3);
+}
+.delivDone {
+  margin-top: 11px;
+  font-size: 12px;
+  color: var(--ck-good);
+  background: var(--ck-good-tint);
+  padding: 8px 11px;
+  border-radius: 8px;
+}

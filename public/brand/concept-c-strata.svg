@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">
+  <title>Mallin — Concept C: Strata</title>
+  <desc>Four horizontal strata reading top-down: surface vegetation (thin), the visible work (a deal line), the hidden current (Mallin), and the deep substrate. The thickest line is the one beneath — that's the value-prop visualized.</desc>
+
+  <!-- Surface vegetation — short tufts, asymmetric -->
+  <line x1="10" y1="14" x2="10" y2="10" stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="18" y1="14" x2="18" y2="9"  stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="26" y1="14" x2="26" y2="11" stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="36" y1="14" x2="36" y2="8"  stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="44" y1="14" x2="44" y2="11" stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="52" y1="14" x2="52" y2="10" stroke="#1a2230" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Surface line (visible) -->
+  <line x1="6" y1="18" x2="58" y2="18" stroke="#1a2230" stroke-width="2" stroke-linecap="round" />
+
+  <!-- The hidden current — heavier, in stream-blue -->
+  <path d="M 4 32 Q 18 27, 32 32 T 60 32"
+        fill="none"
+        stroke="#4a7186"
+        stroke-width="4"
+        stroke-linecap="round" />
+
+  <!-- Deep substrate — subtle base line -->
+  <line x1="10" y1="46" x2="54" y2="46" stroke="#8a92a3" stroke-width="1.5" stroke-linecap="round" opacity="0.7" />
+</svg>

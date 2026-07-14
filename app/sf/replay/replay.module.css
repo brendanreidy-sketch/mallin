@@ -1,0 +1,606 @@
+/* /sf/replay — call-by-call agentic timeline.
+   White, lightning-adjacent, readable in <90s top-to-bottom. */
+
+.page {
+  min-height: 100vh;
+  background: #f3f3f3;
+  color: #181818;
+  font-family: "Salesforce Sans", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 80px;
+}
+
+.banner {
+  background: #16325c;
+  color: white;
+  padding: 12px 22px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.banner b {
+  font-weight: 700;
+}
+
+.shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 22px 16px 0;
+}
+
+/* Header card — what we're watching */
+.dealHead {
+  background: white;
+  border: 1px solid #dddbda;
+  border-radius: 6px;
+  padding: 18px 22px;
+  margin-bottom: 18px;
+}
+
+.dealHead .label {
+  color: #706e6b;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.dealHead h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #181818;
+}
+
+.dealHead .meta {
+  color: #54698d;
+  font-size: 13px;
+}
+
+.dealHead .meta b {
+  color: #181818;
+}
+
+.outcomeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.outcomeBadge.won {
+  background: #e3f8e5;
+  color: #2e7d4f;
+}
+
+.outcomeBadge.lost {
+  background: #fbe8e8;
+  color: #b3261e;
+}
+
+/* Each call is a card */
+.callCard {
+  background: white;
+  border: 1px solid #dddbda;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.callHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 12px 22px;
+  background: linear-gradient(180deg, #fafafa 0%, white 100%);
+  border-bottom: 1px solid #f3f3f3;
+  flex-wrap: wrap;
+}
+
+.callIndex {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #706e6b;
+  background: #f3f3f3;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.callTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #181818;
+  flex: 1;
+}
+
+.callMeta {
+  font-size: 11px;
+  color: #706e6b;
+}
+
+.callBody {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.left,
+.right {
+  padding: 18px 22px;
+}
+
+.left {
+  border-right: 1px solid #f3f3f3;
+}
+
+.sectionLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #706e6b;
+  margin: 0 0 6px;
+}
+
+.theRead {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #181818;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f3f3;
+}
+
+.risks {
+  margin-bottom: 18px;
+}
+
+.risks ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.risks li {
+  padding: 4px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #54698d;
+  border-bottom: 1px dashed #f3f3f3;
+}
+
+.risks li:last-child {
+  border-bottom: none;
+}
+
+.risks li b {
+  color: #b3261e;
+  font-weight: 600;
+}
+
+.suggestQueue {
+  margin-bottom: 4px;
+}
+
+.suggestItem {
+  background: #fff8e1;
+  border-left: 3px solid #fcb95b;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+}
+
+.suggestItem .field {
+  color: #706e6b;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+.suggestItem .value {
+  color: #181818;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.suggestItem .evidence {
+  color: #706e6b;
+  font-size: 10px;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Right column — what landed in SF */
+.right {
+  background: linear-gradient(180deg, #fafbfc 0%, white 100%);
+}
+
+.appliedBlock {
+  margin-bottom: 16px;
+}
+
+.appliedItem {
+  background: #e3f8e5;
+  border-left: 3px solid #4bca81;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+}
+
+.appliedItem .field {
+  color: #2e7d4f;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.appliedItem .value {
+  color: #181818;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.auditLine {
+  font-size: 10px;
+  color: #706e6b;
+  font-family: ui-monospace, monospace;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f3f3f3;
+}
+
+.auditLine .ok {
+  color: #2e7d4f;
+  font-weight: 600;
+}
+
+.empty {
+  font-size: 12px;
+  color: #b0adab;
+  font-style: italic;
+}
+
+/* Recall — "this looks like..." memory cards */
+/* Quiet by design. Soft band, no badge. Just story. */
+
+.recall {
+  background: #f4f3ee;
+  border-left: 3px solid #8a7e5e;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #3a3530;
+}
+
+.recall .recallAnchor {
+  font-weight: 600;
+  color: #2c2823;
+  margin-bottom: 4px;
+}
+
+.recall .recallSituation {
+  color: #2c2823;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.recall .recallMove {
+  color: #3a3530;
+  margin-bottom: 4px;
+}
+
+.recall .recallOutcome {
+  color: #3a3530;
+  margin-bottom: 8px;
+}
+
+.recall .recallOutcome.won {
+  color: #2e6e44;
+}
+
+.recall .recallOutcome.lost {
+  color: #8e2d24;
+}
+
+.recall .recallLesson {
+  color: #2c2823;
+  font-weight: 600;
+  border-top: 1px solid #dcd8c8;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* Methodology escalation banners */
+
+.escalationSummary {
+  background: white;
+  border: 1px solid #dddbda;
+  border-left: 4px solid #b3261e;
+  border-radius: 6px;
+  padding: 18px 22px;
+  margin-bottom: 18px;
+}
+
+.escalationSummary h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #181818;
+  margin: 0 0 4px;
+}
+
+.escalationSummary .sub {
+  font-size: 12px;
+  color: #706e6b;
+  margin-bottom: 12px;
+}
+
+.escalationList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.escalationRow {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.escalationRow.escalate {
+  background: #fbe8e8;
+  color: #181818;
+  border-left: 3px solid #b3261e;
+}
+
+.escalationRow.warn {
+  background: #fff8e1;
+  color: #181818;
+  border-left: 3px solid #fcb95b;
+}
+
+.escalationRow .when {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #706e6b;
+  align-self: center;
+}
+
+.escalationRow.escalate .when {
+  color: #b3261e;
+}
+
+.escalationRow.warn .when {
+  color: #92400e;
+}
+
+.escalationRow .msg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.escalationRow .msgRep {
+  color: #181818;
+}
+
+.escalationRow .msgManager {
+  font-size: 11px;
+  color: #706e6b;
+  font-style: italic;
+}
+
+/* Inline alert banner inside a call card (when an alert FIRES on that call) */
+.callAlert {
+  padding: 10px 14px;
+  margin: 0 22px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.callAlert.escalate {
+  background: #fbe8e8;
+  border-left: 3px solid #b3261e;
+}
+
+.callAlert.warn {
+  background: #fff8e1;
+  border-left: 3px solid #fcb95b;
+}
+
+.callAlert .badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.callAlert.escalate .badge {
+  background: #b3261e;
+  color: white;
+}
+
+.callAlert.warn .badge {
+  background: #fcb95b;
+  color: #5a3500;
+}
+
+.callAlert .body {
+  flex: 1;
+}
+
+.callAlert .body .ruleLabel {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.callAlert .body .reps {
+  color: #181818;
+}
+
+.callAlert .body .mgr {
+  color: #706e6b;
+  font-size: 11px;
+  font-style: italic;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Next-call asks — the explicit tie-back to "what to ask next" */
+
+.nextCallAsks {
+  background: linear-gradient(180deg, #f6f9fd 0%, #fafbfc 100%);
+  border-top: 1px solid #dddbda;
+  padding: 14px 22px 18px;
+}
+
+.nextCallAsks .sectionLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1958a5;
+  margin-bottom: 10px;
+}
+
+.askItem {
+  background: white;
+  border: 1px solid #cfddee;
+  border-left: 3px solid #1958a5;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.askItem:last-child {
+  margin-bottom: 0;
+}
+
+.askItem .step {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1958a5;
+  margin-bottom: 6px;
+}
+
+.askItem .who {
+  color: #706e6b;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.askItem .who b {
+  color: #181818;
+  font-weight: 600;
+}
+
+.askItem .question {
+  color: #181818;
+  font-style: italic;
+  font-weight: 500;
+  margin-bottom: 6px;
+  border-left: 2px solid #fcb95b;
+  padding-left: 10px;
+}
+
+.askItem .why {
+  color: #706e6b;
+  font-size: 11px;
+  font-style: italic;
+}
+
+/* Final state card */
+.finalCard {
+  background: white;
+  border: 1px solid #4bca81;
+  border-radius: 6px;
+  padding: 22px;
+  margin-top: 24px;
+}
+
+.finalCard h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #181818;
+}
+
+.finalCard .sub {
+  font-size: 12px;
+  color: #706e6b;
+  margin-bottom: 14px;
+}
+
+.finalState {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.finalField {
+  background: #fafafa;
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+
+.finalField .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #706e6b;
+  margin-bottom: 4px;
+}
+
+.finalField .value {
+  font-size: 13px;
+  color: #181818;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 800px) {
+  .callBody {
+    grid-template-columns: 1fr;
+  }
+  .left {
+    border-right: none;
+    border-bottom: 1px solid #f3f3f3;
+  }
+  .finalState {
+    grid-template-columns: 1fr;
+  }
+}

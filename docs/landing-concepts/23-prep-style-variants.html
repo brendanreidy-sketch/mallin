@@ -1,0 +1,2187 @@
+<!doctype html>
+<!--
+  ─────────────────────────────────────────────────────────────────────
+  CANONICAL REFERENCE: write-through operating layer behavior.
+
+  Three-layer doctrine stack:
+    • WHY    → memory:write_through_operating_layer.md
+                ("one system at a given time; Mallin is where the rep
+                 works, CRM is the governed record")
+    • WHAT   → memory:write_through_surface_contract.md
+                (six engineering rules + PR checklist + type-level
+                 enforcement shape — block at PR review)
+    • HOW IT FEELS → this file (the visual + interaction spec)
+
+  Surface-stack constraint (governs the chat panel at the bottom):
+    memory:cockpit_chat_crm_stack.md — Cockpit (this brief) is the
+    PRIMARY surface. Chat (Ask Mallin) is the SECONDARY layer that
+    interrogates the brief. CRM is the governed destination. Chat
+    must never become the product. Drift signals: full-screen chat,
+    chat-first entry points, chat history as persistent surface.
+
+  Anchored behaviors demonstrated here:
+    • Binary scope picker (Deal | Account) — every note syncs to CRM 1:1
+    • Pattern is a Mallin-only metadata tag, NOT a sync-scope filter
+    • Private is a CRM-native flag Mallin honors, not invents
+    • Sync state is visible on every note (syncing / synced / pending)
+    • Queued sync demonstrates integrity-preserving friction (no silent
+      divergence; failures surface visibly on the note)
+    • Past-notes panel shows where notes actually live in CRM, not in
+      a Mallin-side parallel store
+
+  When future surfaces (deal-thread, manager brief, stakeholder updates,
+  MEDDPICC writes) need the same write-through behavior, the visual
+  patterns here are the reference — sync-chip language, queue states,
+  scope-as-CRM-attachment, tag-as-Mallin-metadata.
+  ─────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin · Pre-call brief — per-rep UI variants mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --accent-h: 204;
+    --accent-s: 40%;
+    --accent-l: 67%;
+    --accent:    hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+    --accent-d:  hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08);
+    --accent-mid:hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.22);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; -webkit-font-smoothing: antialiased; }
+
+  /* ──────────────────────────────────────────────────────────────
+     MOCKUP CHROME (not part of the product)
+     ────────────────────────────────────────────────────────────── */
+  .mockup-strip {
+    background: #11161f;
+    border-bottom: 1px dashed rgba(255,255,255,0.1);
+    padding: 14px 28px;
+    font-family: "Inter", sans-serif;
+    font-size: 12.5px;
+    color: #9898a3;
+    display: flex; align-items: center; gap: 14px; justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .mockup-strip .pill {
+    display: inline-block; padding: 2px 8px;
+    background: var(--accent-d); color: var(--accent);
+    border: 0.5px solid var(--accent-mid);
+    border-radius: 999px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .mockup-strip b { color: #e8e8ed; }
+  .switcher {
+    display: inline-flex;
+    background: rgba(0,0,0,0.4);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 7px;
+    padding: 3px;
+  }
+  .switcher button {
+    background: none; border: none; cursor: pointer;
+    padding: 6px 12px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: #9898a3;
+    border-radius: 5px;
+    transition: all 120ms ease;
+  }
+  .switcher button:hover { color: #e8e8ed; }
+  .switcher button.active {
+    background: var(--accent-d);
+    color: var(--accent);
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     SHARED LAYOUT SHELL (same HTML; per-style CSS overrides below)
+     ────────────────────────────────────────────────────────────── */
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #e8e8ed;
+    background: #0a0e16;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .page { padding: 28px 16px 96px; }
+  .shell {
+    width: 100%; max-width: 820px;
+    margin: 0 auto;
+    background: #11161f;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 0.5px solid rgba(255,255,255,0.06);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  }
+  .greet {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 28px 6px;
+  }
+  .greet-icon {
+    width: 32px; height: 32px;
+    background: var(--accent-d);
+    border: 0.5px solid var(--accent-mid);
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--accent);
+    font-family: "JetBrains Mono", monospace; font-weight: 700;
+  }
+  .greet-text { flex: 1; }
+  .greet-eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #9898a3; margin-bottom: 3px;
+  }
+  .greet-name {
+    font-size: 17px; font-weight: 700; letter-spacing: -0.015em;
+  }
+  .greet-right {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .layout-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: #c8c8d0;
+    font: inherit; font-size: 12px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .layout-btn:hover, .layout-btn.active {
+    background: var(--accent-d);
+    border-color: var(--accent-mid);
+    color: var(--accent);
+  }
+
+  .intel {
+    margin: 14px 28px 6px;
+    padding: 22px 26px 22px;
+    background: rgba(255,255,255,0.02);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    position: relative;
+  }
+  .intel::before {
+    content: ""; position: absolute;
+    left: 0; top: 14px; bottom: 14px;
+    width: 2px; background: var(--accent);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .section {
+    padding: 16px 0;
+    border-top: 0.5px dashed rgba(255,255,255,0.08);
+    position: relative;
+    transition: opacity 200ms ease;
+  }
+  .section.first { border-top: none; padding-top: 4px; }
+  .section[hidden] { display: none; }
+
+  .section-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .section-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .visibility-toggle {
+    position: absolute;
+    right: 0; top: 14px;
+    width: 26px; height: 22px;
+    background: none; border: none; cursor: pointer;
+    color: #4a4a52;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    opacity: 0.35;
+    transition: opacity 140ms ease, color 120ms ease;
+  }
+  .section:hover .visibility-toggle { opacity: 1; }
+  .visibility-toggle:hover { color: #e8e8ed; background: rgba(255,255,255,0.06); }
+
+  .section-body p {
+    margin: 0 0 8px;
+    font-size: 13.5px; line-height: 1.6;
+    color: #c8c8d0;
+    max-width: 720px;
+  }
+  .section-body p strong { color: #e8e8ed; font-weight: 600; }
+  em { font-style: normal; color: var(--accent); }
+
+  /* Primary focus block */
+  .primary-focus {
+    margin-bottom: 4px;
+    padding: 16px 20px 18px;
+    background: var(--accent-d);
+    border: 0.5px solid var(--accent-mid);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+  }
+  .primary-focus .label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 5%));
+    margin-bottom: 8px;
+  }
+  .primary-focus .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  .primary-focus .text {
+    font-size: 14.5px; line-height: 1.55;
+    color: #e8e8ed; margin: 0;
+  }
+
+  /* Stakeholders */
+  .stakeholder {
+    padding: 10px 0 8px;
+    border-top: 0.5px dashed rgba(255,255,255,0.08);
+  }
+  .stakeholder:first-of-type { border-top: none; padding-top: 4px; }
+  .stakeholder-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .stakeholder-name {
+    font-size: 14px; font-weight: 600; color: #e8e8ed;
+  }
+  .stakeholder-name a {
+    color: inherit; text-decoration: underline;
+    text-decoration-color: var(--accent-mid);
+    text-underline-offset: 3px;
+  }
+  .stakeholder-name a:hover { color: var(--accent); }
+  .stakeholder-title { font-size: 13px; color: #9898a3; }
+  .role-badge {
+    padding: 2px 7px;
+    background: var(--accent-d);
+    border: 0.5px solid var(--accent-mid);
+    border-radius: 999px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .stakeholder-bg {
+    font-size: 13px; line-height: 1.55;
+    color: #9898a3; margin: 4px 0 0;
+  }
+
+  /* Events / Priorities */
+  .event-date {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: var(--accent);
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+  .event-headline {
+    font-size: 13.5px; font-weight: 600; color: #e8e8ed;
+    margin-bottom: 4px;
+  }
+  .priorityList { list-style: none; padding: 0; margin: 0; }
+  .priorityList li {
+    position: relative;
+    padding-left: 12px;
+    font-size: 13.5px; color: #c8c8d0;
+    margin-bottom: 8px; line-height: 1.55;
+  }
+  .priorityList li::before {
+    content: ""; position: absolute;
+    left: 0; top: 8px; width: 5px; height: 5px;
+    background: #6a6a76; border-radius: 1px;
+  }
+  .source-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 6px 2px;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; color: #9898a3;
+    margin-left: 6px;
+    text-decoration: none;
+  }
+  .source-pill:hover { color: var(--accent); border-color: var(--accent-mid); }
+
+  /* Hidden-sections drawer */
+  .hidden-drawer {
+    margin: 10px 28px 0;
+    padding: 0;
+    border: 0.5px dashed rgba(255,255,255,0.1);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.015);
+    overflow: hidden;
+    display: none;
+  }
+  .hidden-drawer.has-hidden { display: block; }
+  .hidden-drawer-head {
+    padding: 8px 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: #9898a3;
+  }
+  .hidden-drawer-list {
+    list-style: none; padding: 0 8px 10px; margin: 0;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .hidden-drawer-list .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 10px 5px 8px;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    font-size: 12px; color: #c8c8d0;
+    cursor: pointer;
+  }
+  .hidden-drawer-list .chip:hover {
+    color: var(--accent); border-color: var(--accent-mid); background: var(--accent-d);
+  }
+
+  /* Locked section (Primary Focus) */
+  .locked-pill {
+    position: absolute;
+    right: 0; top: 14px;
+    color: #4a4a52;
+    display: none;
+  }
+  .section.locked .visibility-toggle { display: none; }
+  .section.locked .locked-pill { display: inline; opacity: 0.4; }
+  .section.locked:hover .locked-pill { opacity: 0.8; }
+
+  /* ──────────────────────────────────────────────────────────────
+     VARIANT 2: TERMINAL — Bloomberg-style, mono, compact, sharp
+     ────────────────────────────────────────────────────────────── */
+  @keyframes terminalPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     VARIANT 3: DOC — Notion/Linear-style, serif, flat, generous
+     ────────────────────────────────────────────────────────────── */
+  body.style-doc {
+    background: #f4f1ea;
+    color: #1a2230;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  body.style-doc .mockup-strip {
+    background: #ebe6d6;
+    color: #6b7689;
+    border-bottom-color: rgba(0,0,0,0.08);
+  }
+  body.style-doc .mockup-strip b { color: #1a2230; }
+  body.style-doc .mockup-strip .pill {
+    background: rgba(74, 113, 134, 0.1);
+    color: #4a7186;
+    border-color: rgba(74, 113, 134, 0.3);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: none;
+  }
+  body.style-doc .switcher {
+    background: rgba(255,255,255,0.5);
+    border-color: rgba(0,0,0,0.1);
+  }
+  body.style-doc .switcher button {
+    color: #6b7689;
+    font-family: "Source Serif 4", Georgia, serif;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+  }
+  body.style-doc .switcher button:hover { color: #1a2230; }
+  body.style-doc .switcher button.active {
+    background: rgba(74, 113, 134, 0.15);
+    color: #4a7186;
+  }
+  body.style-doc { --accent-h: 204; --accent-s: 32%; --accent-l: 42%; }
+  body.style-doc .shell {
+    background: #faf7f0;
+    border: 1px solid #e3dccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    max-width: 720px;
+  }
+  body.style-doc .greet {
+    border-bottom: 1px solid #e3dccc;
+    padding: 28px 40px 22px;
+    align-items: flex-start;
+  }
+  body.style-doc .greet-icon {
+    background: rgba(74, 113, 134, 0.1);
+    border: 1px solid rgba(74, 113, 134, 0.25);
+    color: #4a7186;
+    font-family: "Source Serif 4", Georgia, serif;
+    border-radius: 50%;
+    width: 38px; height: 38px;
+    font-size: 14px;
+  }
+  body.style-doc .greet-eyebrow {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    color: #6b7689;
+    font-size: 13px;
+  }
+  body.style-doc .greet-name {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #1a2230;
+  }
+  body.style-doc .intel {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 28px 40px 36px;
+  }
+  body.style-doc .intel::before { display: none; }
+  body.style-doc .section {
+    padding: 28px 0 20px;
+    border-top: 1px solid #e3dccc;
+  }
+  body.style-doc .section.first { padding-top: 8px; }
+  body.style-doc .section-head { margin-bottom: 14px; }
+  body.style-doc .section-label {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: -0.015em;
+    color: #1a2230;
+  }
+  body.style-doc .section-body p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #2c3a4c;
+    max-width: 640px;
+  }
+  body.style-doc .section-body p strong { color: #1a2230; }
+  body.style-doc em { color: #4a7186; font-style: italic; }
+  body.style-doc .primary-focus {
+    background: rgba(74, 113, 134, 0.05);
+    border: 1px solid rgba(74, 113, 134, 0.2);
+    border-left: 4px solid #4a7186;
+    border-radius: 2px;
+    padding: 20px 24px;
+  }
+  body.style-doc .primary-focus .label {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    color: #4a7186;
+    font-size: 13px;
+  }
+  body.style-doc .primary-focus .dot { display: none; }
+  body.style-doc .primary-focus .text {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 18px;
+    line-height: 1.55;
+    color: #1a2230;
+  }
+  body.style-doc .stakeholder {
+    border-top: 1px dotted #c9c1ad;
+    padding: 16px 0 12px;
+  }
+  body.style-doc .stakeholder:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+  body.style-doc .stakeholder-head { gap: 10px; }
+  body.style-doc .stakeholder-name {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a2230;
+  }
+  body.style-doc .stakeholder-name a {
+    text-decoration-color: rgba(74, 113, 134, 0.5);
+    text-underline-offset: 4px;
+  }
+  body.style-doc .stakeholder-title {
+    font-size: 14px;
+    font-style: italic;
+    color: #6b7689;
+  }
+  body.style-doc .role-badge {
+    background: rgba(74, 113, 134, 0.1);
+    border: 1px solid rgba(74, 113, 134, 0.25);
+    color: #4a7186;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 11.5px;
+    text-transform: none;
+    letter-spacing: 0.03em;
+    font-weight: 600;
+    border-radius: 3px;
+  }
+  body.style-doc .stakeholder-bg {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px;
+    line-height: 1.65;
+    color: #3b4658;
+    max-width: 580px;
+  }
+  body.style-doc .event-date {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    color: #4a7186;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  body.style-doc .event-headline {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a2230;
+    line-height: 1.35;
+  }
+  body.style-doc .priorityList li {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15.5px;
+    color: #2c3a4c;
+    padding-left: 18px;
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  body.style-doc .priorityList li::before {
+    content: "—";
+    background: none; color: #4a7186;
+    width: auto; height: auto; top: 0;
+    font-weight: normal;
+  }
+  body.style-doc .source-pill {
+    background: rgba(74, 113, 134, 0.06);
+    border: 1px solid rgba(74, 113, 134, 0.2);
+    color: #4a7186;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  body.style-doc .visibility-toggle { color: #9aa3b3; }
+  body.style-doc .visibility-toggle:hover { color: #1a2230; background: rgba(0,0,0,0.04); }
+  body.style-doc .layout-btn {
+    background: rgba(74, 113, 134, 0.08);
+    border: 1px solid rgba(74, 113, 134, 0.2);
+    color: #4a7186;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px;
+  }
+  body.style-doc .layout-btn:hover, body.style-doc .layout-btn.active {
+    background: rgba(74, 113, 134, 0.18);
+    color: #4a7186;
+  }
+  body.style-doc .hidden-drawer {
+    margin: 0 40px 24px;
+    background: rgba(74, 113, 134, 0.04);
+    border-color: rgba(74, 113, 134, 0.2);
+  }
+  body.style-doc .hidden-drawer-head {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    color: #6b7689;
+    letter-spacing: 0;
+  }
+  body.style-doc .hidden-drawer-list .chip {
+    background: rgba(255,255,255,0.6);
+    border-color: rgba(74, 113, 134, 0.2);
+    color: #3b4658;
+    font-family: "Source Serif 4", Georgia, serif;
+    border-radius: 3px;
+  }
+  body.style-doc .hidden-drawer-list .chip:hover {
+    color: #4a7186; background: rgba(74, 113, 134, 0.1);
+  }
+  body.style-doc .locked-pill { color: #9aa3b3; }
+
+  /* ──────────────────────────────────────────────────────────────
+     VARIANT 4: CHATGPT — conversational, message-bubble, friendly
+     ────────────────────────────────────────────────────────────── */
+
+  /* Each section becomes a chat message bubble */
+  /* Avatar to the left of every assistant message */
+  /* The first message (primary focus) gets a "user question" bubble above it */
+
+  /* ──────────────────────────────────────────────────────────────
+     ASK MALLIN — conversational layer at the bottom. Anything saved
+     from chat (notes, drafted emails, action items) follows the same
+     write-through doctrine as the per-section notes above.
+     ────────────────────────────────────────────────────────────── */
+  .chat-panel {
+    max-width: 820px;
+    margin: 18px auto 0;
+    background: rgba(255,255,255,0.025);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .chat-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 12px 18px 8px;
+    gap: 12px;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+  }
+  .chat-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .chat-meta {
+    font-size: 11.5px;
+    color: #6a6a76;
+  }
+  .chat-thread {
+    padding: 14px 18px;
+    max-height: 360px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .chat-empty {
+    text-align: left;
+  }
+  .chat-empty > p {
+    font-size: 13px;
+    color: #9898a3;
+    margin: 0 0 10px;
+    line-height: 1.5;
+  }
+  .chat-suggestions {
+    display: flex; flex-direction: column; gap: 6px;
+    align-items: flex-start;
+  }
+  .chat-chip {
+    padding: 7px 12px;
+    background: rgba(136, 184, 208, 0.06);
+    border: 0.5px solid rgba(136, 184, 208, 0.22);
+    border-radius: 8px;
+    color: #c8c8d0;
+    font: inherit; font-size: 12.5px;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.45;
+    transition: all 120ms ease;
+  }
+  .chat-chip:hover {
+    background: rgba(136, 184, 208, 0.12);
+    border-color: rgba(136, 184, 208, 0.4);
+    color: #e8e8ed;
+  }
+
+  .chat-msg {
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .chat-msg .chat-avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .chat-msg.user .chat-avatar {
+    background: rgba(136, 184, 208, 0.18);
+    color: #88b8d0;
+    border: 0.5px solid rgba(136, 184, 208, 0.4);
+  }
+  .chat-msg.assistant .chat-avatar {
+    background: var(--accent);
+    color: #0a0e16;
+  }
+  .chat-msg .chat-body {
+    flex: 1;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #e8e8ed;
+    padding-top: 3px;
+  }
+  .chat-msg .chat-body p { margin: 0 0 6px; }
+  .chat-msg .chat-body p:last-child { margin-bottom: 0; }
+  .chat-msg.assistant .chat-body em { color: var(--accent); font-style: italic; }
+  .chat-msg-meta {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #6a6a76;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .chat-action-row {
+    display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+  }
+  .chat-action {
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: #c8c8d0;
+    font: inherit; font-size: 11.5px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .chat-action:hover {
+    background: rgba(136, 184, 208, 0.1);
+    border-color: rgba(136, 184, 208, 0.35);
+    color: #e8e8ed;
+  }
+
+  .chat-input-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px 12px;
+    border-top: 0.5px solid rgba(255,255,255,0.06);
+  }
+  .chat-input {
+    flex: 1;
+    padding: 9px 12px;
+    background: rgba(0,0,0,0.25);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    font: inherit; font-size: 13px;
+    color: #e8e8ed;
+    outline: none;
+  }
+  .chat-input::placeholder { color: #6a6a76; }
+  .chat-input:focus { border-color: rgba(136, 184, 208, 0.4); }
+  .chat-send {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    color: #0a0e16;
+    border: none;
+    border-radius: 8px;
+    font: inherit; font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .chat-send:hover { filter: brightness(1.08); }
+
+  /* Doc variant overrides for chat panel */
+  body.style-doc .chat-panel {
+    background: rgba(255,255,255,0.5);
+    border-color: rgba(0,0,0,0.1);
+    max-width: 720px;
+    border-radius: 4px;
+  }
+  body.style-doc .chat-head { border-bottom-color: #e3dccc; }
+  body.style-doc .chat-label {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #4a7186;
+    font-size: 14px;
+  }
+  body.style-doc .chat-meta {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px;
+    color: #6b7689;
+    font-style: italic;
+  }
+  body.style-doc .chat-empty > p {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px;
+    color: #3b4658;
+  }
+  body.style-doc .chat-chip {
+    background: rgba(74, 113, 134, 0.06);
+    border-color: rgba(74, 113, 134, 0.22);
+    color: #2c3a4c;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14px;
+    border-radius: 3px;
+  }
+  body.style-doc .chat-chip:hover {
+    background: rgba(74, 113, 134, 0.14);
+    border-color: rgba(74, 113, 134, 0.4);
+    color: #1a2230;
+  }
+  body.style-doc .chat-msg .chat-body {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px;
+    color: #1a2230;
+  }
+  body.style-doc .chat-msg.assistant .chat-avatar {
+    background: #4a7186;
+    color: #faf7f0;
+  }
+  body.style-doc .chat-msg.user .chat-avatar {
+    background: rgba(74, 113, 134, 0.15);
+    border-color: rgba(74, 113, 134, 0.4);
+    color: #4a7186;
+  }
+  body.style-doc .chat-action {
+    background: rgba(255,255,255,0.6);
+    border-color: rgba(0,0,0,0.12);
+    color: #2c3a4c;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px;
+    border-radius: 3px;
+  }
+  body.style-doc .chat-action:hover {
+    background: rgba(74, 113, 134, 0.1);
+    border-color: rgba(74, 113, 134, 0.35);
+    color: #1a2230;
+  }
+  body.style-doc .chat-input-row { border-top-color: #e3dccc; }
+  body.style-doc .chat-input {
+    background: #fff;
+    border-color: #d6cfbe;
+    color: #1a2230;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14px;
+    border-radius: 3px;
+  }
+  body.style-doc .chat-input::placeholder { color: #9aa3b3; }
+  body.style-doc .chat-input:focus { border-color: #4a7186; }
+  body.style-doc .chat-send {
+    background: #4a7186;
+    color: #faf7f0;
+    border-radius: 3px;
+  }
+  body.style-doc .chat-msg-meta {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    color: #6b7689;
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     NOTES + INLINE EDITS — the rep's contribution layer
+     ────────────────────────────────────────────────────────────── */
+
+  /* Top-of-brief learning indicator. Surfaces the loop: rep's past
+     notes shape this brief. Click to see which notes from which
+     past deals are influencing the current view. */
+  .learning-indicator {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 28px 14px;
+    padding: 9px 14px;
+    background: rgba(212, 168, 95, 0.08);
+    border: 0.5px solid rgba(212, 168, 95, 0.3);
+    border-left: 3px solid #d4a85f;
+    border-radius: 7px;
+    font-size: 12.5px;
+    color: #c8c8d0;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+  .learning-indicator:hover { background: rgba(212, 168, 95, 0.14); }
+  .learning-indicator b { color: #e8e8ed; font-weight: 600; }
+  .learning-indicator em { font-style: italic; color: #d4a85f; }
+  .learning-indicator .arrow {
+    margin-left: auto; color: #d4a85f;
+    transition: transform 200ms ease;
+  }
+  .learning-indicator .arrow.open { transform: rotate(90deg); }
+
+  /* Memory panel — opens beneath the indicator. Shows past notes
+     attributed to specific sections of the current brief. The hover
+     interaction highlights the section a note shaped. */
+  .memory-panel {
+    margin: 0 28px 14px;
+    background: rgba(212, 168, 95, 0.04);
+    border: 0.5px solid rgba(212, 168, 95, 0.22);
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 280ms ease, opacity 200ms ease, margin 200ms ease;
+  }
+  .memory-panel.open {
+    max-height: 1000px;
+    opacity: 1;
+  }
+  .memory-panel-head {
+    padding: 12px 16px;
+    border-bottom: 0.5px solid rgba(212, 168, 95, 0.2);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: #d4a85f;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .memory-close {
+    background: none; border: none; cursor: pointer;
+    color: #d4a85f; font-size: 18px;
+    width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+  }
+  .memory-close:hover { background: rgba(212, 168, 95, 0.12); }
+  .memory-list {
+    padding: 6px 8px;
+  }
+  .memory-item {
+    padding: 12px 14px;
+    margin: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 140ms ease;
+  }
+  .memory-item:hover {
+    background: rgba(212, 168, 95, 0.08);
+  }
+  .memory-item-head {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .memory-source {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: #d4a85f;
+  }
+  .memory-attach {
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: rgba(136, 184, 208, 0.1);
+    border: 0.5px solid rgba(136, 184, 208, 0.3);
+    color: #88b8d0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+  }
+  .memory-tag {
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: rgba(168, 145, 200, 0.12);
+    border: 0.5px solid rgba(168, 145, 200, 0.35);
+    color: #a891c8;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+  }
+  body.style-doc .memory-attach {
+    background: rgba(74, 113, 134, 0.08);
+    border-color: rgba(74, 113, 134, 0.3);
+    color: #4a7186;
+    font-family: "Source Serif 4", Georgia, serif;
+    letter-spacing: 0;
+    font-size: 12px;
+    font-style: italic;
+  }
+  body.style-doc .memory-tag {
+    background: rgba(135, 100, 165, 0.08);
+    border-color: rgba(135, 100, 165, 0.3);
+    color: #8764a5;
+    font-family: "Source Serif 4", Georgia, serif;
+    letter-spacing: 0;
+    font-size: 12px;
+    font-style: italic;
+  }
+  .memory-quote {
+    font-size: 13px;
+    line-height: 1.55;
+    color: #e8e8ed;
+    font-style: italic;
+    padding-left: 10px;
+    border-left: 2px solid rgba(212, 168, 95, 0.35);
+    margin-bottom: 8px;
+  }
+  .memory-shaped {
+    font-size: 12px;
+    color: #9898a3;
+  }
+  .memory-shaped b { color: #d4a85f; font-weight: 600; }
+  .memory-foot {
+    padding: 10px 16px;
+    border-top: 0.5px solid rgba(212, 168, 95, 0.2);
+    font-size: 11.5px;
+    color: #9898a3;
+  }
+  .memory-foot-link {
+    color: #d4a85f;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(212, 168, 95, 0.4);
+  }
+  .memory-foot-link:hover { color: #e2bd7f; }
+
+  /* Highlight effect on the section a memory shaped (on hover) */
+  .section.shaped {
+    background: rgba(212, 168, 95, 0.06);
+    box-shadow: -3px 0 0 0 #d4a85f;
+    transition: background 140ms ease, box-shadow 140ms ease;
+  }
+
+  /* Note controls — scope picker + Mallin-only / CRM-visible toggles */
+  .note-controls {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 0.5px dashed rgba(212, 168, 95, 0.2);
+  }
+  .scope-picker {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 11.5px;
+    color: #6a6a76;
+  }
+  .scope-picker .picker-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6a6a76;
+  }
+  .scope-pick {
+    padding: 3px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 999px;
+    color: #9898a3;
+    font: inherit; font-size: 11px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .scope-pick:hover { color: #e8e8ed; border-color: rgba(255,255,255,0.2); }
+  .scope-pick.active {
+    background: rgba(136, 184, 208, 0.12);
+    border-color: rgba(136, 184, 208, 0.4);
+    color: #88b8d0;
+  }
+
+  .note-toggles {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+  }
+  .note-toggle {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px 4px;
+    background: transparent;
+    border: 0.5px dashed rgba(255,255,255,0.15);
+    border-radius: 5px;
+    color: #6a6a76;
+    font: inherit; font-size: 11px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .note-toggle:hover { color: #c8c8d0; border-color: rgba(255,255,255,0.3); }
+  .note-toggle.active {
+    border-style: solid;
+  }
+  .note-toggle[data-toggle="pattern"].active {
+    background: rgba(168, 145, 200, 0.14);
+    border-color: rgba(168, 145, 200, 0.5);
+    color: #a891c8;
+  }
+  .note-toggle[data-toggle="private"].active {
+    background: rgba(90, 143, 122, 0.14);
+    border-color: rgba(90, 143, 122, 0.5);
+    color: #7fb39c;
+  }
+
+  /* Sync state chip — visible on every note */
+  .sync-chip {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px;
+    padding: 7px 11px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-family: "JetBrains Mono", monospace;
+    letter-spacing: 0.02em;
+  }
+  .sync-chip .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sync-chip .sync-text { flex: 1; }
+  .sync-chip a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .sync-chip a:hover { color: #e8e8ed; }
+  .sync-chip.syncing {
+    background: rgba(136, 184, 208, 0.06);
+    border: 0.5px solid rgba(136, 184, 208, 0.22);
+    color: #88b8d0;
+  }
+  .sync-chip.syncing .sync-dot {
+    background: #88b8d0;
+    animation: syncPulse 0.8s infinite;
+  }
+  @keyframes syncPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .sync-chip.synced {
+    background: rgba(90, 143, 122, 0.06);
+    border: 0.5px solid rgba(90, 143, 122, 0.22);
+    color: #7fb39c;
+  }
+  .sync-chip.synced .sync-dot { background: #5a8f7a; }
+  .sync-chip.pending {
+    background: rgba(212, 168, 95, 0.08);
+    border: 0.5px solid rgba(212, 168, 95, 0.3);
+    color: #d4a85f;
+  }
+  .sync-chip.pending .sync-dot {
+    background: #d4a85f;
+    animation: syncPulse 1.6s infinite;
+  }
+  .sync-chip.failed {
+    background: rgba(194, 90, 74, 0.08);
+    border: 0.5px solid rgba(194, 90, 74, 0.3);
+    color: #d68070;
+  }
+  .sync-chip.failed .sync-dot { background: #c25a4a; }
+
+  /* CRM-offline simulator (mockup affordance, not production UI) */
+  .crm-offline-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px;
+    background: transparent;
+    border: 0.5px dashed rgba(255,255,255,0.15);
+    border-radius: 6px;
+    color: #6a6a76;
+    font: inherit; font-size: 11px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .crm-offline-btn:hover {
+    color: #d4a85f;
+    border-color: rgba(212, 168, 95, 0.4);
+    border-style: solid;
+  }
+  .crm-offline-btn.active {
+    background: rgba(212, 168, 95, 0.12);
+    border-color: rgba(212, 168, 95, 0.5);
+    border-style: solid;
+    color: #d4a85f;
+  }
+
+  /* Doc variant overrides for the new controls */
+  body.style-doc .scope-pick {
+    background: rgba(74, 113, 134, 0.05);
+    border-color: rgba(74, 113, 134, 0.2);
+    color: #6b7689;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 12.5px;
+  }
+  body.style-doc .scope-pick.active {
+    background: rgba(74, 113, 134, 0.15);
+    border-color: rgba(74, 113, 134, 0.4);
+    color: #4a7186;
+  }
+  body.style-doc .scope-picker .picker-label {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #6b7689;
+  }
+  body.style-doc .note-toggle {
+    background: rgba(255,255,255,0.4);
+    border-color: rgba(0,0,0,0.1);
+    color: #6b7689;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 12.5px;
+  }
+  body.style-doc .note-toggle.active {
+    border-style: solid;
+  }
+  body.style-doc .sync-chip {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+  body.style-doc .sync-chip.synced {
+    background: rgba(90, 143, 122, 0.08);
+    border-color: rgba(90, 143, 122, 0.3);
+    color: #4d8067;
+  }
+  body.style-doc .sync-chip.syncing {
+    background: rgba(74, 113, 134, 0.08);
+    border-color: rgba(74, 113, 134, 0.3);
+    color: #4a7186;
+  }
+  body.style-doc .sync-chip.pending {
+    background: rgba(193, 142, 64, 0.1);
+    border-color: rgba(193, 142, 64, 0.35);
+    color: #c18e40;
+  }
+  body.style-doc .crm-offline-btn {
+    background: rgba(255,255,255,0.5);
+    border-color: rgba(0,0,0,0.15);
+    color: #6b7689;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px;
+  }
+  body.style-doc .crm-offline-btn.active {
+    background: rgba(193, 142, 64, 0.12);
+    border-color: rgba(193, 142, 64, 0.4);
+    color: #c18e40;
+  }
+
+  /* Doc variant overrides for memory panel */
+  body.style-doc .memory-panel {
+    background: rgba(193, 142, 64, 0.05);
+    border-color: rgba(193, 142, 64, 0.22);
+  }
+  body.style-doc .memory-panel-head {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #c18e40;
+    font-size: 14px;
+  }
+  body.style-doc .memory-source {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #c18e40;
+    font-size: 13px;
+  }
+  body.style-doc .memory-quote {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px;
+    color: #1a2230;
+    border-left-color: rgba(193, 142, 64, 0.4);
+  }
+  body.style-doc .memory-shaped {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13.5px;
+    color: #6b7689;
+  }
+  body.style-doc .memory-shaped b { color: #c18e40; }
+  body.style-doc .memory-scope {
+    font-family: "Source Serif 4", Georgia, serif;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11.5px;
+  }
+  body.style-doc .memory-foot {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13.5px;
+  }
+  body.style-doc .section.shaped {
+    background: rgba(193, 142, 64, 0.06);
+    box-shadow: -3px 0 0 0 #c18e40;
+  }
+
+  /* Terminal variant */
+
+  /* "Your thinking" section — pre-call brain dump that persists per
+     (rep, account) and feeds future-brief context. Lives at the top
+     so reps capture initial thoughts BEFORE reading the agent's take. */
+  .my-thinking {
+    margin: 0 28px 14px;
+    padding: 14px 18px 16px;
+    background: rgba(212, 168, 95, 0.04);
+    border: 0.5px solid rgba(212, 168, 95, 0.18);
+    border-radius: 8px;
+    position: relative;
+  }
+  .my-thinking-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .my-thinking-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: #d4a85f;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .my-thinking-meta {
+    font-size: 11px;
+    color: #6a6a76;
+  }
+  .my-thinking-meta .saved { color: #5a8f7a; }
+  .my-thinking-input {
+    width: 100%;
+    min-height: 52px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.2);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    color: #e8e8ed;
+    font: inherit; font-size: 13.5px;
+    line-height: 1.55;
+    resize: vertical;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .my-thinking-input:focus {
+    border-color: rgba(212, 168, 95, 0.5);
+  }
+  .my-thinking-input::placeholder { color: #6a6a76; }
+
+  /* Inline pencil for editing agent paragraphs */
+  .edit-pencil {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 5px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #6a6a76;
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 140ms ease, color 120ms ease;
+    vertical-align: middle;
+    user-select: none;
+  }
+  .editable:hover .edit-pencil { opacity: 1; }
+  .edit-pencil:hover { color: #e8e8ed; }
+  .editable.editing {
+    outline: 2px solid rgba(212, 168, 95, 0.4);
+    outline-offset: 4px;
+    border-radius: 4px;
+    background: rgba(212, 168, 95, 0.04);
+  }
+  .editable.edited {
+    border-left: 2px solid #d4a85f;
+    padding-left: 10px;
+    margin-left: -12px;
+    position: relative;
+  }
+  .editable.edited::after {
+    content: "✎ edited";
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 6px;
+    background: rgba(212, 168, 95, 0.12);
+    border: 0.5px solid rgba(212, 168, 95, 0.3);
+    border-radius: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    color: #d4a85f;
+    vertical-align: middle;
+  }
+
+  /* Per-section margin note (the rep's annotation) */
+  .add-note-btn {
+    display: inline-flex;
+    margin-top: 10px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 0.5px dashed rgba(212, 168, 95, 0.35);
+    border-radius: 6px;
+    color: rgba(212, 168, 95, 0.7);
+    font: inherit; font-size: 11.5px;
+    cursor: pointer;
+    align-items: center; gap: 5px;
+    opacity: 0.6;
+    transition: opacity 140ms ease, background 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+  .section:hover .add-note-btn { opacity: 1; }
+  .add-note-btn:hover {
+    background: rgba(212, 168, 95, 0.08);
+    border-style: solid;
+    border-color: rgba(212, 168, 95, 0.6);
+    color: #d4a85f;
+  }
+
+  .rep-note {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(212, 168, 95, 0.06);
+    border-left: 3px solid #d4a85f;
+    border-radius: 0 6px 6px 0;
+    position: relative;
+  }
+  .rep-note-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 10.5px;
+    color: #d4a85f;
+    font-family: "JetBrains Mono", monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .rep-note-delete {
+    background: none; border: none; cursor: pointer;
+    color: #6a6a76;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .rep-note:hover .rep-note-delete { opacity: 1; }
+  .rep-note-delete:hover { color: #e8e8ed; }
+  .rep-note-body {
+    font-size: 13px;
+    line-height: 1.55;
+    color: #e8e8ed;
+    outline: none;
+  }
+  .rep-note-body:empty::before {
+    content: "Type your note…";
+    color: #6a6a76;
+  }
+  .rep-note-meta {
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: #6a6a76;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .rep-note-meta .scope { color: #5a8f7a; }
+
+  /* Doc variant overrides for notes/edits */
+  body.style-doc .learning-indicator {
+    background: rgba(193, 142, 64, 0.08);
+    border-color: rgba(193, 142, 64, 0.3);
+    border-left-color: #c18e40;
+    color: #3b4658;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 14px;
+  }
+  body.style-doc .learning-indicator b { color: #1a2230; }
+  body.style-doc .learning-indicator .arrow { color: #c18e40; }
+  body.style-doc .my-thinking {
+    background: rgba(193, 142, 64, 0.05);
+    border-color: rgba(193, 142, 64, 0.18);
+  }
+  body.style-doc .my-thinking-label {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #c18e40;
+    font-size: 14px;
+  }
+  body.style-doc .my-thinking-input {
+    background: rgba(255,255,255,0.6);
+    border-color: rgba(0,0,0,0.1);
+    color: #1a2230;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px;
+  }
+  body.style-doc .my-thinking-input::placeholder { color: #9aa3b3; }
+  body.style-doc .add-note-btn {
+    border-color: rgba(193, 142, 64, 0.4);
+    color: #c18e40;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 13px;
+  }
+  body.style-doc .rep-note {
+    background: rgba(193, 142, 64, 0.06);
+    border-left-color: #c18e40;
+  }
+  body.style-doc .rep-note-head {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #c18e40;
+  }
+  body.style-doc .rep-note-body {
+    color: #1a2230;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 15px;
+  }
+  body.style-doc .editable.edited { border-left-color: #c18e40; }
+  body.style-doc .editable.edited::after {
+    background: rgba(193, 142, 64, 0.12);
+    border-color: rgba(193, 142, 64, 0.3);
+    color: #c18e40;
+    font-family: "Source Serif 4", Georgia, serif;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 760px) {
+    .mockup-strip { padding: 12px 14px; gap: 10px; }
+    .intel { margin: 12px 14px; padding: 16px 14px; }
+    .greet { padding: 14px 18px; }
+    .chat-panel { margin: 16px 14px 0; }
+    .chat-thread { max-height: 280px; }
+  }
+</style>
+</head>
+<body class="style-cards">
+
+<div class="mockup-strip">
+  <div>
+    <span class="pill">Mockup</span> &nbsp; <b>Same brief, three UI shapes.</b>
+    The data, the cognition contract, and the sources stay identical —
+    the rep picks the shape that fits how they think. Per-rep, persisted.
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="crm-offline-btn" id="crmOfflineBtn" onclick="toggleCrmOffline()" title="Mockup affordance — simulate the CRM being unreachable so you can see queued-sync behavior.">⚠ Simulate CRM offline</button>
+    <div class="switcher">
+      <button class="active" data-style="style-cards" onclick="setStyle('style-cards', this)">Cards</button>
+      <button data-style="style-doc" onclick="setStyle('style-doc', this)">Doc</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="shell">
+
+    <div class="greet">
+      <div class="greet-icon">JD</div>
+      <div class="greet-text">
+        <div class="greet-eyebrow">PRE-CALL · 11 MIN AGO</div>
+        <div class="greet-name">Olive &amp; June</div>
+      </div>
+    </div>
+
+    <!-- Learning indicator — surfaces the loop. Past notes shape this brief. -->
+    <div class="learning-indicator" onclick="toggleMemoryPanel()">
+      <span>📝</span>
+      <span><b>3 notes from your past calls</b> shape this brief. Click to see <em>where</em>.</span>
+      <span class="arrow" id="memArrow">→</span>
+    </div>
+
+    <!-- Memory panel — shows attribution from past notes to current claims -->
+    <div class="memory-panel" id="memoryPanel">
+      <div class="memory-panel-head">
+        How your past notes shaped this brief
+        <button class="memory-close" onclick="toggleMemoryPanel()" title="Close">×</button>
+      </div>
+      <div class="memory-list">
+
+        <div class="memory-item" data-targets="primary-focus,competitive">
+          <div class="memory-item-head">
+            <span class="memory-source">Hooli · Q1 2026</span>
+            <span class="memory-attach">Note on Hooli deal in HubSpot</span>
+            <span class="memory-tag">⚐ Cross-deal pattern</span>
+          </div>
+          <div class="memory-quote">"HoT-style parent companies always default to incumbent ERP — name the silent competitor on call 1, before HoT IT enters the room."</div>
+          <div class="memory-shaped">→ Shaped: <b>Primary Decision Focus</b>, <b>Competitive Context</b> (NetSuite as silent competitor)</div>
+        </div>
+
+        <div class="memory-item" data-targets="stakeholders">
+          <div class="memory-item-head">
+            <span class="memory-source">Pennrose · Mar 2026</span>
+            <span class="memory-attach">Note on Pennrose deal in HubSpot</span>
+            <span class="memory-tag">⚐ Cross-deal pattern</span>
+          </div>
+          <div class="memory-quote">"When the CEO is brand-focused (not ops-focused), the SVP Operations is the real champion — get them in the room by call 2 or the deal stalls."</div>
+          <div class="memory-shaped">→ Shaped: <b>Stakeholders</b> (Monica Willadsen flagged as the load-bearing champion)</div>
+        </div>
+
+        <div class="memory-item" data-targets="stakeholders">
+          <div class="memory-item-head">
+            <span class="memory-source">Cipher · Feb 2026</span>
+            <span class="memory-attach">Note on Cipher deal in HubSpot</span>
+            <span class="memory-tag">⚐ Cross-deal pattern</span>
+          </div>
+          <div class="memory-quote">"Founder-CEOs in active earnout periods have veto-only authority on infrastructure decisions — don't engineer the deal around getting their signature."</div>
+          <div class="memory-shaped">→ Shaped: <b>Stakeholders</b> (Sarah Gibson Tuttle's role + rationale)</div>
+        </div>
+
+      </div>
+      <div class="memory-foot">
+        Every note lives in your CRM as a normal deal/account note. Mallin only adds metadata (like the ⚐ pattern tag) for cross-deal surfacing.
+        <span class="memory-foot-link" onclick="showFuturePreview()">Preview how new notes shape future briefs →</span>
+      </div>
+    </div>
+
+    <!-- Your thinking — pre-call brain dump, persisted per (rep, account) -->
+    <div class="my-thinking">
+      <div class="my-thinking-head">
+        <span class="my-thinking-label">📝 Your thinking on this call</span>
+        <span class="my-thinking-meta"><span class="saved">✓ Auto-saved</span> · Informs future briefs on Olive &amp; June</span>
+      </div>
+      <textarea class="my-thinking-input" id="myThinking" placeholder="What are you walking in with? Notes here are persisted per-rep per-account and feed future brief generation. Type anything — your hunches, what you want to verify, the question you're really asking on this call…" oninput="saveThinking()"></textarea>
+    </div>
+
+    <div class="intel">
+      <div id="sections">
+
+        <section class="section first locked" data-key="primary-focus" data-label="Primary Decision Focus">
+          <span class="locked-pill" title="Locked — Primary Decision Focus stays put">🔒</span>
+          <div class="primary-focus">
+            <div class="label"><span class="dot"></span>The call to make on this call</div>
+            <div class="editable" data-original="Resolve the silent-competitor question. Is this a real S/4HANA deal, or is Olive &amp; June already on a glide path to NetSuite via HoT IT? Walk out with a clear answer to one question — and that determines whether everything else matters.">
+              <p class="text">Resolve the silent-competitor question. Is this a real S/4HANA deal, or is Olive &amp; June already on a glide path to NetSuite via HoT IT? Walk out with a clear answer to one question — and that determines whether everything else matters.</p>
+              <span class="edit-pencil" onclick="editParagraph(this)">✎</span>
+            </div>
+          </div>
+          <button class="add-note-btn" onclick="addNote(this)">＋ Add note</button>
+        </section>
+
+        <section class="section" data-key="recent-events" data-label="Recent events">
+          <button class="visibility-toggle" onclick="hideSection('recent-events')" title="Hide section">👁</button>
+          <div class="section-head"><div class="section-label">— Recent events</div></div>
+          <div class="section-body">
+            <div class="event-date">Dec 16 2024</div>
+            <div class="event-headline">Helen of Troy acquires Olive &amp; June for $240M; founder stays as CEO under "stand-alone but supported"</div>
+            <div class="editable" data-original="agent">
+              <p>This is the single most important fact in the deal. HoT runs Oracle E-Business Suite as its ERP system of record. That makes NetSuite the <em>silent competitor</em> — John won't see it quoted early because Olive &amp; June themselves haven't decided yet, but HoT IT will push it the moment integration becomes a topic.<a href="#" class="source-pill">helenoftroy.com</a></p>
+              <span class="edit-pencil" onclick="editParagraph(this)">✎</span>
+            </div>
+          </div>
+          <button class="add-note-btn" onclick="addNote(this)">＋ Add note</button>
+        </section>
+
+        <section class="section" data-key="strategic-priorities" data-label="Strategic priorities">
+          <button class="visibility-toggle" onclick="hideSection('strategic-priorities')" title="Hide section">👁</button>
+          <div class="section-head"><div class="section-label">— Strategic priorities</div></div>
+          <div class="section-body">
+            <div class="editable" data-original="agent">
+              <ul class="priorityList">
+                <li>Post-acquisition system rationalization (~17 months post-close, squarely inside the 12-24 month window where parent corp pushes back-office standardization).</li>
+                <li>Wholesale expansion at scale — Target / Ulta / Walmart EDI + OTIF scorecard is the operational rupture point that creates the ERP buying window.</li>
+                <li>"Stand-alone but supported" — Sarah has day-to-day decision rights, parent has gravitational pull on infrastructure.</li>
+              </ul>
+              <span class="edit-pencil" onclick="editParagraph(this)">✎</span>
+            </div>
+          </div>
+          <button class="add-note-btn" onclick="addNote(this)">＋ Add note</button>
+        </section>
+
+        <section class="section" data-key="stakeholders" data-label="Stakeholders">
+          <button class="visibility-toggle" onclick="hideSection('stakeholders')" title="Hide section">👁</button>
+          <div class="section-head"><div class="section-label">— Stakeholders</div></div>
+          <div class="section-body">
+
+            <div class="stakeholder">
+              <div class="stakeholder-head">
+                <span class="stakeholder-name"><a href="https://www.linkedin.com/in/gibsontuttle/" target="_blank" rel="noopener">Sarah Gibson Tuttle</a></span>
+                <span class="stakeholder-title">Founder &amp; CEO, Olive &amp; June</span>
+                <span class="role-badge">Economic buyer</span>
+              </div>
+              <div class="editable" data-original="agent">
+                <p class="stakeholder-bg">Founded Olive &amp; June 2013. Sold to Helen of Troy Dec 2024, staying on as CEO. Founder-operator — comfortable with brand decisions, less likely to spend cycles on enterprise software.</p>
+                <span class="edit-pencil" onclick="editParagraph(this)">✎</span>
+              </div>
+            </div>
+
+            <div class="stakeholder">
+              <div class="stakeholder-head">
+                <span class="stakeholder-name"><a href="https://www.linkedin.com/in/kimberly-luciani-3074b467" target="_blank" rel="noopener">Kimberly Luciani</a></span>
+                <span class="stakeholder-title">Senior Director FP&amp;A — Olive &amp; June</span>
+                <span class="role-badge">Influencer</span>
+              </div>
+              <div class="editable" data-original="agent">
+                <p class="stakeholder-bg">Came from Living Proof (another HoT brand) early 2025. Inside HoT operating culture, brings the parent's playbook with her. Most informed person in the room about HoT IT — and the gravitational center pulling toward the silent competitor.</p>
+                <span class="edit-pencil" onclick="editParagraph(this)">✎</span>
+              </div>
+            </div>
+
+            <div class="stakeholder">
+              <div class="stakeholder-head">
+                <span class="stakeholder-name"><a href="https://www.linkedin.com/in/monica-willadsen-99075331/" target="_blank" rel="noopener">Monica Willadsen</a></span>
+                <span class="stakeholder-title">SVP Operations, Olive &amp; June</span>
+                <span class="role-badge">Influencer</span>
+              </div>
+              <div class="editable" data-original="agent">
+                <p class="stakeholder-bg">Pre-acquisition tenure since June 2022. Beauty industry ops veteran (Pixi, SEED Beauty, Church &amp; Dwight, ORLY). If S/4HANA is going to win this deal, she's the champion that makes it happen. If she's not in the room, John's having the wrong conversation.</p>
+                <span class="edit-pencil" onclick="editParagraph(this)">✎</span>
+              </div>
+            </div>
+
+          </div>
+          <button class="add-note-btn" onclick="addNote(this)">＋ Add note</button>
+        </section>
+
+        <section class="section" data-key="competitive" data-label="Competitive context">
+          <button class="visibility-toggle" onclick="hideSection('competitive')" title="Hide section">👁</button>
+          <div class="section-head"><div class="section-label">— Competitive context</div></div>
+          <div class="section-body">
+            <div class="editable" data-original="agent">
+              <p><strong>NetSuite</strong> — Oracle's mid-market ERP, the silent competitor. HoT is an Oracle E-Business Suite shop, which means HoT IT has Oracle relationships, licensing, and bias. Natural extension. <em>The deal closes here or upstream.</em></p>
+              <p><strong>Microsoft Dynamics 365 Business Central</strong> — possible if Olive &amp; June runs a full evaluation independently. Less likely if HoT IT is involved.</p>
+              <span class="edit-pencil" onclick="editParagraph(this)">✎</span>
+            </div>
+          </div>
+          <button class="add-note-btn" onclick="addNote(this)">＋ Add note</button>
+        </section>
+
+        <section class="section" data-key="questions" data-label="Questions to qualify">
+          <button class="visibility-toggle" onclick="hideSection('questions')" title="Hide section">👁</button>
+          <div class="section-head"><div class="section-label">— Questions to qualify</div></div>
+          <div class="section-body">
+            <div class="editable" data-original="agent">
+              <ul class="priorityList">
+                <li>How is the buying process structured — Olive &amp; June, joint with HoT, or driven from HoT IT? <em>(The single most important qualifying question.)</em></li>
+                <li>What systems are you running today — both at Olive &amp; June and any infrastructure shared with the parent?</li>
+                <li>Where's the most painful manual work happening — month-end close, EDI/retail compliance, inventory visibility?</li>
+              </ul>
+              <span class="edit-pencil" onclick="editParagraph(this)">✎</span>
+            </div>
+          </div>
+          <button class="add-note-btn" onclick="addNote(this)">＋ Add note</button>
+        </section>
+
+      </div>
+
+      <div class="hidden-drawer" id="hiddenDrawer">
+        <div class="hidden-drawer-head">— Hidden · click to restore</div>
+        <ul class="hidden-drawer-list" id="hiddenList"></ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Ask Mallin — live conversational layer over the brief. Anything
+       saved from chat (notes, drafted emails, action items) follows the
+       same write-through doctrine: lands in CRM under existing governance. -->
+  <div class="chat-panel">
+    <div class="chat-head">
+      <span class="chat-label">— Ask Mallin</span>
+      <span class="chat-meta">Anything you save here syncs to HubSpot under the same rules as your notes above.</span>
+    </div>
+    <div class="chat-thread" id="chatThread">
+      <div class="chat-empty">
+        <p>Ask anything about Olive &amp; June, draft a follow-up, or pull a recap from a past call.</p>
+        <div class="chat-suggestions">
+          <button class="chat-chip" onclick="sendChat('Why is Monica the real champion here, not Sarah?')">Why is Monica the real champion here, not Sarah?</button>
+          <button class="chat-chip" onclick="sendChat('Draft a follow-up email to Kimberly that lands the silent-competitor question without naming NetSuite directly.')">Draft a follow-up to Kimberly that lands the silent-competitor question</button>
+          <button class="chat-chip" onclick="sendChat(&quot;What's Helen of Troy's next earnings call, and what's likely to come up about Beauty &amp; Wellness segment integration?&quot;)">What's HoT's next earnings call?</button>
+        </div>
+      </div>
+    </div>
+    <form class="chat-input-row" onsubmit="event.preventDefault();sendChatFromInput();">
+      <input class="chat-input" id="chatInput" type="text" placeholder="Ask Mallin about Olive &amp; June…" autocomplete="off" />
+      <button class="chat-send" type="submit" title="Send (Enter)">↑</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function setStyle(cls, btn) {
+    document.body.classList.remove("style-cards", "style-doc");
+    document.body.classList.add(cls);
+    document.querySelectorAll(".switcher button").forEach(function (b) { b.classList.remove("active"); });
+    if (btn) {
+      btn.classList.add("active");
+    } else {
+      const matchBtn = document.querySelector('.switcher button[data-style="' + cls + '"]');
+      if (matchBtn) matchBtn.classList.add("active");
+    }
+  }
+
+  // ── Ask Mallin chat — conversational layer over the brief ───
+  // In production: this hits the same coach/intelligence agent the
+  // rep is already talking to via the cockpit. Anything the rep
+  // saves from chat (notes, drafted emails, tasks) follows the same
+  // write-through doctrine: lands in CRM under existing governance.
+  // For the mockup, responses are stubbed; the UX shape is the point.
+  function sendChatFromInput() {
+    const input = document.getElementById("chatInput");
+    if (!input) return;
+    const text = (input.value || "").trim();
+    if (!text) { input.focus(); return; }
+    input.value = "";
+    sendChat(text);
+  }
+
+  function sendChat(text) {
+    const thread = document.getElementById("chatThread");
+    if (!thread) return;
+    // First message → drop the empty/suggestions block
+    const empty = thread.querySelector(".chat-empty");
+    if (empty) empty.remove();
+
+    // Append user message
+    const userMsg = document.createElement("div");
+    userMsg.className = "chat-msg user";
+    userMsg.innerHTML = '<span class="chat-avatar">JD</span><div class="chat-body"></div>';
+    userMsg.querySelector(".chat-body").textContent = text;
+    thread.appendChild(userMsg);
+    thread.scrollTop = thread.scrollHeight;
+
+    // Stubbed assistant reply — production swaps in the real agent call
+    setTimeout(function () {
+      const reply = mockReply(text);
+      const aMsg = document.createElement("div");
+      aMsg.className = "chat-msg assistant";
+      aMsg.innerHTML = '<span class="chat-avatar">M</span><div class="chat-body">' + reply.body +
+        (reply.actions ? '<div class="chat-action-row">' + reply.actions.map(function (a) {
+          return '<button class="chat-action" onclick="chatActionClicked(this, \'' + a.kind + '\')">' + a.label + '</button>';
+        }).join("") + '</div>' : '') +
+        '<div class="chat-msg-meta">— Mallin · just now</div></div>';
+      thread.appendChild(aMsg);
+      thread.scrollTop = thread.scrollHeight;
+    }, 400);
+  }
+
+  function mockReply(text) {
+    const t = text.toLowerCase();
+    if (/email|draft|follow-?up|recap/.test(t)) {
+      return {
+        body: '<p>Drafted. Soft enough to not name NetSuite, sharp enough to surface the parent-corp dynamic so Kimberly has to commit one way or the other:</p>' +
+              '<p style="padding:8px 12px;background:rgba(0,0,0,0.2);border-left:2px solid var(--accent);font-style:italic;color:#c8c8d0;">' +
+              '"Kimberly — appreciated the conversation today. One thread I\'d love to close before our next call: how is the system evaluation tracking on your side vs Helen of Troy\'s broader integration cadence? Asking because that shapes what scope of S/4 conversation makes sense to bring you next time."</p>' +
+              '<p>Saving the draft to your action queue and to HubSpot as a logged activity on the deal — review + send when you\'re ready.</p>',
+        actions: [
+          { kind: "save_draft", label: "✓ Save draft to action queue + HubSpot" },
+          { kind: "save_note", label: "📝 Save reasoning as a note on this deal" },
+        ],
+      };
+    }
+    if (/monica|svp|champion/.test(t)) {
+      return {
+        body: '<p>Two signals converge on Monica:</p>' +
+              '<p><strong>1.</strong> Pre-acquisition tenure (June 2022). She was at Olive &amp; June before Helen of Troy bought them, so her loyalty is to the brand-as-it-was, not the HoT operating culture. Pulls AGAINST silent-competitor gravity.</p>' +
+              '<p><strong>2.</strong> Beauty-industry ops background spans the exact scale curve they\'re on (Pixi → SEED Beauty → Church &amp; Dwight). She\'s seen "we outgrew our systems" three times and would recognize the rupture point.</p>' +
+              '<p>Sarah is the brand. Kimberly came from another HoT brand with HoT systems instincts. <em>Monica is the only person in the room whose evaluation of S/4HANA isn\'t pre-loaded with a thumb on the scale.</em></p>',
+        actions: [
+          { kind: "save_note", label: "📝 Save this read as a note on the Stakeholders section" },
+        ],
+      };
+    }
+    if (/hot|helen of troy|earnings|integration/.test(t)) {
+      return {
+        body: '<p>Helen of Troy reports quarterly (fiscal year ends Feb). Next earnings call is end of July 2026 (Q1 FY27). Beauty &amp; Wellness segment integration is on the public roadmap — they\'ve named it as a FY26 priority on the last two calls.</p>' +
+              '<p><em>Operationally what that means for you:</em> integration language will get louder on each call, and "we\'re still standalone" gets harder for Olive &amp; June leadership to defend internally as the fiscal year progresses. The decision window is closing inward; your discovery call timing is good.</p>',
+        actions: [
+          { kind: "save_note", label: "📝 Save the timing-window read as a note" },
+        ],
+      };
+    }
+    return {
+      body: '<p>(Mockup reply — production wires this to the live agent that has access to the full deal substrate, past notes, and CRM history.)</p><p>What would help you here: ask about a specific stakeholder, a specific past deal pattern, or draft something for follow-up.</p>',
+    };
+  }
+
+  function chatActionClicked(btn, kind) {
+    btn.textContent = "✓ Synced to HubSpot";
+    btn.disabled = true;
+    btn.style.opacity = "0.6";
+    btn.style.cursor = "default";
+  }
+
+  // ── Inline edit on agent paragraphs ─────────────────────────
+  function editParagraph(pencil) {
+    const wrap = pencil.closest(".editable");
+    const target = wrap.querySelector("p, ul, ol") || wrap;
+    if (!wrap.dataset.original || wrap.dataset.original === "agent") {
+      wrap.dataset.original = target.innerHTML;
+    }
+    target.setAttribute("contenteditable", "true");
+    target.focus();
+    wrap.classList.add("editing");
+    // Select all text for easy replace
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    function commit() {
+      target.removeAttribute("contenteditable");
+      wrap.classList.remove("editing");
+      const current = target.innerHTML.trim();
+      const original = wrap.dataset.original.trim();
+      if (current !== original && current.length > 0) {
+        wrap.classList.add("edited");
+        persistEdits();
+      }
+      target.removeEventListener("blur", commit);
+      target.removeEventListener("keydown", onKey);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") {
+        target.innerHTML = wrap.dataset.original;
+        wrap.classList.remove("edited");
+        commit();
+      } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        commit();
+      }
+    }
+    target.addEventListener("blur", commit);
+    target.addEventListener("keydown", onKey);
+  }
+
+  // ── Per-section margin notes ────────────────────────────────
+  let noteCounter = 0;
+  function addNote(btn) {
+    noteCounter++;
+    const noteId = "note-" + Date.now() + "-" + noteCounter;
+    const note = document.createElement("div");
+    note.className = "rep-note";
+    note.dataset.noteId = noteId;
+    note.innerHTML = `
+      <div class="rep-note-head">
+        <span>📝 Your note</span>
+        <button class="rep-note-delete" onclick="deleteNote(this)" title="Delete note">×</button>
+      </div>
+      <div class="rep-note-body" contenteditable="true" oninput="persistNotes()"></div>
+      <div class="note-controls">
+        <div class="scope-picker">
+          <span class="picker-label">Attach to:</span>
+          <button class="scope-pick active" data-scope="deal" onclick="setScope(this)">Deal · Olive &amp; June</button>
+          <button class="scope-pick" data-scope="account" onclick="setScope(this)">Account · Helen of Troy</button>
+        </div>
+        <div class="note-toggles">
+          <button class="note-toggle" data-toggle="pattern" onclick="toggleNoteFlag(this)" title="Mallin-only tag — flags this note for cross-deal pattern surfacing. Always still syncs to CRM as a normal deal note.">⚐ <span>Cross-deal pattern</span></button>
+          <button class="note-toggle" data-toggle="private" onclick="toggleNoteFlag(this)" title="Maps to CRM's existing private-note flag. CRM governance enforces visibility.">🔒 <span>Private in CRM</span></button>
+        </div>
+      </div>
+      <div class="sync-chip syncing">
+        <span class="sync-dot"></span>
+        <span class="sync-text">Syncing to HubSpot…</span>
+      </div>
+    `;
+    btn.parentNode.insertBefore(note, btn);
+    note.querySelector(".rep-note-body").focus();
+    persistNotes();
+    simulateSync(note);
+  }
+
+  function setScope(btn) {
+    const picker = btn.closest(".scope-picker");
+    const note = btn.closest(".rep-note");
+    picker.querySelectorAll(".scope-pick").forEach(function (b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    persistNotes();
+    simulateSync(note, true);
+  }
+
+  function toggleNoteFlag(btn) {
+    btn.classList.toggle("active");
+    const note = btn.closest(".rep-note");
+    persistNotes();
+    simulateSync(note, true);
+  }
+
+  // Sync state simulation. In production: this is the actual CRM write.
+  // Status transitions: syncing → synced. If CRM is "offline" (the demo
+  // toggle), goes to "pending retry" instead and stays there until the
+  // toggle flips back.
+  function simulateSync(note, refresh) {
+    const chip = note.querySelector(".sync-chip");
+    if (!chip) return;
+    const offline = document.body.classList.contains("crm-offline");
+    const scopeBtn = note.querySelector(".scope-pick.active");
+    const scope = scopeBtn ? scopeBtn.dataset.scope : "deal";
+    const attachLabel = scope === "account" ? 'Helen of Troy company record' : 'Olive &amp; June deal';
+    const isPrivate = note.querySelector('.note-toggle[data-toggle="private"]')?.classList.contains("active");
+    const isPattern = note.querySelector('.note-toggle[data-toggle="pattern"]')?.classList.contains("active");
+    chip.className = "sync-chip syncing";
+    chip.innerHTML = '<span class="sync-dot"></span><span class="sync-text">Syncing to HubSpot…</span>';
+    setTimeout(function () {
+      if (document.body.classList.contains("crm-offline")) {
+        chip.className = "sync-chip pending";
+        chip.innerHTML = '<span class="sync-dot"></span><span class="sync-text">⏳ Pending sync · will retry when HubSpot reconnects</span>';
+      } else {
+        const privateBit = isPrivate ? ' · 🔒 private to you in HubSpot' : '';
+        const patternBit = isPattern ? ' · ⚐ tagged for cross-deal pattern (Mallin metadata)' : '';
+        chip.className = "sync-chip synced";
+        chip.innerHTML = '<span class="sync-dot"></span><span class="sync-text">✓ Synced to HubSpot · note on ' + attachLabel + privateBit + patternBit + ' · <a href="#" onclick="event.preventDefault();alert(\'In production this links to the note record in HubSpot.\')">view in HubSpot →</a></span>';
+      }
+    }, refresh ? 350 : 800);
+  }
+
+  function toggleCrmOffline() {
+    const offlineNow = document.body.classList.toggle("crm-offline");
+    document.getElementById("crmOfflineBtn").classList.toggle("active", offlineNow);
+    // Re-evaluate every existing note's sync state
+    document.querySelectorAll(".rep-note").forEach(function (n) {
+      simulateSync(n, true);
+    });
+  }
+  function deleteNote(x) {
+    const note = x.closest(".rep-note");
+    if (note) {
+      note.remove();
+      persistNotes();
+    }
+  }
+
+  // ── Persistence (localStorage — proxy for the real backend) ─
+  const STORAGE_KEY = "mallin.mockup.layout.v1";
+  function persistThinking() {
+    const ta = document.getElementById("myThinking");
+    if (!ta) return;
+    const state = loadState();
+    state.thinking = ta.value;
+    saveState(state);
+    flashSaved();
+  }
+  function saveThinking() {
+    clearTimeout(window._thinkingTimer);
+    window._thinkingTimer = setTimeout(persistThinking, 400);
+  }
+  function persistNotes() {
+    const state = loadState();
+    state.notes = Array.from(document.querySelectorAll(".rep-note")).map(function (n) {
+      const activeScope = n.querySelector(".scope-pick.active");
+      return {
+        sectionKey: n.closest(".section")?.dataset.key,
+        body: n.querySelector(".rep-note-body").innerHTML,
+        scope: activeScope ? activeScope.dataset.scope : "deal",
+        pattern: !!n.querySelector('.note-toggle[data-toggle="pattern"].active'),
+        private: !!n.querySelector('.note-toggle[data-toggle="private"].active'),
+        id: n.dataset.noteId,
+      };
+    });
+    saveState(state);
+  }
+  function persistEdits() {
+    const state = loadState();
+    state.edits = {};
+    document.querySelectorAll(".editable.edited").forEach(function (e) {
+      const sec = e.closest(".section");
+      if (!sec) return;
+      const target = e.querySelector("p, ul, ol") || e;
+      state.edits[sec.dataset.key + ":" + Array.from(sec.querySelectorAll(".editable")).indexOf(e)] = {
+        current: target.innerHTML,
+        original: e.dataset.original,
+      };
+    });
+    saveState(state);
+  }
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+    catch (e) { return {}; }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (e) {}
+  }
+  function flashSaved() {
+    const meta = document.querySelector(".my-thinking-meta .saved");
+    if (!meta) return;
+    meta.textContent = "✓ Saving…";
+    setTimeout(function () { meta.textContent = "✓ Auto-saved"; }, 500);
+  }
+
+  // Restore on load
+  window.addEventListener("DOMContentLoaded", function () {
+    const state = loadState();
+    if (state.thinking) {
+      const ta = document.getElementById("myThinking");
+      if (ta) ta.value = state.thinking;
+    }
+    // Notes — restore body + scope + pattern/private flags + sync chip
+    if (Array.isArray(state.notes)) {
+      state.notes.forEach(function (n) {
+        const sec = document.querySelector('.section[data-key="' + n.sectionKey + '"]');
+        if (!sec) return;
+        const btn = sec.querySelector(".add-note-btn");
+        if (!btn) return;
+        const scope = n.scope || "deal";
+        const note = document.createElement("div");
+        note.className = "rep-note";
+        note.dataset.noteId = n.id;
+        note.innerHTML = `
+          <div class="rep-note-head">
+            <span>📝 Your note</span>
+            <button class="rep-note-delete" onclick="deleteNote(this)" title="Delete note">×</button>
+          </div>
+          <div class="rep-note-body" contenteditable="true" oninput="persistNotes()">${n.body}</div>
+          <div class="note-controls">
+            <div class="scope-picker">
+              <span class="picker-label">Attach to:</span>
+              <button class="scope-pick${scope === "deal" ? " active" : ""}" data-scope="deal" onclick="setScope(this)">Deal · Olive &amp; June</button>
+              <button class="scope-pick${scope === "account" ? " active" : ""}" data-scope="account" onclick="setScope(this)">Account · Helen of Troy</button>
+            </div>
+            <div class="note-toggles">
+              <button class="note-toggle${n.pattern ? " active" : ""}" data-toggle="pattern" onclick="toggleNoteFlag(this)" title="Mallin-only tag — flags this note for cross-deal pattern surfacing. Always still syncs to CRM as a normal deal note.">⚐ <span>Cross-deal pattern</span></button>
+              <button class="note-toggle${n.private ? " active" : ""}" data-toggle="private" onclick="toggleNoteFlag(this)" title="Maps to CRM's existing private-note flag. CRM governance enforces visibility.">🔒 <span>Private in CRM</span></button>
+            </div>
+          </div>
+          <div class="sync-chip syncing">
+            <span class="sync-dot"></span>
+            <span class="sync-text">Syncing to HubSpot…</span>
+          </div>
+        `;
+        btn.parentNode.insertBefore(note, btn);
+        simulateSync(note, true);
+      });
+    }
+    // Edits — restore both visual state + content
+    if (state.edits) {
+      Object.keys(state.edits).forEach(function (key) {
+        const [sectionKey, idx] = key.split(":");
+        const sec = document.querySelector('.section[data-key="' + sectionKey + '"]');
+        if (!sec) return;
+        const edits = sec.querySelectorAll(".editable");
+        const editable = edits[parseInt(idx, 10)];
+        if (!editable) return;
+        const target = editable.querySelector("p, ul, ol") || editable;
+        editable.dataset.original = state.edits[key].original;
+        target.innerHTML = state.edits[key].current;
+        editable.classList.add("edited");
+      });
+    }
+  });
+
+
+  // ── Memory panel — past notes attributed to current claims ──
+  function toggleMemoryPanel() {
+    const panel = document.getElementById("memoryPanel");
+    const arrow = document.getElementById("memArrow");
+    const isOpen = panel.classList.toggle("open");
+    arrow.classList.toggle("open", isOpen);
+    if (isOpen) wireMemoryHovers();
+  }
+  function wireMemoryHovers() {
+    document.querySelectorAll(".memory-item").forEach(function (item) {
+      if (item._wired) return;
+      item._wired = true;
+      const targets = (item.dataset.targets || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+      item.addEventListener("mouseenter", function () {
+        targets.forEach(function (key) {
+          const sec = document.querySelector('.section[data-key="' + key + '"]');
+          if (sec) sec.classList.add("shaped");
+        });
+      });
+      item.addEventListener("mouseleave", function () {
+        document.querySelectorAll(".section.shaped").forEach(function (s) {
+          s.classList.remove("shaped");
+        });
+      });
+    });
+  }
+
+  function showFuturePreview() {
+    alert(
+      "▷ HOW YOUR NOTES SHAPE FUTURE BRIEFS\n\n" +
+      "Every note you write is a CRM note (1:1 sync). Mallin's job is reading those notes back into future briefs.\n\n" +
+      "Scope (CRM-side) — where the note lives in your CRM:\n" +
+      "• Attached to Deal → surfaces on future briefs for that specific deal\n" +
+      "• Attached to Account → surfaces on future briefs for that account + any related subsidiary (Helen of Troy → Drybar, Living Proof, Hot Tools, etc.)\n\n" +
+      "Tag (Mallin-only metadata, invisible to CRM):\n" +
+      "• ⚐ Cross-deal pattern → also surfaces whenever the agent detects similar dynamics on UNRELATED deals (parent-acquired CPG, founder-CEO earnout, ops-as-champion, etc.)\n\n" +
+      "Visibility (CRM permission, enforced by CRM):\n" +
+      "• 🔒 Private → maps to your CRM's existing private-note flag. Only you see it in HubSpot.\n\n" +
+      "Production build will show an actual rendered preview here — a mock of next week's brief on a similar deal with your note woven into the relevant section."
+    );
+  }
+
+  function hideSection(key) {
+    const sec = document.querySelector('.section[data-key="' + key + '"]');
+    if (!sec) return;
+    sec.setAttribute("hidden", "");
+    refreshHiddenDrawer();
+  }
+  function showSection(key) {
+    const sec = document.querySelector('.section[data-key="' + key + '"]');
+    if (!sec) return;
+    sec.removeAttribute("hidden");
+    refreshHiddenDrawer();
+  }
+  function refreshHiddenDrawer() {
+    const list = document.getElementById("hiddenList");
+    const drawer = document.getElementById("hiddenDrawer");
+    list.innerHTML = "";
+    const hidden = document.querySelectorAll(".section[hidden]");
+    hidden.forEach(function (s) {
+      const li = document.createElement("li");
+      li.className = "chip";
+      li.innerHTML = "+ " + s.dataset.label;
+      li.onclick = function () { showSection(s.dataset.key); };
+      list.appendChild(li);
+    });
+    drawer.classList.toggle("has-hidden", hidden.length > 0);
+  }
+</script>
+
+</body>
+</html>

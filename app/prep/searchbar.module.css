@@ -1,0 +1,279 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   SearchBar — ⌘K cross-deal navigator.
+   Two surfaces:
+     1. Trigger button in the TopBar
+     2. Modal overlay
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  border-radius: 6px;
+  color: var(--ck-ink-2);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+.trigger:hover {
+  background: var(--ck-surface-2);
+  border-color: var(--ck-rule-2);
+  color: var(--ck-ink);
+}
+.triggerIcon {
+  font-size: 13px;
+  color: var(--ck-ink-3);
+}
+.triggerLabel {
+  font-weight: 500;
+}
+.triggerHint {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  color: var(--ck-ink-4);
+}
+
+/* ─── Modal ─────────────────────────────────────────────────────────── */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 10, 0.65);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+  z-index: 1000;
+  animation: scrimIn 0.12s ease-out;
+}
+@keyframes scrimIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal {
+  width: min(640px, 90vw);
+  background: var(--ck-surface);
+  border: 0.5px solid var(--ck-rule-2);
+  border-radius: 12px;
+  box-shadow: 0 24px 64px var(--ck-shadow);
+  overflow: hidden;
+  animation: modalIn 0.14s ease-out;
+}
+@keyframes modalIn {
+  from { transform: translateY(-6px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.inputIcon {
+  color: var(--ck-ink-4);
+  font-size: 16px;
+}
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--ck-ink);
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+}
+.input::placeholder {
+  color: var(--ck-ink-4);
+}
+.loading {
+  color: var(--ck-ink-4);
+  font-size: 14px;
+  animation: streamPulse 1.0s ease-in-out infinite;
+}
+@keyframes streamPulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+.escHint {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  color: var(--ck-ink-4);
+}
+
+/* ─── Results list ──────────────────────────────────────────────────── */
+
+.results {
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--ck-ink-4);
+  font-size: 13.5px;
+}
+
+/* LinkedIn search escape hatch — typed query becomes a doorway to
+   LinkedIn people search. Appears as the first row whenever there's
+   a query; ⌘+Enter triggers it even when a deal is highlighted. */
+.linkedInRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(10, 102, 194, 0.06);
+  border: 0.5px solid rgba(74, 158, 255, 0.18);
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--ck-ink-2);
+  margin-bottom: 6px;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+.linkedInRow:hover {
+  background: rgba(10, 102, 194, 0.14);
+  border-color: rgba(74, 158, 255, 0.4);
+}
+.linkedInIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(10, 102, 194, 0.25);
+  color: #6ab0ff;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.linkedInLabel {
+  flex: 1;
+  font-size: 13px;
+  color: var(--ck-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.linkedInHint {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ck-ink-4);
+  padding: 2px 5px;
+  background: var(--ck-surface-2);
+  border-radius: 3px;
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--ck-ink-2);
+}
+.resultHighlighted {
+  background: var(--ck-good-tint);
+}
+
+.resultMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.resultDealName {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ck-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.resultAccount {
+  font-size: 11.5px;
+  color: var(--ck-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resultMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.resultStage {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ck-ink-4);
+  letter-spacing: 0.02em;
+}
+.matchTag {
+  font-size: 11px;
+  color: var(--ck-good);
+  font-style: italic;
+}
+
+/* Posture pills (smaller variant for the result row) */
+.posturePill {
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.posture_advancing {
+  background: var(--ck-good-tint);
+  border: 0.5px solid var(--ck-good);
+  color: var(--ck-good);
+}
+.posture_at_risk {
+  background: var(--ck-crit-tint);
+  border: 0.5px solid var(--ck-crit);
+  color: var(--ck-crit);
+}
+.posture_stalled {
+  background: var(--ck-warn-tint);
+  border: 0.5px solid var(--ck-warn);
+  color: var(--ck-warn);
+}
+.posture_indeterminate {
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  color: var(--ck-ink-3);
+}

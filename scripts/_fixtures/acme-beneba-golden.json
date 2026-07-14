@@ -1,0 +1,135 @@
+{
+  "intelligence": [
+    {
+      "id": "si_eleanor_pain_q3",
+      "source_channel": "call",
+      "derivation": "observed",
+      "summary": "Eleanor (champion) explicitly stated Q3 expansion has stretched team thin and they are evaluating solutions now. Direct pain articulation from a buyer who self-identifies as actively shopping.",
+      "quote": "We're evaluating solutions now — the Q3 expansion really stretched our team thin.",
+      "strength": "strong",
+      "source_span": {
+        "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+        "start_ms": 245000
+      }
+    },
+    {
+      "id": "si_eleanor_stakeholder_map",
+      "source_channel": "call",
+      "derivation": "observed",
+      "summary": "Eleanor named James (procurement) and Maria (CFO) as required participants in any decision. Champion volunteering decision committee composition unprompted.",
+      "quote": "James in procurement and Maria our CFO would need to be involved in any decision.",
+      "strength": "moderate",
+      "source_span": {
+        "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+        "start_ms": 1180000
+      }
+    },
+    {
+      "id": "si_meeting_procurement_intent",
+      "source_channel": "calendar",
+      "derivation": "inferred",
+      "summary": "Future-scheduled follow-up meeting with title 'Beneba follow-up - bring procurement' indicates seller-side awareness that procurement engagement is imminent. Paper process not yet executed but anticipated.",
+      "strength": "weak",
+      "source_span": {
+        "activity_id": "18a295e6-c003-4bde-9bab-6277927522e5"
+      }
+    },
+    {
+      "id": "si_call_summary_synthesis",
+      "source_channel": "call",
+      "derivation": "inferred",
+      "summary": "Discovery call covered Beneba ops challenges driven by Q3 expansion. Procurement and CFO review process discussed. No commitments made — deal remains in active discovery, not advanced commercial discussion.",
+      "strength": "moderate",
+      "source_span": {
+        "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a"
+      }
+    }
+  ],
+  "methodology_pillar_evidence": [
+    {
+      "pillar_key": "identify_pain",
+      "evidence_ids": ["si_eleanor_pain_q3"],
+      "confidence": "high",
+      "status_override": "confirmed"
+    },
+    {
+      "pillar_key": "champion",
+      "evidence_ids": ["si_eleanor_pain_q3", "si_eleanor_stakeholder_map"],
+      "confidence": "medium",
+      "status_override": "partial"
+    },
+    {
+      "pillar_key": "economic_buyer",
+      "evidence_ids": ["si_eleanor_stakeholder_map"],
+      "confidence": "low",
+      "status_override": "partial"
+    },
+    {
+      "pillar_key": "paper_process",
+      "evidence_ids": ["si_meeting_procurement_intent"],
+      "confidence": "low",
+      "status_override": "partial"
+    },
+    {
+      "pillar_key": "decision_criteria",
+      "evidence_ids": ["si_call_summary_synthesis"],
+      "confidence": "low",
+      "status_override": "partial"
+    }
+  ],
+  "stakeholder_enrichments": [
+    {
+      "stakeholder_id": "eec477e0-d8e5-4795-9459-c0c5ef682c73",
+      "disposition": "champion",
+      "engagement_level": "active",
+      "influence_level": "high",
+      "notes": "Strong champion behavior: articulating pain unprompted, surfacing decision committee, attending follow-up meeting. Already disposition=champion in CRM — corroborated by call evidence.",
+      "evidence_ids": ["si_eleanor_pain_q3", "si_eleanor_stakeholder_map"],
+      "confidence": "high"
+    },
+    {
+      "stakeholder_id": "7ebfc445-0e07-4e54-9f3c-b6a6bb76aa1b",
+      "disposition": "neutral",
+      "engagement_level": "passive",
+      "influence_level": "medium",
+      "notes": "Technical buyer attending follow-up meeting. No call utterances captured. Disposition currently neutral in CRM; no evidence to update.",
+      "evidence_ids": ["si_eleanor_stakeholder_map"],
+      "confidence": "low"
+    },
+    {
+      "stakeholder_id": "6607872b-fe1f-489b-8597-c41d35b433db",
+      "disposition": "unknown",
+      "engagement_level": "absent",
+      "influence_level": "high",
+      "notes": "Economic buyer named by champion but has not appeared on any call, email, or meeting. Influence inferred from CFO role; disposition cannot be assessed without direct contact.",
+      "evidence_ids": ["si_eleanor_stakeholder_map"],
+      "confidence": "low"
+    }
+  ],
+  "conflicts": [],
+  "opportunity_enrichments": {
+    "last_activity_summary": {
+      "text": "Discovery call (Apr 20) surfaced Q3 expansion pain and decision committee. Follow-up meeting scheduled Apr 30 with procurement on agenda.",
+      "confidence": "high",
+      "evidence_ids": ["si_call_summary_synthesis", "si_meeting_procurement_intent"]
+    },
+    "deal_posture": {
+      "status": "advancing",
+      "rationale": "Active discovery with confirmed pain, identified champion, and forward-scheduled meeting that escalates to procurement. No stalls, no objections, no disengaged stakeholders other than economic buyer who has not yet been engaged.",
+      "confidence": "medium",
+      "evidence_ids": ["si_eleanor_pain_q3", "si_meeting_procurement_intent", "si_call_summary_synthesis"]
+    }
+  },
+  "diagnostics": {
+    "overall_confidence": "medium",
+    "rationale": "One full discovery call with strong champion utterances anchors most pillars. Email body is null and meeting has no recap, limiting evidence breadth. Economic buyer and procurement contact have not been engaged directly. Pain and champion pillars are well-evidenced; remaining MEDDPICC pillars are partial or absent.",
+    "insufficiently_evidenced": [
+      { "field_path": "methodology_pillar_evidence.metrics", "reason": "No quantified business metrics surfaced on call or in any payload." },
+      { "field_path": "methodology_pillar_evidence.decision_process", "reason": "Champion mentioned procurement and CFO involvement but did not describe sequencing, gates, or timeline." },
+      { "field_path": "methodology_pillar_evidence.competition", "reason": "No competitive vendor mentioned in any payload." },
+      { "field_path": "stakeholder_enrichments.maria_chen.disposition", "reason": "Economic buyer has had zero direct interaction across all activities; disposition cannot be inferred from third-party mention alone." }
+    ],
+    "generated_at": "2026-04-27T22:30:00.000Z",
+    "model": "manual-golden-v1"
+  }
+}

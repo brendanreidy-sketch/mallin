@@ -1,0 +1,125 @@
+/* CollapsibleSections — chip drawer + expandable sections.
+ * Spec: docs/landing-concepts/23-prep-style-variants.html. */
+
+.section {
+  margin: 14px 0 0;
+  padding: 16px 0 4px;
+  border-top: 0.5px dashed var(--ck-rule);
+  position: relative;
+  transition: opacity 200ms ease;
+}
+
+.section[data-first="true"] {
+  border-top: none;
+  padding-top: 8px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sectionLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mallin-accent, #7aa8d8);
+}
+
+.visibilityToggle {
+  margin-left: auto;
+  width: 26px;
+  height: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ck-ink-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  /* Discoverable at rest — the old 0.35 + faintest ink read as invisible.
+     Clearly visible now (muted, not shouting), full strength on hover/focus. */
+  color: var(--ck-ink-3);
+  opacity: 0.85;
+  transition:
+    opacity 140ms ease,
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.section:hover .visibilityToggle {
+  opacity: 1;
+  color: var(--ck-ink-2);
+}
+
+.visibilityToggle:hover,
+.visibilityToggle:focus-visible {
+  color: var(--ck-ink);
+  background: var(--ck-surface-2);
+  opacity: 1;
+  outline: none;
+}
+
+.sectionBody {
+  /* The section's actual rendered content. Children inherit existing
+     accountIntelligence.module.css classes; this wrapper is layout-only. */
+}
+
+.drawer {
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0.5px dashed var(--ck-rule-2);
+  border-radius: 8px;
+  background: var(--ck-surface-2);
+  overflow: hidden;
+}
+
+.drawerHead {
+  padding: 8px 14px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ck-ink-3);
+}
+
+.drawerList {
+  list-style: none;
+  padding: 0 8px 10px;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 8px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ck-ink-2);
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.chip:hover,
+.chip:focus-visible {
+  color: var(--mallin-accent, #7aa8d8);
+  border-color: var(--ck-blue-tint);
+  background: var(--ck-blue-tint);
+  outline: none;
+}

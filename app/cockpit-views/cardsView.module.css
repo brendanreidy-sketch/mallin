@@ -1,0 +1,128 @@
+.bands {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* Tier 3 — quiet reference material: denser grid, dimmer surface. */
+.referenceBand {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bandLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ck-ink-4);
+  padding-top: 8px;
+  border-top: 0.5px solid rgba(26, 34, 48, 0.05);
+}
+.gridDense {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  border: 0.5px solid rgba(26, 34, 48, 0.07);
+  border-radius: 10px;
+  background: var(--ck-surface);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Tier 1 — the one dominant card. */
+.primary {
+  border-color: rgba(74, 113, 134, 0.35);
+  background: linear-gradient(180deg, rgba(74, 113, 134, 0.05), rgba(74, 113, 134, 0));
+  padding: 22px 24px;
+}
+
+/* Tier 3 — dimmer, tighter, smaller type. */
+.tier3 {
+  background: var(--ck-surface-3);
+  border-color: rgba(26, 34, 48, 0.05);
+  padding: 13px 14px;
+  gap: 9px;
+}
+
+.gapped {
+  border-color: rgba(194, 90, 74, 0.25);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ck-ink);
+}
+.primary .title {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.tier3 .title {
+  font-size: 12.5px;
+  color: var(--ck-ink-2);
+}
+
+/* Primary framing line — what this card means. */
+.descriptor {
+  margin: -4px 0 2px;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  color: var(--ck-blue);
+  opacity: 0.85;
+}
+
+.gapTag {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ck-crit);
+  border: 0.5px solid rgba(194, 90, 74, 0.4);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.primary .body {
+  gap: 16px;
+}
+.tier3 .body {
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .gridDense {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .grid,
+  .gridDense {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,173 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ck-ink-3);
+}
+
+.text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ck-ink-2);
+}
+
+.list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.list li {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+}
+
+/* pairs */
+.pairs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.pair {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.pairLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ck-ink-3);
+}
+.pairValue {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* people */
+.people {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.person {
+  display: flex;
+  gap: 9px;
+}
+.personDot {
+  margin-top: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.personBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.personHead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.personName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ck-ink);
+}
+.personRole {
+  font-size: 12px;
+  color: var(--ck-ink-3);
+}
+.personDisp {
+  font-size: 11px;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+.personNote {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-3);
+}
+
+/* flags */
+.flags {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.flag {
+  display: flex;
+  gap: 9px;
+}
+.flagBar {
+  width: 2.5px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+.flagBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.flagHead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.flagTitle {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ck-ink);
+  line-height: 1.4;
+}
+.flagSev {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.flagDetail {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-3);
+}
+
+/* gap — required-but-absent governance data point */
+.gap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 0.5px dashed rgba(194, 90, 74, 0.4);
+  border-radius: 6px;
+  background: rgba(194, 90, 74, 0.05);
+}
+.gapDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ck-crit);
+  flex: 0 0 auto;
+}
+.gapText {
+  font-size: 12.5px;
+  color: var(--ck-ink-2);
+}
+.gapText em {
+  color: var(--ck-ink-3);
+  font-style: italic;
+}

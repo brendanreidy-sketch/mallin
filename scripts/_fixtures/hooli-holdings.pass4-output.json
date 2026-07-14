@@ -1,0 +1,386 @@
+{
+  "metadata": {
+    "surface_mode": "full",
+    "rationale": "Deal is at_risk because the economic buyer has been in one call out of five and the champion's airtime collapsed at the last call after procurement entered. Marcus is preparing a recommendation to Linda solo. Everything downstream anchors on the absence of an EB-level conversation.",
+    "insufficiently_evidenced": [
+      {
+        "field_path": "stakeholder_strategy[sth_linda_park].disposition_rationale",
+        "reason": "Linda Park attended only one call (Feb 26 demo) and dropped at 35 min of 60. Her two questions were procedural and never followed up. Her current view of the proposal or of the procurement comparison is unknown."
+      }
+    ],
+    "model": "claude-sonnet-4-6",
+    "prompt_version": "v1.4.1",
+    "generated_at": "2026-04-10T14:22:08.341Z",
+    "opportunity_id": "opp_hooli_holdings",
+    "usage": {
+      "input_tokens": 84210,
+      "output_tokens": 6892
+    },
+    "latency_ms": 142104,
+    "attempts": 1
+  },
+  "top_line": {
+    "text": "Hooli Holdings reads as Negotiation 75% in HubSpot. Mallin reads it as Evaluation, structurally thin — the economic buyer (Linda Park, CFO) has been on one call out of five, the champion's airtime collapsed at the last call, and procurement just entered with a vendor-template + comparative win-rate ask.",
+    "posture": "at_risk",
+    "evidence_ids": ["call_01", "call_02", "call_04", "call_05"]
+  },
+  "deal_thesis": {
+    "status": "formed",
+    "thesis": "This deal will be won or lost on whether the rep can re-enter the conversation before Marcus delivers his recommendation to Linda. The product fit is established; the relationship to the actual decision-maker is not. TreasuryFlow has already anchored the commercial frame and procurement is running a comparative exercise the rep didn't shape.",
+    "confidence": "high",
+    "decision_frame": "Champion-prepared recommendation to absent EB vs. rep-facilitated conversation with EB present",
+    "why_this_matters": "Anchor the next move on getting Linda in a room with the rep before Marcus's recommendation lands. Re-engagement at the EB layer is the only path that changes the deal's trajectory. Continuing to negotiate through Marcus + Devin while Linda is absent locks in TreasuryFlow's anchor.",
+    "evidence_ids": ["call_02", "call_04", "call_05"]
+  },
+  "post_call_synthesis": {
+    "last_interaction_id": "call_05",
+    "last_interaction_label": "Apr 9 procurement intro — Devin Roy enters, Marcus airtime collapses",
+    "what_surfaced": [
+      "Procurement entered the conversation for the first time — Devin Roy (Senior Procurement Manager) drove 70% of the dialogue and asked for win-rate-vs-TreasuryFlow plus a vendor-terms template. Procurement entering at call 5 without rep preparation is a closing-out signal, not a buying signal.",
+      "Champion airtime collapsed from ~40% (calls 1–4) to ~8% on this call. Marcus said three sentences over a 40-minute call where he was scheduled to lead. He let procurement reframe the entire conversation.",
+      "Marcus closed with 'Linda's expecting a recommendation' — explicit signal that the champion is preparing to make the case to the economic buyer without the rep in the room. 'I think we have what we need' is the language of a position, not an exploration.",
+      "TreasuryFlow surfaced explicitly for the second time. Procurement is now running a comparative exercise. Every response from this point answers their question rather than framing the deal on Hooli's actual decision criteria — which the buyer has never defined."
+    ],
+    "to_think_through": [
+      "Decide whether to request a 30-minute call with Marcus + Linda before Marcus delivers his recommendation. The rep owns this ask. If yes, the request goes to Marcus this week and Linda is in the room before the recommendation lands. If no, the recommendation lands without rep influence and the rep is responding to a downstream decision rather than shaping the upstream one.",
+      "Decide how to handle Devin's vendor template + win-rate-vs-TreasuryFlow request. Filling out the template confirms the comparative frame; refusing or delaying it without an alternative looks evasive. The third option is to send the template along with a one-pager that reframes the comparison off price (implementation timeline, subsidiary-roll-up architecture, references at scale) before the comparison happens.",
+      "Pre-clear with the deal desk whether there's any incentive structure available below the list price shown on Apr 9. The rep hasn't moved commercially yet. TreasuryFlow has anchored. If a commercial move is required to keep the deal alive, the rep needs to know the floor before procurement asks.",
+      "Align with the manager (already looped in via escalation policy) on whether the right move is rep-led re-engagement with Linda, manager-led re-engagement, or a deliberate withdraw-and-reposition. Two HIGH risks fired on the same call — this is the escalation policy's trigger condition for manager involvement."
+    ]
+  },
+  "what_changed": {
+    "summary": "Apr 9 call introduced procurement (Devin Roy), surfaced competitor (TreasuryFlow) explicitly, and revealed the champion's tone shift toward delivering a solo recommendation to the absent economic buyer.",
+    "changes": [
+      {
+        "kind": "stakeholder_change",
+        "description": "Procurement entered the deal for the first time. Devin Roy (Senior Procurement Manager) drove the Apr 9 call and asked for a vendor-terms template plus comparative win-rate data versus TreasuryFlow.",
+        "evidence_ids": ["call_05"]
+      },
+      {
+        "kind": "position_change",
+        "description": "Champion airtime dropped from ~40% across calls 1–4 to ~8% on call 5. Marcus said three sentences over 40 minutes and closed with 'I think we have what we need,' implying the recommendation is being formed without further rep input.",
+        "evidence_ids": ["call_04", "call_05"]
+      },
+      {
+        "kind": "competitive_change",
+        "description": "TreasuryFlow surfaced explicitly for the second time. Marcus mentioned their proposal 'came in slightly under on the year-one number' at call 4. Devin asked for 'win rate against TreasuryFlow' at call 5. The commercial frame is now relative-to-TreasuryFlow.",
+        "evidence_ids": ["call_04", "call_05"]
+      }
+    ]
+  },
+  "primary_decision_focus": {
+    "severity": "high",
+    "primary_risk": "Champion preparing recommendation without reactivating Linda",
+    "next_move": "Get Linda into a 20-minute commercial alignment before Friday",
+    "confidence": "high",
+    "evidence_quotes": [
+      {
+        "speaker": "Marcus Hale",
+        "role": "Champion · Treasury Manager",
+        "quote": "Yeah, I think we have what we need. Linda's expecting a recommendation.",
+        "callId": "call_05",
+        "callLabel": "Procurement intro · call 5",
+        "callAt": "2026-04-09T15:30:00.000Z"
+      },
+      {
+        "speaker": "Marcus Hale",
+        "role": "Champion · Treasury Manager",
+        "quote": "OK, I'll bring this to Linda and get back to you. We also have a competitive proposal from TreasuryFlow.",
+        "callId": "call_04",
+        "callLabel": "Proposal walkthrough · call 4",
+        "callAt": "2026-03-26T15:30:00.000Z"
+      }
+    ],
+    "stakeholder_stat": {
+      "name": "Linda Park",
+      "title": "CFO · Economic buyer",
+      "stats": "1 of 5 calls · 6 weeks since last touch",
+      "last_seen_at": "2026-02-26T15:00:00.000Z"
+    },
+    "pattern_note": "Champions who let procurement drive a 5th-call introduction without preparing the rep first usually have already decided the question. The 5th call isn't a buying signal — it's a closing-out signal."
+  },
+  "critical_risks": [
+    {
+      "id": "cr_001",
+      "title": "Champion commitment weakened — Marcus preparing recommendation solo",
+      "description": "Marcus Hale was the champion through call 4. On call 5, his airtime dropped from ~40% to ~8% and he let procurement drive a call he was scheduled to lead. He closed with 'Linda's expecting a recommendation' and 'I think we have what we need' — the language of someone preparing a position to deliver upward, not someone exploring options. The relationship still exists; the championing has thinned.",
+      "failure_mode": "Marcus delivers a recommendation to Linda without the rep in the room. The recommendation may be neutral, lukewarm, or framed against TreasuryFlow's commercial anchor — the rep has no ability to defend, reframe, or strengthen it. Linda evaluates a flat document, picks based on the procurement comparison, and the deal closes lost.",
+      "trigger": "Marcus sends a recommendation memo or has a 1:1 with Linda this week without involving the rep. Once the recommendation is delivered, reopening the conversation requires re-establishing why a vendor needs to be in the room — which is much harder than staying in the room from the start.",
+      "in_call_signal": "If Marcus says anything like 'I'll let you know after I sync with Linda' or 'we should be wrapping this up soon' without proposing a meeting, the recommendation is being prepared without the rep. Positive signal: Marcus proposes a 30 with Linda before he delivers his case.",
+      "recommended_posture": "Ask Marcus directly, this week: 'Would it make sense for me to be in the room when you walk Linda through the comparison? The TreasuryFlow framing matters and there are 2–3 places where the structural difference isn't obvious from a side-by-side — I'd hate for her to make the call without seeing those.' Frame the ask around protecting Marcus's recommendation, not reopening it.",
+      "severity": "high",
+      "evidence_ids": ["call_04", "call_05"]
+    },
+    {
+      "id": "cr_002",
+      "title": "Economic buyer (Linda Park, CFO) has been in one call out of five",
+      "description": "Linda Park is the economic buyer. She attended only the Feb 26 demo (call 2). She joined 15 minutes late, asked two procedural questions ('implementation timeline' and 'typical contract structure'), and dropped at 35 minutes of a 60-minute call. She has not appeared on any touch since. That was 6 weeks ago. The two questions she asked were never defined — the rep moved on without follow-up.",
+      "failure_mode": "Linda evaluates the deal based on Marcus's recommendation, procurement's comparative analysis, and her own undefined version of 'implementation timeline' and 'contract structure' — none of which the rep has shaped. The decision happens in a forum the rep is not in, with criteria the rep never validated.",
+      "trigger": "Marcus delivers a recommendation to Linda without an intervening rep-led conversation. Linda asks a question Marcus can't answer fully — and Marcus has no clean way to bring the rep in mid-recommendation without looking unprepared.",
+      "in_call_signal": "If Marcus declines a request for a meeting with Linda, watch the reason carefully. 'Linda prefers to come in at the recommendation stage' is the same language used at call 2 — it's a pattern, not a one-off, and it's the pattern that produces lost deals when the recommendation is comparative.",
+      "recommended_posture": "Frame the meeting request around Linda's own stated criteria: 'You mentioned implementation timeline and contract structure as the two things she'd want to see. I can show her our typical 6-week stand-up timing and walk through the 5-year commercial structure — would it help to put a 30 on the calendar before you sync with her?'",
+      "severity": "high",
+      "evidence_ids": ["call_02", "call_05"]
+    },
+    {
+      "id": "cr_003",
+      "title": "TreasuryFlow has anchored the commercial frame",
+      "description": "List price was presented at call 4 with no incentive structure. TreasuryFlow's proposal surfaced at the same call — Marcus mentioned they 'came in slightly under on the year-one number.' At call 5, procurement explicitly asked for win-rate-vs-TreasuryFlow and a vendor terms template. The commercial conversation is now framed as Mallin-relative-to-TreasuryFlow, not Mallin-as-Mallin. Every concession from this point forward is reactive, not proactive.",
+      "failure_mode": "The rep responds to procurement's comparative exercise on procurement's terms. Each commercial move (price, escalator, term length) is read by the buyer as confirmation that the original list price was inflated. The deal closes either at a deeply discounted Mallin price or as a loss to TreasuryFlow's pre-anchored structure.",
+      "trigger": "The rep fills out Devin's vendor template and answers the win-rate question without reframing. Procurement uses the template + win-rate answer to construct a side-by-side that the rep had no part in shaping.",
+      "in_call_signal": "If Devin asks 'where can you come down on year-one' or 'what's your best price for a 5-year commit,' the deal is in the procurement-driven phase. Positive signal: Devin asks about implementation timeline, references, or non-commercial differentiators — that's the rep's opening to reframe.",
+      "recommended_posture": "Don't refuse the vendor template — that reads evasive. Send it accompanied by a one-pager that reframes the comparison off price: typical implementation timeline by subsidiary-count, the three most-recent go-lives by ARR size, the structural differences in subsidiary-roll-up architecture. The goal is to give Linda a non-price reason to choose Mallin before procurement's price-side-by-side reaches her.",
+      "severity": "medium",
+      "evidence_ids": ["call_04", "call_05"]
+    }
+  ],
+  "stakeholder_strategy": [
+    {
+      "stakeholder_id": "sth_hooli_marcus_hale",
+      "stakeholder_name": "Marcus Hale",
+      "role": "Treasury Manager — deal champion, currently preparing recommendation to Linda solo",
+      "current_state": {
+        "disposition": "neutral",
+        "disposition_rationale": "Was a strong champion through call 4 (~40% airtime, technical engagement, asked good roll-up questions). On call 5 his airtime collapsed to ~8% and his language shifted from 'we're moving toward' to 'I think we have what we need.' Still has the relationship; the championing has thinned.",
+        "engagement_level": "passive",
+        "influence_level": "high"
+      },
+      "call_strategy": "The relationship is intact but Marcus is no longer running the deal. He's preparing to deliver a recommendation. Don't re-pitch the product — he's sold. The whole work now is making sure the recommendation goes through the rep, not around them.",
+      "do_list": [
+        "Ask directly for a 30-minute meeting with him + Linda before he delivers his recommendation. Frame it around Linda's stated criteria from call 2 ('implementation timeline' and 'contract structure').",
+        "Offer to send Linda a Loom directly if a meeting is hard to land — gives him a way to surface the rep's view without him having to schedule.",
+        "Acknowledge his airtime drop at call 5 without making it uncomfortable. Something like: 'Looks like Devin had a lot of ground to cover today — happy to run through anything that didn't come up directly with you next time.' Opens the door for him to re-engage."
+      ],
+      "dont_list": [
+        "Don't re-present capabilities. He's the champion who chose Mallin. Repeating the pitch signals you don't trust his advocacy.",
+        "Don't push back on Devin's vendor template through Marcus. Devin is procurement's process; making Marcus argue with procurement weakens him internally.",
+        "Don't ask for a commitment ('are you still on board') — that puts the relationship on the table and risks a non-answer that locks in the drift."
+      ],
+      "priority": "high",
+      "evidence_ids": ["call_01", "call_03", "call_04", "call_05"]
+    },
+    {
+      "stakeholder_id": "sth_hooli_linda_park",
+      "stakeholder_name": "Linda Park",
+      "role": "Chief Financial Officer — economic buyer, absent since Feb 26 demo",
+      "current_state": {
+        "disposition": "neutral",
+        "disposition_rationale": "Attended call 2 demo for 18 minutes, asked two procedural questions ('implementation timeline', 'typical contract structure'), and dropped at 35 min of 60. Neither question was followed up. No engagement on the four subsequent calls. 6 weeks since last touch. Her current view is unknown.",
+        "engagement_level": "passive",
+        "influence_level": "high"
+      },
+      "call_strategy": "Linda is the decision-maker the rep has never had a real conversation with. The whole deal turns on whether the rep can get back in front of her before Marcus delivers his recommendation. Her two stated criteria are the opening — she said what she cares about; nobody defined what 'good' looks like for either one.",
+      "do_list": [
+        "Get a meeting with Marcus + Linda on the calendar this week. The ask goes through Marcus, not around him. Frame it around her own stated criteria.",
+        "Prepare a Linda-specific one-pager: typical implementation timeline by subsidiary-count, two reference customers at her ARR size, the structural advantages of Mallin's subsidiary-roll-up architecture. Built for a CFO, not for a treasury manager.",
+        "If a meeting can't be landed: get a 5-minute Loom from a Mallin executive directly to Linda. The credibility transfer of an executive face matters when the rep can't get a calendar slot."
+      ],
+      "dont_list": [
+        "Don't send Linda a generic introductory email — she'll read it as the noise that didn't get her attention the first time.",
+        "Don't go around Marcus to email Linda directly. Marcus is the relationship owner. Surprise outreach burns the champion relationship without delivering an EB conversation."
+      ],
+      "priority": "high",
+      "evidence_ids": ["call_02", "call_05"]
+    },
+    {
+      "stakeholder_id": "sth_hooli_devin_roy",
+      "stakeholder_name": "Devin Roy",
+      "role": "Senior Procurement Manager — entered at call 5, running comparative-pricing process",
+      "current_state": {
+        "disposition": "neutral",
+        "disposition_rationale": "Procurement, not buyer. Procedural and thorough. Asked for vendor template + comparative win-rate vs TreasuryFlow. Drove 70% of call 5 dialogue. Not adversarial — running the comparative-pricing process he was brought in to run.",
+        "engagement_level": "active",
+        "influence_level": "medium"
+      },
+      "call_strategy": "Devin's job is to commoditize. The rep's job is to keep the conversation about value, not price-relative-to-TreasuryFlow. Engage with procurement, but don't let procurement be the only forum the deal is being evaluated in.",
+      "do_list": [
+        "Fill out the vendor template promptly — refusing or delaying it reads evasive. Send it accompanied by a one-pager that reframes the comparison off price.",
+        "Answer the win-rate-vs-TreasuryFlow question with concrete numbers (if available) — saying 'we don't track it that way' loses credibility with procurement. Provide context: where Mallin typically wins, where TreasuryFlow typically wins, and what the differentiators are at Hooli's scale.",
+        "Try to get Linda's stated decision criteria from Devin. Procurement often has the most explicit version of what the EB has asked for. 'When Linda evaluates this, what's she going to be looking at first?' is a fair question."
+      ],
+      "dont_list": [
+        "Don't volunteer commercial concessions to Devin. The list price is the list price until the deal-desk says otherwise. Procurement's job is to extract; the rep's job is to make procurement work for it.",
+        "Don't treat Devin as the buyer. He's running a process, not making the decision. Linda is."
+      ],
+      "priority": "medium",
+      "evidence_ids": ["call_05"]
+    },
+    {
+      "stakeholder_id": "sth_hooli_sarah_vega",
+      "stakeholder_name": "Sarah Vega",
+      "role": "Controller — strong on call 1, hasn't returned since",
+      "current_state": {
+        "disposition": "supporter",
+        "disposition_rationale": "Highly engaged on call 1 discovery — surfaced hedge-accounting requirement, asked technical audit-trail questions, dropped early on call 2 demo and hasn't appeared since.",
+        "engagement_level": "passive",
+        "influence_level": "medium"
+      },
+      "call_strategy": "Sarah is a quiet supporter the rep has lost touch with. Her hedge-accounting concern from call 1 was never closed. Re-engaging her could give the rep a second technical voice in the room when the recommendation lands.",
+      "do_list": [
+        "Send Sarah a short email referencing her hedge-accounting question from Feb 12: 'Wanted to follow up specifically on what you raised on call 1 — I have a clean answer now if it's still relevant.' Low-friction, technical, leaves her room to re-engage on her terms.",
+        "If she responds positively, ask whether she'll be part of Linda's evaluation. Sarah's controller voice carries weight on the accounting side that procurement and the CFO won't have."
+      ],
+      "dont_list": [
+        "Don't introduce a new commercial conversation through Sarah — she's an accounting/technical voice, and surfacing pricing through her would feel out of role."
+      ],
+      "priority": "medium",
+      "evidence_ids": ["call_01"]
+    }
+  ],
+  "commercial_reality": {
+    "situation_summary": "List pricing ($185K ARR, 3-year term, Net 30, 3% annual escalator) was presented at call 4 with no incentive structure. TreasuryFlow's proposal surfaced the same call — Marcus mentioned they 'came in slightly under on the year-one number.' At call 5, procurement explicitly asked for win-rate-vs-TreasuryFlow and a vendor-terms template. The commercial conversation is now anchored relative to TreasuryFlow. No commercial concession has been made yet — the deal-desk floor has not been tested. The rep is in a reactive posture but the response is still open.",
+    "asks": [
+      {
+        "category": "price",
+        "customer_position": "TreasuryFlow came in slightly under on year-one — implicit ask for matching or beating that anchor, but no specific number named.",
+        "your_flexibility": "List shown was $185K ARR. Deal-desk floor not yet established for this deal. If a commercial response is needed, the move should come AFTER Linda is in the conversation — not as a concession to procurement, but as a structured offer aligned with what Linda actually values.",
+        "firmness": "soft",
+        "evidence_ids": ["call_04", "call_05"]
+      },
+      {
+        "category": "term",
+        "customer_position": "No term ask yet. 3-year proposed as standard.",
+        "your_flexibility": "5-year is in Mallin's interest if it earns price flexibility. Don't volunteer.",
+        "firmness": "soft",
+        "evidence_ids": []
+      },
+      {
+        "category": "scope",
+        "customer_position": "Vendor terms template requested by procurement at call 5 — payment terms, SLA, standard contract structure.",
+        "your_flexibility": "Standard. Send the template. Use it as a vehicle to reframe the comparison rather than refuse the comparison.",
+        "firmness": "stated",
+        "evidence_ids": ["call_05"]
+      }
+    ],
+    "walk_in_posture": "Hold the line on price until Linda is in the conversation. Don't volunteer commercial movement to procurement. Use the vendor template as a forcing function to reframe — send it with a non-commercial one-pager that addresses Linda's stated criteria (implementation timeline, contract structure) before procurement runs the comparison.",
+    "prior_concessions": []
+  },
+  "talk_track": {
+    "opening_angle": "Open with the meeting ask, not with capability. 'Marcus — before anything else, I want to make sure I'm in the room when you walk Linda through the comparison. The TreasuryFlow framing matters and there are 2–3 places where the structural difference isn't obvious from a side-by-side. I'd hate for her to make the call without seeing those. Could we put a 30 on the calendar this week?' Gets the EB-in-the-room ask on the table immediately, framed as protecting Marcus, not reopening the conversation.",
+    "opening_rationale": "The deal will be won or lost on whether Linda is in a conversation with the rep before Marcus delivers his recommendation. Opening with the meeting ask makes that conversation the central topic of the next call, not a side ask that gets buried.",
+    "key_questions": [
+      {
+        "question": "Worth asking Marcus: 'When you sync with Linda — is that already on the calendar, or are you waiting until you have everything you need to present?' — pins down the recommendation timeline.",
+        "rationale": "If the meeting is already scheduled, the rep has hours, not days, to get in front of Linda. If it's not yet scheduled, the rep has a window to land a Marcus + Linda meeting first.",
+        "evidence_ids": ["call_05"]
+      },
+      {
+        "question": "Here's what I might ask: 'You mentioned Linda was looking at implementation timeline and contract structure on the demo — has she said anything more specific about what she'd want to see in either of those?' — surfaces her current criteria.",
+        "rationale": "Linda's two stated criteria from Feb 26 were never defined. Marcus has been with her for 6 weeks since; he likely has more clarity now even if it hasn't been formal.",
+        "evidence_ids": ["call_02", "call_05"]
+      },
+      {
+        "question": "Something like: 'Devin asked for a comparative win-rate vs TreasuryFlow. Before we send that — do you know what specifically about TreasuryFlow caught your team's attention on their proposal?' — surfaces the actual competitive frame, not the comparative frame procurement is running.",
+        "rationale": "Knowing what caught Hooli's attention on TreasuryFlow's proposal lets the rep address it directly. 'Slightly under on year-one' could mean price, total contract value, payment terms, or escalator — they're different conversations.",
+        "evidence_ids": ["call_04"]
+      },
+      {
+        "question": "I'd ask: 'Sarah Vega raised hedge accounting on call 1 — has that come back up in your internal discussions, or has it dropped off the criteria list?' — re-introduces the controller voice.",
+        "rationale": "Sarah was a quiet supporter who got out of the room after call 2. If hedge accounting is still on the criteria list, she's a second technical voice the rep can re-engage. If it's not, the rep saves the breath.",
+        "evidence_ids": ["call_01"]
+      },
+      {
+        "question": "Direct ask if the meeting can't be landed: 'If Linda's calendar is locked up, would a 5-minute Loom from me directly to her help — something she can watch on her time that walks through implementation timeline and the year-one cost structure?' — offers a fallback that still gets the rep's voice into her evaluation.",
+        "rationale": "If a live meeting is impossible, an async executive touch is better than nothing. A Loom forces the rep's framing into Linda's evaluation without requiring her calendar.",
+        "evidence_ids": ["call_05"]
+      }
+    ],
+    "objection_angles": [
+      {
+        "likely_objection": "Marcus says: 'Linda prefers to come in at the recommendation stage — same as the demo.'",
+        "handling_angle": "Acknowledge it without accepting it: 'Totally understand that's how she likes to work — and I get why. The reason I'm asking is the TreasuryFlow comparison has a few structural pieces that don't show up cleanly in a written recommendation. If you want, I can do the 30 with both of you so you don't have to translate it on the fly — or I can send you a Loom you can attach to your memo. Either works; I want to make sure her decision has the full picture in it.' Don't push back on Linda's working style; offer to fit into it.",
+        "evidence_ids": ["call_02", "call_05"]
+      },
+      {
+        "likely_objection": "Devin pushes back on the timing of the win-rate-vs-TreasuryFlow answer — wants it before the rep gets to Linda.",
+        "handling_angle": "Frame it as service, not stall: 'Happy to put that together — what I want to make sure I do is give you the version that's actually useful for the decision, not just the raw number. Where do you typically see TreasuryFlow strongest? That'll let me write the comparison around the parts that matter to your evaluation rather than the parts that don't.' Buys time and gets procurement to surface what they think the comparison is actually about.",
+        "evidence_ids": ["call_05"]
+      },
+      {
+        "likely_objection": "Marcus reveals he's already drafted a recommendation and it's neutral or qualified — leaning on price as a differentiator.",
+        "handling_angle": "Don't react to the framing; redirect to what's missing: 'I appreciate you sharing that — before it goes up, I want to make sure two things are in there that might not have been clear from our last few sessions. Can we walk through implementation timeline by subsidiary-count and the references at your ARR size? Five minutes — and if it doesn't change anything, you send it as-is.' Reopens the recommendation without making it about the recommendation.",
+        "evidence_ids": ["call_05"]
+      }
+    ],
+    "positioning_angles": [
+      "Reframe the TreasuryFlow comparison off year-one price: typical implementation timeline by subsidiary-count, the three most-recent go-lives, the structural difference in roll-up architecture for a 9-subsidiary book. The buyer's actual risk is implementation timing and accuracy across subsidiaries; price-relative-to-TreasuryFlow is procurement's framing, not Linda's.",
+      "Linda's two stated criteria — 'implementation timeline' and 'typical contract structure' — are an opening, not a constraint. Neither has been defined. The rep gets to define them in a Linda-facing conversation if one happens; otherwise procurement defines them through the vendor template.",
+      "Sarah Vega's hedge-accounting concern from call 1 is a second technical surface the rep can re-engage. Re-introducing her into the buying committee adds an internal voice that procurement and the CFO don't have."
+    ]
+  },
+  "open_questions": [
+    {
+      "id": "oq_001",
+      "question": "Is Marcus's recommendation to Linda already scheduled, drafted, or is it still in formation?",
+      "why_it_matters": "Determines whether the rep has hours or days to land a Marcus + Linda meeting before the recommendation goes up. If already drafted, the conversation is reactive; if not yet drafted, the rep has a window.",
+      "urgency": "blocking",
+      "blocks_decision": true,
+      "how_to_ask": "Direct, no euphemism: 'When you sync with Linda — is that already on the calendar, or are you waiting until you have everything you need to present?'",
+      "evidence_ids": ["call_05"]
+    },
+    {
+      "id": "oq_002",
+      "question": "What does Linda actually mean by 'implementation timeline' and 'typical contract structure' — the two criteria she named on Feb 26?",
+      "why_it_matters": "These are the only two criteria the EB has put on the record. Neither has been defined. They are either the rep's opening or procurement's frame — whoever defines them wins.",
+      "urgency": "high",
+      "blocks_decision": true,
+      "how_to_ask": "Ask Marcus: 'On the demo, Linda mentioned implementation timeline and contract structure. Has she said anything more specific about what she's looking at on either one since then?'",
+      "evidence_ids": ["call_02"]
+    },
+    {
+      "id": "oq_003",
+      "question": "What specifically about TreasuryFlow's proposal caught Hooli's attention — was it the year-one price, total contract value, payment structure, or something else?",
+      "why_it_matters": "'Slightly under on year-one' is procurement's framing. The buyer-level framing is probably different. Knowing what actually impressed Hooli on TreasuryFlow lets the rep address it directly.",
+      "urgency": "high",
+      "blocks_decision": false,
+      "how_to_ask": "Ask Marcus before the vendor template gets sent: 'Before we send the comparison Devin asked for — what about TreasuryFlow's proposal stood out internally? I want to make sure we're answering the actual question, not the comparison procurement is going to run.'",
+      "evidence_ids": ["call_04"]
+    },
+    {
+      "id": "oq_004",
+      "question": "Is Sarah Vega still on the buying committee, or has she dropped out?",
+      "why_it_matters": "Sarah was a strong technical supporter on call 1 (hedge accounting, audit trail). She hasn't appeared since call 2. If she's still in the room when Linda decides, the rep has a second internal advocate. If she's out, the buying committee is Marcus alone.",
+      "urgency": "medium",
+      "blocks_decision": false,
+      "how_to_ask": "Either through Marcus ('Is Sarah still involved on the evaluation side?') or directly to Sarah with a short email referencing her hedge-accounting question.",
+      "evidence_ids": ["call_01"]
+    }
+  ],
+  "success_criteria": {
+    "summary": "Call succeeds if Marcus agrees to a 30 with Linda + rep before he delivers his recommendation — OR if he agrees to attach a rep-produced one-pager / Loom to whatever he sends her.",
+    "outcomes": [
+      {
+        "outcome": "Marcus + Linda + rep meeting scheduled within the week, BEFORE Marcus's recommendation memo or 1:1 with Linda.",
+        "why_it_matters": "Puts the rep in the conversation with the actual decision-maker for the first time. This is the only outcome that changes the deal's trajectory directly."
+      },
+      {
+        "outcome": "If a live meeting can't be landed: Marcus agrees to attach a rep-produced 5-minute Loom from a Mallin executive to whatever he sends Linda.",
+        "why_it_matters": "Gives the rep's framing into Linda's evaluation without requiring her calendar. Inferior to a live meeting but materially better than the rep being absent from the recommendation entirely."
+      },
+      {
+        "outcome": "Marcus shares what about TreasuryFlow's proposal caught Hooli's attention — the actual buyer-level concern, not procurement's comparative framing.",
+        "why_it_matters": "Lets the rep address the real competitive frame instead of responding to procurement's price-relative-to-TreasuryFlow exercise."
+      }
+    ],
+    "acceptable_partial": "At minimum: Marcus shares the timeline for his recommendation delivery, AND either a meeting with Linda is agreed in principle or a Loom is agreed to in lieu.",
+    "failure_signal": "Marcus declines both the meeting and the Loom, doesn't share the recommendation timeline, and sends the vendor template back without any reframing — the deal is now being run by procurement on a comparative-price track the rep didn't shape."
+  },
+  "coaching_notes": [
+    {
+      "topic": "stakeholder_coverage",
+      "note": "Linda Park was flagged as the EB at call 2 — Marcus told the rep 'she prefers to come in at the recommendation stage.' That was the moment to push gently for a second EB touchpoint after the demo: 'Totally understand — would it help if I sent her a short note recapping the demo so she's tracking before the recommendation lands?' Six weeks without an EB conversation, with a competitor in play, is a structural risk that compounds. For deals where the EB is named but absent, I'd consider a single low-friction EB touch within 2 weeks of the demo a non-negotiable step.",
+      "evidence_ids": ["call_02", "call_05"]
+    },
+    {
+      "topic": "qualification_gap",
+      "note": "Linda's two stated criteria on Feb 26 ('implementation timeline' and 'typical contract structure') were never defined. Neither one. Six weeks later, procurement entered the deal and the rep has no buyer-level definition of either criterion. On the next deal where an EB names a criterion that's left undefined, that's the moment to ask follow-up before moving on: 'When you say implementation timeline — are you measuring that as kickoff-to-go-live, or are you including the bank-connectivity ramp? Different numbers and they tell different stories.' Defining the criteria early protects the rep from procurement defining them later.",
+      "evidence_ids": ["call_02"]
+    },
+    {
+      "topic": "methodology_discipline",
+      "note": "List pricing was shown at call 4 with no incentive structure and no commercial frame. TreasuryFlow surfaced at the same call. Once a competitor's price anchors before the rep's commercial structure is established, every subsequent move is reactive. On the next deal, I'd think about pre-anchoring before list pricing is discussed: either land an incentive structure conditional on close-window/term-length, or surface competition explicitly first so the rep is framing the comparison rather than responding to it. Showing list with no incentive when a competitor is in play is the move that costs the most leverage.",
+      "evidence_ids": ["call_04"]
+    }
+  ],
+  "manager_note": "Two HIGH risks fired on call 5 (champion thinning + EB invisible). Manager looped in via escalation policy. The single move that changes the trajectory is getting Linda in a room with the rep before Marcus delivers his recommendation."
+}

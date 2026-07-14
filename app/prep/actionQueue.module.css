@@ -1,0 +1,310 @@
+.section {
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-rule);
+  border-radius: 10px;
+  padding: 22px;
+  margin-top: 24px;
+  scroll-margin-top: 80px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ck-ink);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.empty {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-4);
+  margin: 0;
+  padding: 12px 0;
+}
+
+.bulkActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bannerOk {
+  padding: 10px 14px;
+  background: var(--ck-good-tint);
+  border: 1px solid var(--ck-good-tint);
+  color: var(--ck-good);
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.bannerErr {
+  padding: 10px 14px;
+  background: var(--ck-crit-tint);
+  border: 1px solid var(--ck-crit-tint);
+  color: var(--ck-crit);
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.groupHead {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-top: 14px;
+  border-top: 1px solid var(--ck-rule);
+  margin-top: 6px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--ck-surface-2);
+  border: 1px solid var(--ck-rule);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.checkbox {
+  margin-top: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--ck-action);
+}
+
+.checkboxSpacer {
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.actionType {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ck-ink-2);
+  letter-spacing: 0.04em;
+}
+
+.statusChip {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.statusPending {
+  background: var(--ck-blue-tint);
+  color: var(--ck-blue);
+}
+
+.statusOk {
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+}
+
+.statusErr {
+  background: var(--ck-crit-tint);
+  color: var(--ck-crit);
+}
+
+.statusDismissed {
+  background: var(--ck-surface-3);
+  color: var(--ck-ink-4);
+}
+
+.statusDeferred {
+  background: var(--ck-warn-tint);
+  color: var(--ck-warn);
+}
+
+.summary {
+  font-size: 14px;
+  color: var(--ck-ink);
+  line-height: 1.4;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.rationale {
+  font-size: 12px;
+  color: var(--ck-ink-4);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.errorText {
+  font-size: 12px;
+  color: var(--ck-crit);
+  margin-top: 4px;
+}
+
+.openLink {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ck-blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+.openLink:hover {
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.btnApply {
+  padding: 5px 10px;
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+  border: 1px solid var(--ck-good-tint);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnApply:hover:not(:disabled) {
+  background: var(--ck-good-tint);
+}
+.btnApply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnDefer {
+  padding: 5px 10px;
+  background: var(--ck-warn-tint);
+  color: var(--ck-warn);
+  border: 1px solid var(--ck-warn-tint);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnDefer:hover:not(:disabled) {
+  background: var(--ck-warn-tint);
+}
+.btnDefer:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnDismiss {
+  padding: 5px 10px;
+  background: transparent;
+  color: var(--ck-ink-3);
+  border: 1px solid var(--ck-rule);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnDismiss:hover:not(:disabled) {
+  color: var(--ck-crit);
+  border-color: var(--ck-crit-tint);
+  background: var(--ck-crit-tint);
+}
+.btnDismiss:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  padding: 8px 14px;
+  background: var(--ck-action);
+  color: var(--ck-action-ink);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnPrimary:hover:not(:disabled) {
+  background: #2a3340;
+}
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  padding: 8px 14px;
+  background: var(--ck-surface);
+  color: var(--ck-ink);
+  border: 1px solid var(--ck-rule-2);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnSecondary:hover:not(:disabled) {
+  background: var(--ck-surface-2);
+}
+
+.btnTertiary {
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--ck-ink-4);
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnTertiary:hover {
+  color: var(--ck-ink);
+}

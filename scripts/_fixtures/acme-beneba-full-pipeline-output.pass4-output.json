@@ -1,0 +1,375 @@
+{
+  "metadata": {
+    "surface_mode": "full",
+    "rationale": "Early-stage Discovery deal with one call, confirmed pain from champion Eleanor, procurement joining Apr 30 meeting. Economic buyer (Maria/CFO) entirely unengaged. MEDDPICC gaps are Metrics, Decision Process, Competition — all unresolved. No conflicts in Pass 2. Thesis formed at low confidence on expansion-driven ops bandwidth pain as the controlling frame, but decision criteria and EB stance are unknown.",
+    "insufficiently_evidenced": [
+      {
+        "field_path": "methodology_pillar_evidence.metrics",
+        "reason": "No quantified business metrics surfaced in any activity or call."
+      },
+      {
+        "field_path": "methodology_pillar_evidence.decision_process",
+        "reason": "Champion named procurement and CFO but provided no sequencing, gates, or timeline."
+      },
+      {
+        "field_path": "methodology_pillar_evidence.competition",
+        "reason": "No competitive vendor named in any payload."
+      },
+      {
+        "field_path": "stakeholder_enrichments.maria_chen.disposition",
+        "reason": "Economic buyer has had zero direct interaction; disposition cannot be assessed."
+      },
+      {
+        "field_path": "coaching_notes",
+        "reason": "Limited interaction history (one call) constrains behavioral specificity; best-effort coaching emitted."
+      }
+    ],
+    "model": "claude-sonnet-4-6",
+    "prompt_version": "v1.2.0",
+    "generated_at": "2026-04-29T23:09:13.045Z",
+    "opportunity_id": "6d072dbd-cc3d-444a-a574-520eefb15296",
+    "usage": {
+      "input_tokens": 17441,
+      "output_tokens": 5240
+    },
+    "latency_ms": 111115,
+    "attempts": 1
+  },
+  "top_line": {
+    "text": "Deal is advancing into first procurement touchpoint (Apr 30): Eleanor is a confirmed champion with articulated Q3 expansion pain, but economic buyer Maria Chen (CFO) is fully absent and decision criteria, process, and metrics remain undefined.",
+    "posture": "advancing",
+    "evidence_ids": [
+      "si_eleanor_pain_q3",
+      "si_eleanor_stakeholder_map",
+      "si_meeting_procurement_intent",
+      "si_call_summary_synthesis"
+    ]
+  },
+  "deal_thesis": {
+    "status": "formed",
+    "thesis": "Buyer is evaluating solutions to relieve ops bandwidth pressure caused by Q3 expansion — the controlling frame is operational capacity relief, with CFO (Maria) as the financial gate who has not yet weighed in.",
+    "confidence": "low",
+    "decision_frame": "ops bandwidth relief vs. Q3 growth pressure, pending CFO financial approval",
+    "why_this_matters": "Anchor every conversation on measurable ops relief tied to Q3 scale — but avoid commercial depth until Maria's stance is known; premature pricing conversations risk misalignment with the real approval authority.",
+    "evidence_ids": [
+      "si_eleanor_pain_q3",
+      "si_eleanor_stakeholder_map",
+      "si_call_summary_synthesis"
+    ]
+  },
+  "what_changed": {
+    "summary": "First procurement stakeholder (James Okoye) enters the conversation on Apr 30 — a meaningful escalation from champion-only discovery to multi-stakeholder qualification.",
+    "changes": [
+      {
+        "kind": "new_stakeholder",
+        "description": "James Okoye (Procurement Manager) accepted the Apr 30 meeting invite — first direct engagement with a non-champion buyer stakeholder in this deal.",
+        "evidence_ids": [
+          "si_meeting_procurement_intent",
+          "si_eleanor_stakeholder_map"
+        ]
+      }
+    ]
+  },
+  "critical_risks": [
+    {
+      "id": "cr_01",
+      "title": "CFO absent — deal stalls at approval gate",
+      "description": "Maria Chen (CFO / economic buyer) has been named by Eleanor but has had zero interaction with the seller across all activities. In a $180K deal, CFO approval is the likely hard gate. Without a path to Maria, the deal can progress through discovery and demos and then stall when it reaches financial review.",
+      "failure_mode": "Deal progresses through full evaluation cycle and dies at CFO approval because rep never established EB access or a champion-coached financial narrative before Maria was engaged.",
+      "trigger": "Rep exits Apr 30 meeting without securing a concrete next step that includes Maria or a coach-Maria plan from Eleanor.",
+      "in_call_signal": "Eleanor deflects or vagues-out when asked 'What would Maria need to see to approve this?' or James signals procurement cannot move without CFO sign-off.",
+      "recommended_posture": "Ask Eleanor directly on this call: 'What does Maria need to believe for this to get approved, and can you help me prepare that case?' Do not leave without a named Maria-engagement step.",
+      "severity": "blocking",
+      "evidence_ids": [
+        "si_eleanor_stakeholder_map",
+        "si_call_summary_synthesis"
+      ]
+    },
+    {
+      "id": "cr_02",
+      "title": "No metrics — ROI case is unfounded",
+      "description": "Zero quantified business metrics have been captured across the entire deal. Ops bandwidth pain is stated qualitatively ('stretched our team thin') but no numbers attach to it. Without metrics, the ROI case for $180K is unsubstantiated and the CFO review will have no financial anchor.",
+      "failure_mode": "Rep enters CFO review stage without a defensible ROI number; Maria rejects the business case on cost grounds and deal loses to status quo.",
+      "trigger": "Rep advances to demo or commercial discussion without capturing operational volume, cost-of-delay, or headcount impact from Eleanor or James.",
+      "in_call_signal": "Conversation stays at qualitative frustration without Eleanor or James volunteering numbers when directly asked about team size, volume of work affected, or cost of current constraints.",
+      "recommended_posture": "Use this call to extract at least one quantifiable metric: ask 'How many people are affected, and what does the delay/rework cost you per quarter?' before the conversation moves to product.",
+      "severity": "high",
+      "evidence_ids": [
+        "si_eleanor_pain_q3",
+        "si_call_summary_synthesis"
+      ]
+    },
+    {
+      "id": "cr_03",
+      "title": "Decision process undefined — timeline and gates are invisible",
+      "description": "Eleanor named James and Maria as required participants but gave no sequencing, gates, or timeline for the decision. With procurement now joining the call, the risk is that James introduces gates (security review, IT sign-off, legal review) the rep is unaware of, extending the deal or creating surprise blockers.",
+      "failure_mode": "Undiscovered procurement or IT gate (e.g., security review, Carlos Vega IT approval) delays deal close by a full quarter and pushes past the stated close date.",
+      "trigger": "Rep ends Apr 30 meeting without a documented decision sequence showing who approves what, in what order, and by when.",
+      "in_call_signal": "James references additional review steps ('we'd also need to loop in...') or adds approval layers not previously mentioned by Eleanor.",
+      "recommended_posture": "Ask James directly: 'Walk me through how a decision like this gets made — who approves at each step and in what order?' Map every gate before leaving the call.",
+      "severity": "high",
+      "evidence_ids": [
+        "si_eleanor_stakeholder_map",
+        "si_meeting_procurement_intent",
+        "si_call_summary_synthesis"
+      ]
+    }
+  ],
+  "stakeholder_strategy": [
+    {
+      "stakeholder_id": "eec477e0-d8e5-4795-9459-c0c5ef682c73",
+      "stakeholder_name": "Eleanor Beneba",
+      "role": "VP Operations — confirmed champion, deal initiator",
+      "current_state": {
+        "disposition": "champion",
+        "disposition_rationale": "Articulated pain unprompted, surfaced decision committee, scheduled and attended all touchpoints.",
+        "engagement_level": "active",
+        "influence_level": "high"
+      },
+      "call_strategy": "Transition Eleanor from pain-articulator to active deal coach. She's done the champion job of surfacing the problem — now she needs to coach you into Maria's approval frame and open the CFO door. Keep her engaged but shift asks from discovery to sponsorship.",
+      "do_list": [
+        "Ask Eleanor what Maria (CFO) specifically needs to see to approve this investment — get the financial frame directly from the coach.",
+        "Ask Eleanor to introduce you to Maria or to set up a dedicated CFO briefing before the evaluation progresses further.",
+        "Confirm Eleanor's internal positioning: 'How are you framing this internally to James and Maria?'"
+      ],
+      "dont_list": [
+        "Don't run a second discovery session with Eleanor — pain is confirmed; redirect energy toward EB access and metrics.",
+        "Don't let Eleanor absorb the full 45 minutes — James is the new variable and needs dedicated airtime."
+      ],
+      "priority": "high",
+      "evidence_ids": [
+        "si_eleanor_pain_q3",
+        "si_eleanor_stakeholder_map"
+      ]
+    },
+    {
+      "stakeholder_id": "7ebfc445-0e07-4e54-9f3c-b6a6bb76aa1b",
+      "stakeholder_name": "James Okoye",
+      "role": "Procurement Manager — technical buyer, first call",
+      "current_state": {
+        "disposition": "neutral",
+        "disposition_rationale": "Accepted meeting invite; no prior utterances or direct engagement captured. Disposition is genuinely unknown beneath neutral CRM default.",
+        "engagement_level": "passive",
+        "influence_level": "medium"
+      },
+      "call_strategy": "This is the first substantive interaction with James — prioritize understanding his decision authority, process ownership, and evaluation criteria before any commercial positioning. He controls paper process and could introduce blocking gates if not mapped early.",
+      "do_list": [
+        "Ask James to walk through Beneba's procurement decision sequence — who signs off, in what order, and with what documentation required.",
+        "Ask James what his evaluation criteria are for a solution of this size and category (security, integration, contractual terms).",
+        "Gauge James's relationship with Maria: does procurement drive the CFO recommendation, or does Eleanor?"
+      ],
+      "dont_list": [
+        "Don't open with pricing or commercial terms — James hasn't established his criteria yet and premature commercial anchoring gives away flexibility.",
+        "Don't let James steer the call to feature/spec comparison before process and criteria are mapped."
+      ],
+      "priority": "high",
+      "evidence_ids": [
+        "si_eleanor_stakeholder_map",
+        "si_meeting_procurement_intent"
+      ]
+    },
+    {
+      "stakeholder_id": "6607872b-fe1f-489b-8597-c41d35b433db",
+      "stakeholder_name": "Maria Chen",
+      "role": "CFO — economic buyer, fully absent from deal to date",
+      "current_state": {
+        "disposition": "unknown",
+        "disposition_rationale": "Named by Eleanor as required approver; zero direct interaction. Stance, priorities, and financial criteria entirely unconfirmed.",
+        "engagement_level": "absent",
+        "influence_level": "high"
+      },
+      "call_strategy": "Maria cannot be sold to indirectly for a $180K deal. The goal for this call is not to reach Maria — it's to get Eleanor or James to commit to a concrete Maria-engagement plan. Establish what Maria needs and who will set up that meeting.",
+      "do_list": [
+        "Ask Eleanor: 'What does Maria need to see before she'd approve something like this — and would she be open to a 30-minute briefing?'",
+        "Ask James: 'Does procurement typically prepare the CFO recommendation, or does the business sponsor (Eleanor) do that directly?'"
+      ],
+      "dont_list": [
+        "Don't accept 'we'll loop her in later' as a satisfactory answer — name a specific step and owner."
+      ],
+      "priority": "high",
+      "evidence_ids": [
+        "si_eleanor_stakeholder_map",
+        "si_call_summary_synthesis"
+      ]
+    }
+  ],
+  "talk_track": {
+    "opening_angle": "Open by acknowledging the deal's progression — procurement joining signals Beneba is moving this forward seriously. Frame the call's purpose as two-way: you want to understand James's evaluation criteria and decision process, and you want to deepen the Q3 ops impact picture so the right business case reaches Maria.",
+    "key_questions": [
+      {
+        "question": "Eleanor, when you picture this getting approved internally — what does Maria need to believe, and what's the evidence she'd want to see?",
+        "rationale": "Unlocks the CFO's decision frame from the champion who knows her. This is the single most leveraged question on this call — the answer shapes every downstream commercial and qualification move.",
+        "evidence_ids": [
+          "si_eleanor_stakeholder_map",
+          "si_call_summary_synthesis"
+        ]
+      },
+      {
+        "question": "James, can you walk me through how Beneba typically evaluates and approves a solution in this category — who's involved at each step, and what does the process look like from here to a signed agreement?",
+        "rationale": "Maps the decision process and paper process in one question. James owns procurement sequencing and this is his first call — his answer will surface gates (IT, legal, security) not yet visible in the deal.",
+        "evidence_ids": [
+          "si_meeting_procurement_intent",
+          "si_eleanor_stakeholder_map"
+        ]
+      },
+      {
+        "question": "Eleanor, when you said Q3 stretched the team thin — can you put numbers on that? How many people are affected, and what does the downstream impact look like in terms of delay, rework, or cost?",
+        "rationale": "Converts confirmed qualitative pain into a quantifiable metric. Without this, no ROI case can be constructed for the CFO review. This is the metrics gap the deal currently has.",
+        "evidence_ids": [
+          "si_eleanor_pain_q3"
+        ]
+      },
+      {
+        "question": "James, what are your primary evaluation criteria for a solution of this size — are there technical, security, or contractual requirements we should understand upfront?",
+        "rationale": "Surfaces procurement's criteria before commercial discussion begins. James may introduce IT or security requirements (Carlos Vega, IT Director, is on account but not on deal) that create hidden blockers if not mapped now.",
+        "evidence_ids": [
+          "si_meeting_procurement_intent",
+          "si_eleanor_stakeholder_map"
+        ]
+      },
+      {
+        "question": "Given Q3 is the pressure point — what's the decision timeline that actually matters? When would Beneba need a solution in place to make a difference for Q3?",
+        "rationale": "Decision process pillar is entirely uncharted. A Q3-anchored forcing function may exist that creates a natural close timeline. If so, it should be named and documented now to prevent drift.",
+        "evidence_ids": [
+          "si_eleanor_pain_q3",
+          "si_call_summary_synthesis"
+        ]
+      }
+    ],
+    "objection_angles": [
+      {
+        "likely_objection": "'We're still early in our evaluation — we're talking to a few options.'",
+        "handling_angle": "Acknowledge the evaluation is appropriate for a decision of this size. Pivot to process: ask what criteria they're using to evaluate options and what success looks like for the winning vendor. Positions you as criteria-shaper, not vendor-competitor.",
+        "evidence_ids": [
+          "si_call_summary_synthesis",
+          "si_eleanor_pain_q3"
+        ]
+      },
+      {
+        "likely_objection": "'We'd need IT involved before we can go further.' (James introducing Carlos Vega or a security review gate)",
+        "handling_angle": "Welcome it — ask James to name the IT stakeholder and the specific requirements they'd review. Request to schedule a parallel IT scoping conversation so it doesn't become a sequential blocker. Carlos Vega (IT Director) is already on account; proactively surfacing him is better than discovering him late.",
+        "evidence_ids": [
+          "si_meeting_procurement_intent",
+          "si_eleanor_stakeholder_map"
+        ]
+      },
+      {
+        "likely_objection": "'Maria would need to approve the budget — we can't confirm anything until she's reviewed it.'",
+        "handling_angle": "Agree and make it a collaborative step: ask what format Maria needs the case in and offer to prepare it with Eleanor's input. Then ask Eleanor to set up the Maria briefing directly — don't let this be an indefinite delay.",
+        "evidence_ids": [
+          "si_eleanor_stakeholder_map",
+          "si_call_summary_synthesis"
+        ]
+      }
+    ],
+    "positioning_angles": [
+      "Position around Q3 scale relief: Beneba's pain is expansion-driven, not inefficiency-driven — frame the solution as enabling growth capture, not just cost reduction. This angle will resonate with both Eleanor (ops relief) and Maria (investment in growth).",
+      "Position on speed-to-value: if Q3 is the forcing function, implementation timeline matters as much as capability. Proactively surface how fast value is realized to differentiate from alternatives.",
+      "Do NOT position on features or technical depth in this call — decision criteria are unmapped and James has not signaled what he cares about. Feature pitching before criteria are known hands the buyer a comparison framework you didn't shape."
+    ]
+  },
+  "open_questions": [
+    {
+      "id": "oq_01",
+      "question": "What does Maria Chen (CFO) need to see to approve this investment, and who will facilitate her direct engagement with the seller?",
+      "why_it_matters": "Blocks the decision to advance past discovery — without a Maria-engagement plan, the deal cannot move to a stage where financial approval is possible. Every downstream step is conditional on this gate.",
+      "urgency": "blocking",
+      "blocks_decision": true,
+      "how_to_ask": "Ask Eleanor: 'For something like this to get approved, what would Maria need to see, and is she open to a direct briefing from us?'",
+      "evidence_ids": [
+        "si_eleanor_stakeholder_map",
+        "si_call_summary_synthesis"
+      ]
+    },
+    {
+      "id": "oq_02",
+      "question": "What is Beneba's decision process — sequencing, approval gates, and timeline from evaluation to signed agreement?",
+      "why_it_matters": "Blocks the decision to set a realistic close plan and identify hidden gates (IT, legal, security). Without this, close date and stage progression are guesses.",
+      "urgency": "blocking",
+      "blocks_decision": true,
+      "how_to_ask": "Ask James: 'Walk me through how a decision like this gets made at Beneba — who approves at each step and in what sequence?'",
+      "evidence_ids": [
+        "si_meeting_procurement_intent",
+        "si_eleanor_stakeholder_map"
+      ]
+    },
+    {
+      "id": "oq_03",
+      "question": "What quantifiable metrics attach to the Q3 ops bandwidth pain — team size affected, volume, cost of delay or rework?",
+      "why_it_matters": "Blocks construction of a defensible ROI case for CFO review. Without numbers, the business case cannot be built and Maria cannot be asked to approve an investment with no financial anchor.",
+      "urgency": "high",
+      "blocks_decision": true,
+      "how_to_ask": "Ask Eleanor: 'When you said Q3 stretched the team thin — can you put numbers on that? What does the downstream impact look like in headcount, delay, or cost?'",
+      "evidence_ids": [
+        "si_eleanor_pain_q3"
+      ]
+    },
+    {
+      "id": "oq_04",
+      "question": "Is there a competitive evaluation underway — are other vendors being assessed in parallel?",
+      "why_it_matters": "Competition pillar is entirely unknown. If alternatives exist, the rep is selling into a comparison without knowing the frame or the criteria being used to differentiate.",
+      "urgency": "high",
+      "blocks_decision": false,
+      "how_to_ask": "Ask Eleanor or James: 'Are you evaluating any other approaches or vendors alongside this conversation?'",
+      "evidence_ids": [
+        "si_call_summary_synthesis",
+        "si_eleanor_pain_q3"
+      ]
+    },
+    {
+      "id": "oq_05",
+      "question": "Does Carlos Vega (IT Director) have a role in evaluating or approving this solution?",
+      "why_it_matters": "Carlos is on account but not engaged in the deal. James may introduce an IT gate that routes through Carlos — discovering this now prevents a late-stage surprise blocker.",
+      "urgency": "medium",
+      "blocks_decision": false,
+      "how_to_ask": "Ask James: 'Would your IT team need to be involved in evaluating the technical or security requirements for a solution like this?'",
+      "evidence_ids": [
+        "si_meeting_procurement_intent",
+        "si_eleanor_stakeholder_map"
+      ]
+    }
+  ],
+  "success_criteria": {
+    "summary": "Exit Apr 30 call with: a named Maria-engagement next step, a documented decision process from James, and at least one quantified metric from Eleanor.",
+    "outcomes": [
+      {
+        "outcome": "Eleanor commits to either scheduling a Maria briefing or providing a specific coaching frame for how the CFO case should be built — with a named date.",
+        "why_it_matters": "Without EB access or a coach-Maria plan, the deal cannot progress past discovery regardless of how well the evaluation goes."
+      },
+      {
+        "outcome": "James describes Beneba's procurement decision sequence — named approvers, order of steps, and documentation required — so the rep can map a realistic close plan.",
+        "why_it_matters": "Decision process is entirely uncharted; without this, stage progression and close date have no grounding."
+      },
+      {
+        "outcome": "Eleanor or James provides at least one quantified operational metric (headcount affected, volume impacted, or cost of delay) that can anchor the CFO-facing business case.",
+        "why_it_matters": "Metrics pillar is empty; no ROI case can be constructed without at least one number tied to the confirmed pain."
+      }
+    ],
+    "acceptable_partial": "If Maria engagement cannot be committed to in-meeting, secure Eleanor's verbal agreement to a specific internal conversation with Maria before the next seller touchpoint — with a date attached.",
+    "failure_signal": "Call ends with no new information on decision process or EB access, and the agreed next step is another generic discovery call with Eleanor only."
+  },
+  "coaching_notes": [
+    {
+      "topic": "stakeholder_coverage",
+      "note": "This call is the first opportunity to engage procurement and map the EB — but the invite was generated without a stated agenda for James. Before the next meeting, send a pre-call agenda naming the specific questions for James so he arrives prepared to answer process questions rather than observing an Eleanor-led discovery replay.",
+      "evidence_ids": [
+        "si_meeting_procurement_intent",
+        "si_eleanor_stakeholder_map"
+      ]
+    },
+    {
+      "topic": "discovery_depth",
+      "note": "Eleanor's Q3 pain was captured qualitatively but no metric was extracted on the first call. On this call, do not leave without a number — ask Eleanor to quantify impact before the conversation moves to product or procurement process. Unquantified pain cannot be defended in a CFO review.",
+      "evidence_ids": [
+        "si_eleanor_pain_q3"
+      ]
+    },
+    {
+      "topic": "qualification_gap",
+      "note": "Competition pillar is entirely blank after one full discovery call. Add a direct competitive question to every discovery conversation: 'Are you evaluating other approaches?' Waiting until a later stage to discover alternatives hands the buyer a framing advantage.",
+      "evidence_ids": [
+        "si_call_summary_synthesis"
+      ]
+    }
+  ]
+}

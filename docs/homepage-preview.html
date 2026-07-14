@@ -1,0 +1,486 @@
+<meta charset="utf-8">
+<title>Mallín — simplified homepage preview</title>
+<style>
+  :root{
+    --paper:#f4f1ea; --surface:#fff; --ink:#1a2230; --ink2:#3b4658; --ink3:#6b7689;
+    --ink4:#9aa3b3; --rule:#e3dccc; --rule2:#dcd6ca; --blue:#4a7186; --blue-tint:#e7eff4;
+    --crit:#c25a4a; --crit-tint:#f6e7e3; --good:#5a8f7a; --good-tint:#e2efe9;
+    --warn:#a9762e; --warn-tint:#f6efe0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+  a{text-decoration:none;color:inherit}
+  .container{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  /* nav */
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;max-width:1080px;margin:0 auto}
+  .mark{display:inline-flex;align-items:center;gap:8px;font-size:18px;font-weight:600}
+  .navr{display:flex;align-items:center;gap:22px}
+  .navlink{font-size:14px;color:var(--ink2)}
+  .navcta{font-size:14px;font-weight:600;color:var(--paper);background:var(--ink);border-radius:8px;padding:9px 16px}
+  @media(max-width:720px){.navr .navlink,.navr .navitem{display:none}}
+
+  /* dropdown nav */
+  .navitem{position:relative;display:inline-flex;align-items:center}
+  .navtrigger{font-family:inherit;font-size:14px;color:var(--ink2);background:none;border:none;padding:0;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .navtrigger .caret{transition:transform .18s ease}
+  .navitem:hover .caret,.navitem.open .caret{transform:rotate(180deg)}
+  .dropdown{position:absolute;top:calc(100% + 14px);left:0;background:#fff;border:0.5px solid var(--rule2);border-radius:14px;box-shadow:0 18px 44px rgba(26,34,48,.16);padding:14px;display:flex;gap:14px;opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease,visibility .18s;z-index:70}
+  .dropdown::before{content:"";position:absolute;top:-14px;left:0;right:0;height:14px}
+  .dropdown.dd-right{left:auto;right:0}
+  .navitem:hover .dropdown,.navitem.open .dropdown{opacity:1;visibility:visible;transform:none}
+  .ddgrid{display:flex;flex-direction:column;gap:2px;min-width:252px}
+  .ddrow{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:10px}
+  .ddrow:hover{background:var(--paper)}
+  .ddt{font-size:14px;font-weight:600;color:var(--ink)}
+  .dds{font-size:12.5px;color:var(--ink3);line-height:1.35}
+  .ddfeature{width:206px;background:var(--ink);color:var(--paper);border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px}
+  .ddfeature .wave{margin-bottom:auto}
+  .ddft{font-size:14px;font-weight:600}
+  .ddfs{font-size:12px;color:#aeb9c6;line-height:1.4}
+
+  /* pronunciation strip */
+  .topbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--ink3);background:#ece7dc;border-bottom:0.5px solid var(--rule);padding:8px 16px;line-height:1.3;text-align:center}
+  .tb-name{font-weight:600;color:var(--ink)}
+  .tb-say{display:inline-flex;align-items:center;gap:5px;color:var(--blue);font-weight:600}
+  .tb-mean{color:var(--ink3)}
+  .tb-sep{width:3px;height:3px;border-radius:50%;background:var(--ink4);display:inline-block;flex-shrink:0}
+
+  /* hero */
+  .hero{padding:44px 0 64px}
+  .herogrid{display:grid;grid-template-columns:1fr;gap:40px;align-items:center}
+  @media(min-width:900px){.herogrid{grid-template-columns:1fr 1.08fr;gap:48px}}
+  .eyebrow{font-size:13px;letter-spacing:.03em;color:var(--blue);font-weight:600;margin:0 0 16px}
+  h1{font-size:40px;line-height:1.1;letter-spacing:-0.025em;font-weight:600;margin:0 0 18px}
+  @media(min-width:900px){h1{font-size:46px}}
+  .sub{font-size:17.5px;line-height:1.6;color:var(--ink2);margin:0 0 26px;max-width:530px}
+  .ctarow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .primary{background:var(--ink);color:var(--paper);border-radius:9px;padding:13px 24px;font-size:15px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+  .secondary{font-size:15px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--rule2);padding-bottom:2px}
+  .trylink{display:inline-block;margin:16px 0 0;font-size:14px;font-weight:600;color:var(--blue)}
+  .heronote{font-size:13.5px;color:var(--ink3);margin:12px 0 0}
+
+  /* the walkthrough card */
+  .card{background:var(--surface);border:0.5px solid var(--rule2);border-radius:14px;box-shadow:0 8px 30px rgba(26,34,48,.08);overflow:hidden}
+  .chrome{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#efeae0;border-bottom:0.5px solid var(--rule2)}
+  .dot{width:10px;height:10px;border-radius:50%;display:block}
+  .cbrand{margin-left:8px;display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink)}
+  .deal{margin-left:auto;font-size:12px;color:var(--ink3)}
+  .mode{display:flex;gap:7px;padding:14px 18px 2px;flex-wrap:wrap}
+  .chip{font-size:11px;font-weight:600;color:var(--ink4);padding:5px 10px;border-radius:20px;background:#f2ede3;transition:all .3s ease;cursor:pointer;user-select:none}
+  .chip:hover{background:#e9e3d6;color:var(--ink2)}
+  .chip:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .chip.on{color:var(--blue);background:var(--blue-tint)}
+  .stage{position:relative;height:388px}
+  .panel{position:absolute;inset:0;padding:16px 20px;opacity:0;transform:translateY(10px);transition:opacity .55s ease,transform .55s ease;pointer-events:none}
+  .stage[data-step="0"] .panel[data-i="0"],.stage[data-step="1"] .panel[data-i="1"],.stage[data-step="2"] .panel[data-i="2"],.stage[data-step="3"] .panel[data-i="3"],.stage[data-step="4"] .panel[data-i="4"]{opacity:1;transform:none}
+  .steptitle{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4);font-weight:700;margin:0 0 10px}
+  .cue{font-size:12px;color:var(--ink4);margin:0 0 12px}
+  .work{display:flex;flex-direction:column;gap:12px;margin-top:2px}
+  .wline{display:flex;align-items:center;gap:10px;font-size:14.5px;color:var(--ink2)}
+  .tick{width:18px;height:18px;border-radius:50%;background:var(--good-tint);color:var(--good);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+  .spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--rule2);border-top-color:var(--blue);flex-shrink:0;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .pending{color:var(--ink4)}
+  .intel{display:flex;flex-direction:column;gap:11px}
+  .co{font-size:14px;line-height:1.5;color:var(--ink2)}
+  .people{display:flex;flex-direction:column;gap:8px}
+  .person{display:flex;align-items:center;gap:10px}
+  .av{width:30px;height:30px;border-radius:50%;background:var(--blue-tint);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+  .pn{font-size:13.5px;color:var(--ink);font-weight:600}
+  .pr{font-size:12.5px;color:var(--ink3)}
+  .signal{background:var(--good-tint);border-radius:9px;padding:10px 12px;font-size:13px;line-height:1.45;color:var(--ink2)}
+  .signal b{color:var(--good)}
+  .read{display:flex;flex-direction:column;gap:9px}
+  .block{border-radius:10px;padding:10px 13px}
+  .block .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin:0 0 3px}
+  .block .v{font-size:13px;line-height:1.45;color:var(--ink2)}
+  .rk{background:var(--crit-tint)} .rk .k{color:var(--crit)}
+  .mv{background:var(--blue-tint)} .mv .k{color:var(--blue)}
+  .ms{background:var(--warn-tint)} .ms .k{color:var(--warn)}
+  .deckrow{display:flex;gap:18px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .slide{width:200px;aspect-ratio:16/9;background:var(--ink);border-radius:8px;position:relative;overflow:hidden;box-shadow:0 3px 10px rgba(26,34,48,.18);flex-shrink:0}
+  .slidebody{padding:15px 17px}
+  .slidetitle{color:#f4f1ea;font-size:14.5px;font-weight:600}
+  .slidesub{color:#88b8d0;font-size:11px;margin-top:3px}
+  .sline{height:5px;background:rgba(244,241,234,.22);border-radius:3px;margin-top:11px;width:82%}
+  .sline.short{width:56%;margin-top:6px}
+  .logos{position:absolute;bottom:10px;left:17px;display:flex;gap:6px}
+  .lg{font-size:9px;color:#f4f1ea;background:rgba(255,255,255,.13);border-radius:4px;padding:2px 7px;letter-spacing:.04em}
+  .deckmeta{flex:1;min-width:175px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+  .deckcopy{font-size:13.5px;color:var(--ink2);line-height:1.5;margin:0}
+  .exportbtn{background:var(--ink);color:var(--paper);border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+  .filetag{font-size:11.5px;color:var(--ink4);display:inline-flex;align-items:center;gap:6px}
+  .filetag .pill{background:#f2ede3;color:var(--ink3);border-radius:5px;padding:1px 6px;font-weight:600}
+  .lib{display:flex;flex-direction:column;gap:8px;margin-top:2px}
+  .row{display:flex;align-items:center;gap:11px;padding:9px 11px;border:0.5px solid var(--rule2);border-radius:9px;background:#faf8f3}
+  .row.hot{border-color:var(--blue);background:var(--blue-tint)}
+  .rav{width:28px;height:28px;border-radius:7px;background:#e9e3d6;color:var(--ink2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .row.hot .rav{background:#fff;color:var(--blue)}
+  .rmain{flex:1;min-width:0}
+  .rname{font-size:13.5px;font-weight:600;color:var(--ink)}
+  .rsub{font-size:12px;color:var(--ink3)}
+  .rchip{font-size:10.5px;font-weight:600;border-radius:20px;padding:3px 9px;flex-shrink:0}
+  .rchip.adv{background:var(--good-tint);color:var(--good)}
+  .rchip.kept{background:var(--blue-tint);color:var(--blue)}
+  .rchip.pend{background:#f2ede3;color:var(--ink3)}
+  .rail{display:flex;gap:6px;padding:10px 20px 18px}
+  .seg{height:3px;flex:1;background:var(--rule2);border-radius:2px;overflow:hidden;position:relative}
+  .seg > i{position:absolute;inset:0;width:0;background:var(--blue);border-radius:2px;transition:width .5s ease}
+  .seg.full > i{width:100%}
+
+  /* sections */
+  .section{padding:76px 0;border-top:0.5px solid var(--rule)}
+  .white{background:var(--surface)}
+  h2{font-size:32px;line-height:1.15;letter-spacing:-0.02em;font-weight:600;margin:0 0 16px;max-width:680px}
+  .lede{font-size:16.5px;line-height:1.65;color:var(--ink2);max-width:660px;margin:0}
+  .punch{font-size:20px;font-weight:600;color:var(--ink);margin:26px 0 0}
+  .plist{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:9px;max-width:640px}
+  .plist li{position:relative;padding-left:22px;font-size:16px;line-height:1.5;color:var(--ink2)}
+  .plist li::before{content:"";position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:50%;background:var(--blue)}
+  .plist li.more{color:var(--ink4);font-style:italic}
+  .plist li.more::before{display:none}
+  .cards3{display:grid;grid-template-columns:1fr;gap:16px;margin-top:34px}
+  @media(min-width:800px){.cards3{grid-template-columns:repeat(3,1fr)}}
+  .b{background:var(--surface);border:0.5px solid var(--rule2);border-radius:12px;padding:22px 22px}
+  .white .b{background:var(--paper)}
+  .b h3{font-size:17px;font-weight:600;margin:0 0 8px}
+  .b p{font-size:14.5px;line-height:1.55;color:var(--ink3);margin:0}
+
+  /* connectivity flow */
+  .flowwrap{margin:30px 0 6px}
+  .flow{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+  .flabel{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink4);font-weight:700;display:block;margin-bottom:10px}
+  .srcgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .src{font-size:13px;font-weight:600;color:var(--ink2);background:var(--paper);border:0.5px solid var(--rule2);border-radius:8px;padding:8px 12px;white-space:nowrap;text-align:center}
+  .farrow{font-size:22px;color:var(--blue)}
+  .hub{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--ink);color:var(--paper);border-radius:14px;padding:16px 22px;min-width:150px}
+  .hubname{font-size:15px;font-weight:700}
+  .hubsub{font-size:11.5px;color:#aeb9c6}
+  .outcard{font-size:14px;font-weight:600;color:var(--ink);background:var(--blue-tint);border-radius:10px;padding:14px 16px;max-width:200px;line-height:1.4}
+  @media(max-width:760px){.flow{flex-direction:column}.farrow{transform:rotate(90deg)}.srcgrid{grid-template-columns:1fr 1fr 1fr}}
+  .white h2,.white .lede{margin-left:auto;margin-right:auto;text-align:center}
+
+  /* pricing */
+  .pricehead{margin:0 0 30px}
+  .tiers{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:760px){.tiers{grid-template-columns:repeat(3,1fr)}}
+  .tier{display:flex;flex-direction:column;background:var(--surface);border:0.5px solid var(--rule2);border-radius:12px;padding:22px 22px}
+  .tier.feat{border:1.5px solid var(--ink)}
+  .tname{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .badge{font-size:11px;font-weight:600;color:var(--blue);background:var(--blue-tint);border-radius:20px;padding:3px 9px}
+  .price{font-size:28px;font-weight:600;letter-spacing:-0.02em}
+  .per{font-size:13px;color:var(--ink4)}
+  .tsub{font-size:14px;color:var(--ink3);line-height:1.5;margin:6px 0 0}
+
+  /* final cta */
+  .final{background:var(--ink);color:var(--paper);text-align:center}
+  .final h2{color:var(--paper);margin:0 auto 14px;max-width:640px}
+  .final p{color:#c9d2dc;font-size:16.5px;line-height:1.6;max-width:560px;margin:0 auto 26px}
+  .final .primary{background:var(--paper);color:var(--ink)}
+  .final .secondary{color:var(--paper);border-color:rgba(244,241,234,.4)}
+
+  /* trust band */
+  .trust{padding:34px 0;border-top:0.5px solid var(--rule)}
+  .trust-inner{display:flex;align-items:center;justify-content:center;gap:14px 24px;flex-wrap:wrap}
+  .ti{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;color:var(--ink2);font-weight:500}
+  .ti svg{color:var(--good);flex-shrink:0}
+  .trust-link{font-size:13.5px;font-weight:600;color:var(--blue)}
+
+  /* name story */
+  .namestory .ns-inner{max-width:600px;margin:0 auto;text-align:center}
+  .ns-mark{margin-bottom:8px}
+  .ns-h{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:0 0 14px}
+  .ns-body{font-size:19px;line-height:1.55;color:var(--ink2);margin:0}
+
+  .footer{background:var(--ink);color:#9aa7b4;font-size:13px;padding:26px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;border-top:0.5px solid rgba(255,255,255,.08)}
+  .footer a{color:#c9d2dc}
+</style>
+
+<div class="page">
+
+  <div class="topbar">
+    <span class="tb-name">Mallín</span>
+    <span class="tb-sep"></span>
+    <span class="tb-say"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg> mah-YEEN</span>
+  </div>
+
+  <nav class="nav">
+    <a class="mark" href="#">
+      <svg viewBox="0 0 64 64" width="22" height="22" fill="none"><path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#1a2230" stroke-width="3" stroke-linecap="round"/><path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#4a7186" stroke-width="3" stroke-linecap="round"/></svg>
+      Mallín
+    </a>
+    <div class="navr">
+      <div class="navitem" data-menu>
+        <button class="navtrigger">Product <svg class="caret" viewBox="0 0 12 12" width="10" height="10" fill="none"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="dropdown">
+          <div class="ddgrid">
+            <a class="ddrow" href="/how-it-works"><span class="ddt">How it works</span><span class="dds">See Mallín work a real deal, end to end</span></a>
+            <a class="ddrow" href="/trust"><span class="ddt">Security &amp; trust</span><span class="dds">How your data is governed and kept yours</span></a>
+          </div>
+          <a class="ddfeature" href="/start">
+            <svg class="wave" viewBox="0 0 64 64" width="26" height="26" fill="none"><path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#f4f1ea" stroke-width="3" stroke-linecap="round"/><path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#7fb0c8" stroke-width="3" stroke-linecap="round"/></svg>
+            <span class="ddft">See it on a real deal</span>
+            <span class="ddfs">Run Mallín on a call you just had. Free.</span>
+          </a>
+        </div>
+      </div>
+      <a class="navlink" href="#pricing">Pricing</a>
+      <a class="navlink" href="/blog">Blog</a>
+      <div class="navitem" data-menu>
+        <button class="navtrigger">Company <svg class="caret" viewBox="0 0 12 12" width="10" height="10" fill="none"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="dropdown dd-right">
+          <div class="ddgrid">
+            <a class="ddrow" href="/about"><span class="ddt">About Mallín</span><span class="dds">The name, the meadow, the why</span></a>
+            <a class="ddrow" href="/contact"><span class="ddt">Contact</span><span class="dds">Talk to us</span></a>
+            <a class="ddrow" href="/careers"><span class="ddt">Careers</span><span class="dds">Help build it</span></a>
+          </div>
+        </div>
+      </div>
+      <a class="navlink" href="/sign-in">Sign in</a>
+      <a class="navcta" href="/start">Start free →</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container herogrid">
+      <div>
+        <p class="eyebrow">Governed native AI for sales teams</p>
+        <h1>The whole sales team, behind every rep.</h1>
+        <p class="sub">Give Mallín whatever you have, a call, an email thread, or just the company you're about to meet, and it hands back a strategy for the deal: what to do next, the angles you missed, the risks you're not seeing. It preps you before the first call and remembers every deal after, so every rep gets the support they need, on every deal.</p>
+        <div class="ctarow">
+          <a class="primary" href="/start">Start free
+            <svg viewBox="0 0 12 12" width="12" height="12" fill="none"><path d="M1 6h10M7 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="secondary" href="/pilot">Book a pilot</a>
+        </div>
+        <a class="trylink" href="/try">Or try one call free, no signup →</a>
+        <p class="heronote">Your first 3 deals are on us. No CRM, no setup.</p>
+      </div>
+
+      <div class="card">
+        <div class="chrome">
+          <span class="dot" style="background:#e0655a"></span><span class="dot" style="background:#e6a93c"></span><span class="dot" style="background:#57a869"></span>
+          <span class="cbrand">
+            <svg viewBox="0 0 64 64" width="16" height="16" fill="none"><path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#1a2230" stroke-width="3" stroke-linecap="round"/><path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#4a7186" stroke-width="3" stroke-linecap="round"/></svg>
+            Mallín
+          </span>
+          <span class="deal">Westfield Robotics</span>
+        </div>
+        <div class="mode">
+          <span class="chip" id="chip1">1 · Research</span>
+          <span class="chip" id="chip2">2 · The strategy</span>
+          <span class="chip" id="chip3">3 · The deck</span>
+          <span class="chip" id="chip4">4 · Your deals</span>
+        </div>
+        <div class="stage" id="stageA" data-step="0">
+          <div class="panel" data-i="0">
+            <p class="steptitle">Before the first call</p>
+            <p class="cue">No call yet. Just the company you're about to meet. Mallín goes to work.</p>
+            <div class="work">
+              <div class="wline"><span class="tick">✓</span> Reading the company</div>
+              <div class="wline"><span class="tick">✓</span> Finding who you're meeting</div>
+              <div class="wline pending"><span class="spin"></span> Scanning for recent signals</div>
+            </div>
+          </div>
+          <div class="panel" data-i="1">
+            <p class="steptitle">What Mallín found</p>
+            <div class="intel">
+              <p class="co">Series B robotics maker, 240 people, pushing into warehouse automation.</p>
+              <div class="people">
+                <div class="person"><span class="av">PN</span><span><span class="pn">Priya Nadkarni</span> <span class="pr">· VP Operations · the person you're meeting</span></span></div>
+                <div class="person"><span class="av">ML</span><span><span class="pn">Marcus Lee</span> <span class="pr">· Director of IT · will weigh in on rollout</span></span></div>
+              </div>
+              <div class="signal"><b>Signal:</b> posted two warehouse operations roles last week. They are scaling the exact team your product serves.</div>
+            </div>
+          </div>
+          <div class="panel" data-i="2">
+            <p class="steptitle">The strategy</p>
+            <p class="cue">After your discovery call with Priya on Tuesday.</p>
+            <div class="read">
+              <div class="block mv"><p class="k">The play</p><p class="v">Get the budget owner in the room before you demo. A great demo to the wrong people stalls here.</p></div>
+              <div class="block ms"><p class="k">What you may have missed</p><p class="v">Priya mentioned a Q3 board review in passing. That is your real deadline, not the close date on the deal.</p></div>
+              <div class="block rk"><p class="k">What you're not seeing</p><p class="v">IT has quietly become a second decision maker. Marcus can stall this, and you have not won him yet.</p></div>
+            </div>
+          </div>
+          <div class="panel" data-i="3">
+            <p class="steptitle">A deck for the meeting</p>
+            <div class="deckrow">
+              <div class="slide">
+                <div class="slidebody">
+                  <div class="slidetitle">Westfield Robotics</div>
+                  <div class="slidesub">Scaling warehouse automation, together</div>
+                  <div class="sline"></div><div class="sline short"></div>
+                </div>
+                <div class="logos"><span class="lg">WR</span><span class="lg">YOU</span></div>
+              </div>
+              <div class="deckmeta">
+                <p class="deckcopy">Built from the deal, dual branded with your logo and theirs. Ready for the meeting.</p>
+                <button class="exportbtn"><svg viewBox="0 0 16 16" width="15" height="15" fill="none"><path d="M8 2v8m0 0l3-3m-3 3L5 7M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Export to PowerPoint</button>
+                <span class="filetag">Westfield Robotics <span class="pill">.pptx</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="panel" data-i="4">
+            <p class="steptitle">When you sign in</p>
+            <p class="cue">Every deal you're working, right where you left it.</p>
+            <div class="lib">
+              <div class="row hot"><span class="rav">WR</span><div class="rmain"><div class="rname">Westfield Robotics</div><div class="rsub">New business · next: get the budget owner in the room</div></div><span class="rchip adv">just now</span></div>
+              <div class="row"><span class="rav">BL</span><div class="rmain"><div class="rname">Brightline Logistics</div><div class="rsub">Discovery · next: book the technical demo</div></div><span class="rchip adv">advancing</span></div>
+              <div class="row"><span class="rav">CS</span><div class="rmain"><div class="rname">Cedar Systems</div><div class="rsub">Security review · next: send the SOC 2 docs</div></div><span class="rchip pend">pending</span></div>
+              <div class="row"><span class="rav">HF</span><div class="rmain"><div class="rname">Halcyon Freight</div><div class="rsub">Inherited · next: reconnect · full history is here</div></div><span class="rchip kept">saved</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="rail"><span class="seg"><i></i></span><span class="seg"><i></i></span><span class="seg"><i></i></span><span class="seg"><i></i></span><span class="seg"><i></i></span></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <h2>Your reps learn how to win. That knowledge stays with them.</h2>
+      <p class="lede">Reps get good by doing. Every deal sharpens how they sell the next one. Not on purpose, just by default, that judgment lives in their heads and a few thin CRM notes, never written down. The things your best people just know:</p>
+      <ul class="plist">
+        <li>Which partner to pull into which deal</li>
+        <li>When to discount, and why</li>
+        <li>How competitor X changes your pitch</li>
+        <li>How to actually get a deal approved inside your own company</li>
+        <li class="more">and so on</li>
+      </ul>
+      <p class="lede" style="margin-top:16px">Even while they are still here, a teammate is stuck on a problem this rep already solved, because the lesson never travels. And when they leave, it is gone for good: their deals stay in the pipeline, but what made them winnable does not, and neither do the lessons from the ones they lost.</p>
+      <p class="punch">Through our governed native AI, Mallín captures these moments as they happen, and hands them back to the whole team as strategy.</p>
+    </div>
+  </section>
+
+  <section class="section white">
+    <div class="container">
+      <h2>One AI, across every tool your team uses.</h2>
+      <p class="lede">Mallín connects to the systems reps already work in. It learns from the deals you won and the ones you lost, reads every conversation inside those tools, and turns what is working, and what is not, into a decision the whole team can act on.</p>
+      <div class="flowwrap">
+        <div class="flow">
+          <div>
+            <span class="flabel">What it reads</span>
+            <div class="srcgrid">
+              <span class="src">Calls</span>
+              <span class="src">Email</span>
+              <span class="src">Chat</span>
+              <span class="src">Calendar</span>
+              <span class="src">CRM</span>
+              <span class="src">News &amp; signals</span>
+            </div>
+          </div>
+          <span class="farrow">&rarr;</span>
+          <div class="hub">
+            <svg viewBox="0 0 64 64" width="26" height="26" fill="none"><path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#f4f1ea" stroke-width="3" stroke-linecap="round"/><path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#7fb0c8" stroke-width="3" stroke-linecap="round"/></svg>
+            <span class="hubname">Mallín</span>
+            <span class="hubsub">learns what works, and what doesn't</span>
+          </div>
+          <span class="farrow">&rarr;</span>
+          <div>
+            <span class="flabel">What you get</span>
+            <div class="outcard">A strategy for the deal, shared with the whole team</div>
+          </div>
+        </div>
+      </div>
+      <div class="cards3">
+        <div class="b"><h3>Learns what wins, and what loses</h3><p>It studies the deals you won for the habits behind the wins, and the ones you lost for the patterns that sink them, so it can tell you what is working, what is not, and when a deal is worth walking away from.</p></div>
+        <div class="b"><h3>A real strategy, every deal</h3><p>The play, the risks you're not seeing, and the things you missed. Not a summary. A strategy.</p></div>
+        <div class="b"><h3>Less pressure on your team</h3><p>The prep and the busywork get done for them, and no one has to carry a deal alone. The team spends its energy selling, not recapping.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="container">
+      <div class="pricehead">
+        <h2>Start on your own. Bring the team when you're ready.</h2>
+        <p class="lede">One rep can start free today. When the floor wants in, we price the team to the value.</p>
+      </div>
+      <div class="tiers">
+        <div class="tier"><div class="tname">Free</div><div><span class="price">$0</span> <span class="per">first 3 deals</span></div><p class="tsub">Run it on three real deals before you decide anything.</p></div>
+        <div class="tier feat"><div class="tname">Pro <span class="badge">For reps</span></div><div><span class="price">$29.99</span> <span class="per">per month</span></div><p class="tsub">Unlimited, for the individual rep, on your own card.</p></div>
+        <div class="tier"><div class="tname">Team</div><div><span class="price">Let's talk</span> <span class="per">per seat</span></div><p class="tsub">Shared memory, manager visibility, and CRM write back for the whole floor.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust">
+    <div class="container">
+      <div class="trust-inner">
+        <span class="ti"><svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M6.5 10.5l2.5 2.5 4.5-5"/></svg> What it learns from your data stays yours</span>
+        <span class="ti"><svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M6.5 10.5l2.5 2.5 4.5-5"/></svg> Every CRM write is yours to approve</span>
+        <span class="ti"><svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M6.5 10.5l2.5 2.5 4.5-5"/></svg> Nothing is auto-sent</span>
+        <a class="trust-link" href="/trust">Our approach to trust →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section final">
+    <div class="container">
+      <h2>See it on a real deal.</h2>
+      <p>Give Mallín a deal you're working right now and watch it hand back the strategy your team has been missing.</p>
+      <div class="ctarow" style="justify-content:center">
+        <a class="primary" href="/start">Start free</a>
+        <a class="secondary" href="/pilot">Book a pilot</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>© 2026 Mallín</span>
+    <a href="#">hello@mallin.io</a>
+    <a href="#">Blog</a>
+    <a href="#">Trust</a>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+  </footer>
+</div>
+
+<script>
+  (function(){
+    var stage=document.getElementById('stageA');
+    var chips=[1,2,3,4].map(function(n){return document.getElementById('chip'+n)});
+    var segs=Array.prototype.slice.call(document.querySelectorAll('.rail .seg'));
+    var durs=[2500,4800,5600,4400,5200];
+    var chipStep=[1,2,3,4];
+    var s=0,timer=null,paused=false;
+    function render(){
+      stage.setAttribute('data-step',s);
+      chips[0].classList.toggle('on',s<=1);
+      chips[1].classList.toggle('on',s===2);
+      chips[2].classList.toggle('on',s===3);
+      chips[3].classList.toggle('on',s===4);
+      segs.forEach(function(seg,i){seg.classList.toggle('full',i<=s)});
+    }
+    function scheduleNext(){
+      clearTimeout(timer);
+      if(paused)return;
+      timer=setTimeout(function(){s=(s+1)%5;render();scheduleNext();},durs[s]);
+    }
+    chips.forEach(function(chip,i){
+      chip.setAttribute('role','button');chip.setAttribute('tabindex','0');
+      function go(){paused=true;clearTimeout(timer);s=chipStep[i];render();}
+      chip.addEventListener('click',go);
+      chip.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+    });
+    render();scheduleNext();
+  })();
+</script>
+
+<script>
+  (function(){
+    var items=Array.prototype.slice.call(document.querySelectorAll('.navitem[data-menu]'));
+    items.forEach(function(it){
+      var trig=it.querySelector('.navtrigger');
+      trig.addEventListener('click',function(e){
+        e.stopPropagation();
+        var wasOpen=it.classList.contains('open');
+        items.forEach(function(o){o.classList.remove('open')});
+        if(!wasOpen)it.classList.add('open');
+      });
+    });
+    document.addEventListener('click',function(){items.forEach(function(o){o.classList.remove('open')})});
+  })();
+</script>

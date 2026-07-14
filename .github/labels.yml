@@ -1,0 +1,21 @@
+# GitHub label declarations for the revops-autopilot repo.
+#
+# GitHub caps label descriptions at 100 chars — keep new entries within
+# that or the API rejects with HTTP 422.
+#
+# To apply manually (requires `gh` CLI authenticated to the repo):
+#
+#   gh label create <name> --color <hex> --description "<≤100 chars>"
+#
+# Or sync the whole file at once via crazy-max/ghaction-github-labeler:
+#
+#   uses: crazy-max/ghaction-github-labeler@v5
+#   with:
+#     yaml-file: .github/labels.yml
+#     skip-delete: true
+#
+# Live on the repo as of 2026-05-20.
+
+- name: write-through-review-required
+  color: e7b75f
+  description: "Touches a CRM write surface — review against write-through contract (8-rule checklist in PR body)"

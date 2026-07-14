@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin · cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink-0: #fafafa;
+    --ink-1: #e6e7e9;
+    --ink-2: #a8aaae;
+    --ink-3: #75777b;
+    --ink-4: #4a4c50;
+    --ink-5: #2c2e32;
+    --ink-6: #1a1b1e;
+    --ink-7: #111114;
+    --ink-8: #0a0b0d;
+    --line: rgba(255,255,255,0.07);
+    --line-strong: rgba(255,255,255,0.14);
+    --accent: #c8ff5e;
+    --warn: #f3b760;
+    --crit: #ff7567;
+    --good: #66e1a6;
+    --info: #6ab3ff;
+    --serif: "Instrument Serif", "Times New Roman", serif;
+    --sans: "Inter", system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--ink-8);
+    color: var(--ink-1);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--accent); color: var(--ink-8); }
+
+  /* ── Page intro / framing ─────────────────────────────────────── */
+  .intro {
+    max-width: 1480px; margin: 0 auto;
+    padding: 80px 32px 36px;
+  }
+  .intro-eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .intro-eyebrow-bar { width: 24px; height: 1px; background: var(--ink-4); }
+  .intro h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(40px, 4.2vw, 64px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--ink-0);
+    max-width: 880px;
+    margin: 0 0 18px;
+  }
+  .intro h1 em { font-style: italic; color: var(--ink-2); }
+  .intro-sub {
+    max-width: 680px;
+    font-size: 16px; line-height: 1.55;
+    color: var(--ink-2);
+    margin: 0;
+  }
+  .intro-sub strong { color: var(--ink-0); font-weight: 500; }
+
+  /* ── Cockpit shell ────────────────────────────────────────────── */
+  .cockpit-frame {
+    max-width: 1480px; margin: 56px auto 0;
+    padding: 0 32px;
+  }
+  .cockpit-chrome {
+    position: relative;
+    border: 1px solid var(--line-strong);
+    border-radius: 18px;
+    background: var(--ink-7);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 60px 120px -40px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+  .chrome-titlebar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--ink-6), var(--ink-7));
+  }
+  .traffic-light {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--ink-5);
+  }
+  .titlebar-url {
+    flex: 1; text-align: center;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.04em;
+  }
+  .titlebar-url b { color: var(--ink-1); font-weight: 500; }
+
+  /* ── Cockpit topbar (app navigation) ──────────────────────────── */
+  .app-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .app-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; letter-spacing: -0.01em;
+  }
+  .app-brand-icon { width: 16px; height: 16px; }
+  .app-nav { display: flex; gap: 4px; }
+  .app-nav button {
+    background: none; border: none;
+    color: var(--ink-2); cursor: pointer;
+    font: inherit;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .app-nav button:hover { background: var(--ink-6); color: var(--ink-0); }
+  .app-nav button.active { background: var(--ink-5); color: var(--ink-0); }
+  .app-status {
+    display: flex; align-items: center; gap: 18px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.06em;
+  }
+  .pulse-dot {
+    display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--good);
+    margin-right: 6px;
+    animation: pulse 2.6s cubic-bezier(0.4,0,0.6,1) infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(102,225,166,0.55); }
+    50% { box-shadow: 0 0 0 5px rgba(102,225,166,0); }
+  }
+
+  /* ── Three-column body ────────────────────────────────────────── */
+  .app-body {
+    display: grid;
+    grid-template-columns: 260px 1fr 340px;
+    height: 760px;
+    background: var(--ink-7);
+  }
+
+  /* ── LEFT — memory column ─────────────────────────────────────── */
+  .col-memory {
+    border-right: 1px solid var(--line);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .col-head {
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .col-head b { color: var(--ink-1); font-weight: 500; }
+  .deal-pick {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(200,255,94,0.04), transparent 60%);
+  }
+  .deal-pick-meta {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .deal-pick-name {
+    font-family: var(--serif); font-size: 22px; line-height: 1.1;
+    color: var(--ink-0); letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .deal-pick-stage {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-2); letter-spacing: 0.04em;
+  }
+  .deal-pick-stage b { color: var(--ink-1); font-weight: 500; }
+  .deal-pick-stage .sep { color: var(--ink-4); }
+
+  .timeline { padding: 12px 18px 24px; flex: 1; overflow-y: auto; }
+  .timeline-section {
+    margin-top: 18px;
+  }
+  .timeline-label {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-4); letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--line);
+    cursor: pointer;
+    transition: opacity 120ms ease;
+  }
+  .timeline-item:hover { opacity: 0.85; }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ink-4);
+    margin-top: 6px;
+    justify-self: center;
+  }
+  .timeline-dot.active { background: var(--accent); box-shadow: 0 0 8px rgba(200,255,94,0.4); }
+  .timeline-dot.alert { background: var(--crit); }
+  .timeline-item-title {
+    font-size: 12px; color: var(--ink-1);
+    line-height: 1.4;
+  }
+  .timeline-item-meta {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-3); letter-spacing: 0.04em;
+    margin-top: 2px;
+  }
+
+  /* ── CENTER — operating column ────────────────────────────────── */
+  .col-operating {
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    background: linear-gradient(180deg, var(--ink-7) 0%, var(--ink-7) 100%);
+  }
+  .pdf-card {
+    margin: 20px 24px 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #15171b 0%, var(--ink-7) 100%);
+    overflow: hidden;
+    position: relative;
+  }
+  .pdf-card::before {
+    content: "";
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--accent);
+  }
+  .pdf-head {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .pdf-eyebrow {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--accent); letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .pdf-sev {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,117,103,0.1);
+    color: var(--crit);
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+  .pdf-sev .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--crit); }
+  .pdf-body { padding: 18px 20px 20px; }
+
+  .pdf-risk-label {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-3); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .pdf-risk {
+    font-family: var(--serif); font-size: 22px;
+    line-height: 1.2; color: var(--ink-0);
+    letter-spacing: -0.01em;
+    margin: 0 0 18px;
+  }
+
+  .pdf-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .pdf-section-label {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-3); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .pdf-move {
+    font-size: 14px; color: var(--ink-0);
+    line-height: 1.5;
+    margin: 0;
+  }
+  .pdf-quote {
+    margin: 0;
+    padding: 12px 14px;
+    border-left: 2px solid var(--accent);
+    background: rgba(200,255,94,0.04);
+    border-radius: 0 6px 6px 0;
+    font-family: var(--serif); font-size: 15px;
+    color: var(--ink-1); font-style: italic;
+    line-height: 1.5;
+  }
+  .pdf-quote-attr {
+    margin-top: 8px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.04em;
+    font-style: normal;
+  }
+  .pdf-quote-attr b { color: var(--ink-1); font-weight: 500; }
+
+  .pdf-temporal {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .pdf-temporal-cell {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--ink-6);
+  }
+  .pdf-temporal-cell .num {
+    font-family: var(--serif); font-size: 22px;
+    color: var(--ink-0); line-height: 1; letter-spacing: -0.01em;
+  }
+  .pdf-temporal-cell .label {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-3); letter-spacing: 0.04em;
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  .pdf-actions {
+    margin-top: 22px;
+    display: flex; gap: 8px;
+  }
+  .approve-btn {
+    padding: 10px 18px;
+    background: var(--accent); color: var(--ink-8);
+    border: none; border-radius: 999px;
+    font: inherit; font-weight: 500; font-size: 13px;
+    cursor: pointer;
+    transition: filter 140ms ease;
+  }
+  .approve-btn:hover { filter: brightness(1.08); }
+  .modify-btn, .reject-btn {
+    padding: 10px 16px;
+    background: transparent;
+    color: var(--ink-1);
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    font: inherit; font-size: 13px;
+    cursor: pointer;
+    transition: background 140ms ease;
+  }
+  .modify-btn:hover, .reject-btn:hover { background: var(--ink-6); }
+
+  /* Secondary cards under PDF */
+  .second-card {
+    margin: 16px 24px 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--ink-7);
+    overflow: hidden;
+  }
+  .second-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .second-head-left {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .second-head-left b { color: var(--ink-1); font-weight: 500; }
+  .second-head-meta {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-4); letter-spacing: 0.04em;
+  }
+  .second-body { padding: 14px 18px 16px; }
+  .second-body p {
+    margin: 0 0 8px;
+    font-size: 13px; color: var(--ink-1); line-height: 1.5;
+  }
+  .second-body p:last-child { margin-bottom: 0; }
+  .last-call-stat {
+    display: flex; gap: 18px;
+    margin-top: 12px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.04em;
+  }
+  .last-call-stat b { color: var(--ink-1); font-weight: 500; }
+
+  .end-spacer { height: 24px; }
+
+  /* ── RIGHT — execution column ─────────────────────────────────── */
+  .col-execution {
+    overflow-y: auto;
+  }
+  .exec-group {
+    padding: 16px 18px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .exec-group-label {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .exec-group-label b { color: var(--ink-1); font-weight: 500; }
+  .exec-group-label .count {
+    color: var(--accent);
+    background: rgba(200,255,94,0.1);
+    padding: 1px 8px; border-radius: 999px;
+    font-size: 10px;
+  }
+
+  .compose-card {
+    padding: 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--ink-6);
+  }
+  .compose-to {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .compose-to b { color: var(--ink-1); font-weight: 500; }
+  .compose-subject {
+    font-size: 12.5px; color: var(--ink-0);
+    margin-bottom: 8px;
+  }
+  .compose-body {
+    font-size: 12px; color: var(--ink-2); line-height: 1.5;
+    border-top: 1px dashed var(--line);
+    padding-top: 8px;
+  }
+  .compose-meta {
+    margin-top: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-4); letter-spacing: 0.04em;
+  }
+  .compose-meta a {
+    color: var(--accent);
+  }
+
+  .crm-update {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--ink-7);
+    margin-bottom: 10px;
+  }
+  .crm-update-head {
+    display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-3); letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .crm-update-head .stage-pill {
+    color: var(--accent);
+    background: rgba(200,255,94,0.08);
+    padding: 1px 6px; border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .crm-field {
+    font-size: 12px; color: var(--ink-1);
+    margin-bottom: 4px;
+  }
+  .crm-diff {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3);
+    display: flex; gap: 6px; align-items: center;
+  }
+  .crm-diff .strike {
+    color: var(--ink-4); text-decoration: line-through;
+  }
+  .crm-diff .arrow { color: var(--ink-4); }
+  .crm-diff .new { color: var(--ink-0); }
+  .crm-update-actions {
+    display: flex; gap: 6px;
+    margin-top: 8px;
+  }
+  .crm-update-actions button {
+    padding: 4px 10px;
+    background: var(--ink-5);
+    color: var(--ink-1);
+    border: none; border-radius: 999px;
+    font: inherit; font-size: 10.5px;
+    cursor: pointer;
+  }
+  .crm-update-actions button.primary {
+    background: var(--accent); color: var(--ink-8);
+  }
+  .crm-guard {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-4); letter-spacing: 0.04em;
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+  .crm-guard b { color: var(--ink-2); font-weight: 500; }
+
+  .queue-item {
+    display: grid;
+    grid-template-columns: 6px 1fr;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .queue-item:last-child { border-bottom: none; }
+  .queue-mark { width: 4px; background: var(--info); border-radius: 2px; }
+  .queue-mark.crit { background: var(--crit); }
+  .queue-mark.warn { background: var(--warn); }
+  .queue-title {
+    font-size: 12px; color: var(--ink-1);
+    line-height: 1.4;
+  }
+  .queue-meta {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-3); letter-spacing: 0.04em;
+    margin-top: 3px;
+  }
+
+  /* Outro framing */
+  .outro {
+    max-width: 1480px; margin: 0 auto;
+    padding: 80px 32px 80px;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 64px;
+  }
+  .outro-eyebrow {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .outro h2 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: 36px; line-height: 1.1; letter-spacing: -0.01em;
+    color: var(--ink-0); margin: 0;
+  }
+  .outro h2 em { font-style: italic; color: var(--ink-2); }
+  .outro-body {
+    font-size: 15px; line-height: 1.6; color: var(--ink-2);
+    max-width: 640px;
+  }
+  .outro-body p { margin: 0 0 16px; }
+  .outro-body p:last-child { margin: 0; }
+  .outro-body strong { color: var(--ink-0); font-weight: 500; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 32px;
+    max-width: 1480px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    letter-spacing: 0.06em;
+  }
+  footer span:last-child { color: var(--ink-4); }
+
+  @media (max-width: 1100px) {
+    .app-body { grid-template-columns: 240px 1fr; }
+    .col-execution { display: none; }
+  }
+  @media (max-width: 760px) {
+    .app-body { grid-template-columns: 1fr; height: auto; }
+    .col-memory, .col-execution { display: none; }
+    .outro { grid-template-columns: 1fr; gap: 24px; padding: 56px 24px; }
+    .app-status { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<section class="intro">
+  <div class="intro-eyebrow">
+    <span class="intro-eyebrow-bar"></span>
+    <span>The cockpit</span>
+  </div>
+  <h1>The operating environment a rep<br/><em>lives inside during an active cycle.</em></h1>
+  <p class="intro-sub">
+    Not a dashboard with AI features. Memory on the left. Decision on the
+    center. Execution on the right. <strong>The cockpit becomes progressively
+    quieter as confidence rises, and sharpens when risk emerges.</strong>
+  </p>
+</section>
+
+<section class="cockpit-frame">
+  <div class="cockpit-chrome">
+
+    <div class="chrome-titlebar">
+      <span class="traffic-light"></span>
+      <span class="traffic-light"></span>
+      <span class="traffic-light"></span>
+      <span class="titlebar-url">mallin.io / cockpit / <b>treasury-platform-Q2</b></span>
+      <span style="width: 39px"></span>
+    </div>
+
+    <div class="app-topbar">
+      <div class="app-brand">
+        <svg class="app-brand-icon" viewBox="0 0 64 64" fill="none">
+          <path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#fafafa" stroke-width="3" stroke-linecap="round"/>
+          <line x1="22" y1="22" x2="22" y2="17" stroke="#fafafa" stroke-width="1.75" stroke-linecap="round"/>
+          <line x1="32" y1="22" x2="32" y2="14" stroke="#fafafa" stroke-width="1.75" stroke-linecap="round"/>
+          <line x1="42" y1="22" x2="42" y2="17" stroke="#fafafa" stroke-width="1.75" stroke-linecap="round"/>
+          <path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#c8ff5e" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        Mallin
+      </div>
+      <div class="app-nav">
+        <button class="active">Cockpit</button>
+        <button>Deals</button>
+        <button>Replay</button>
+        <button>Settings</button>
+      </div>
+      <div class="app-status">
+        <span><span class="pulse-dot"></span>SUBSTRATE · 47 artifacts · synced 09:47</span>
+      </div>
+    </div>
+
+    <div class="app-body">
+
+      <!-- ── LEFT: MEMORY ─────────────────────────────────────── -->
+      <div class="col-memory">
+        <div class="col-head">
+          <span><b>Memory</b></span>
+          <span>deal · 18mo</span>
+        </div>
+
+        <div class="deal-pick">
+          <div class="deal-pick-meta">DEAL · MID-MARKET TREASURY</div>
+          <div class="deal-pick-name">Cipher Mining Platform</div>
+          <div class="deal-pick-stage">
+            <b>$450K</b><span class="sep">·</span><span>stage 4</span><span class="sep">·</span><span>day 31</span>
+          </div>
+        </div>
+
+        <div class="timeline">
+
+          <div class="timeline-section">
+            <div class="timeline-label">Last 7 days</div>
+
+            <div class="timeline-item">
+              <span class="timeline-dot alert"></span>
+              <div>
+                <div class="timeline-item-title">Verification alert · champion airtime collapse</div>
+                <div class="timeline-item-meta">May 17 · 14:22 · from call 4</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <span class="timeline-dot active"></span>
+              <div>
+                <div class="timeline-item-title">Call 4 · demo follow-up</div>
+                <div class="timeline-item-meta">May 17 · 11:00 · 47min · Gong</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <span class="timeline-dot"></span>
+              <div>
+                <div class="timeline-item-title">Email · pricing one-pager sent</div>
+                <div class="timeline-item-meta">May 16 · 09:14 · to Andrea L.</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <span class="timeline-dot"></span>
+              <div>
+                <div class="timeline-item-title">Slack · #deal-treasury-cipher</div>
+                <div class="timeline-item-meta">May 15 · 5 msgs · manager looped</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-section">
+            <div class="timeline-label">Earlier · prior 3 weeks</div>
+
+            <div class="timeline-item">
+              <span class="timeline-dot"></span>
+              <div>
+                <div class="timeline-item-title">Call 3 · technical fit</div>
+                <div class="timeline-item-meta">May 9 · 52min · CFO present</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <span class="timeline-dot alert"></span>
+              <div>
+                <div class="timeline-item-title">Alert · competitor introduced</div>
+                <div class="timeline-item-meta">May 9 · GTreasury · pricing</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <span class="timeline-dot"></span>
+              <div>
+                <div class="timeline-item-title">Call 2 · discovery deepen</div>
+                <div class="timeline-item-meta">May 2 · 38min</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <span class="timeline-dot"></span>
+              <div>
+                <div class="timeline-item-title">Call 1 · qualification</div>
+                <div class="timeline-item-meta">Apr 21 · 31min · inbound</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CENTER: OPERATING ─────────────────────────────────── -->
+      <div class="col-operating">
+
+        <div class="pdf-card">
+          <div class="pdf-head">
+            <span class="pdf-eyebrow">// Primary decision focus</span>
+            <span class="pdf-sev"><span class="dot"></span>HIGH · MANAGER LOOPED</span>
+          </div>
+
+          <div class="pdf-body">
+
+            <div class="pdf-risk-label">RISK</div>
+            <h2 class="pdf-risk">The signer is disengaging. Two consecutive calls with zero questions from the CFO. Champion airtime collapsed 40% → 8%.</h2>
+
+            <div class="pdf-section">
+              <div class="pdf-section-label">MOVE</div>
+              <p class="pdf-move">
+                Force a head-on conversation on call 5. Ask the CFO directly: <em>"Before we send procurement, what would it take for you to commit to a signature date by quarter-end?"</em> If he can't name conditions, the deal is not real — escalate to manager today, not next week.
+              </p>
+            </div>
+
+            <div class="pdf-section">
+              <div class="pdf-section-label">EVIDENCE</div>
+              <blockquote class="pdf-quote">
+                "We'll need to review with the team before next steps."
+                <div class="pdf-quote-attr">— Nathan Reed, CFO · <b>call 4 · 11:38 AM · 24:18 / 47:00</b></div>
+              </blockquote>
+            </div>
+
+            <div class="pdf-section">
+              <div class="pdf-section-label">TEMPORAL</div>
+              <div class="pdf-temporal">
+                <div class="pdf-temporal-cell">
+                  <div class="num">2</div>
+                  <div class="label">calls · signer<br/>question count</div>
+                </div>
+                <div class="pdf-temporal-cell">
+                  <div class="num">8%</div>
+                  <div class="label">champion airtime<br/>down from 40%</div>
+                </div>
+                <div class="pdf-temporal-cell">
+                  <div class="num">31d</div>
+                  <div class="label">since first call<br/>stage 4 day 9</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pdf-actions">
+              <button class="approve-btn">Approve and queue action</button>
+              <button class="modify-btn">Modify</button>
+              <button class="reject-btn">Dismiss</button>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="second-card">
+          <div class="second-head">
+            <div class="second-head-left"><b>Last call</b> · what was heard</div>
+            <div class="second-head-meta">CALL 4 · 47:00 · MAY 17</div>
+          </div>
+          <div class="second-body">
+            <p>CFO present but quiet — entered late, left early. Andrea (champion) carried 92% of buyer-side airtime, mostly fielding technical follow-ups from your SE. No commitment language. No procurement question. Competitor (GTreasury) referenced once by Andrea — "we're also looking at..." — without pushback from anyone on the buyer side.</p>
+            <div class="last-call-stat">
+              <span><b>3</b> stakeholders</span>
+              <span><b>0</b> commitment language</span>
+              <span><b>1</b> competitor mention</span>
+              <span><b>2</b> next-step ambiguity</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="second-card">
+          <div class="second-head">
+            <div class="second-head-left"><b>Pattern across the deal</b></div>
+            <div class="second-head-meta">12 ARTIFACTS · 31 DAYS</div>
+          </div>
+          <div class="second-body">
+            <p>This deal mirrors the closed-lost cycle from the retrospective set (May 2026): signer disengagement after demo + competitor introduced during pricing + champion-only conversations in stages 4–6. In the retrospective, the team softened both signals. Outcome: lost to GTreasury.</p>
+            <p style="color: var(--ink-3); font-size: 12px; font-style: italic;">Pattern flagged on n=1 — not promoted to system rule. Treat as a structured prompt, not a prediction.</p>
+          </div>
+        </div>
+
+        <div class="end-spacer"></div>
+      </div>
+
+      <!-- ── RIGHT: EXECUTION ──────────────────────────────────── -->
+      <div class="col-execution">
+
+        <div class="exec-group">
+          <div class="exec-group-label">
+            <span><b>Compose</b> · email draft</span>
+            <span style="color: var(--ink-4)">PENDING APPROVAL</span>
+          </div>
+          <div class="compose-card">
+            <div class="compose-to">TO · <b>Nathan Reed</b> ‹nreed@cipher.example›</div>
+            <div class="compose-subject">A direct question before procurement</div>
+            <div class="compose-body">
+              Nathan — quick one before we send the procurement template. To make sure we're solving the right problem on your side: what would need to be true for you to commit to a signature date by quarter-end? Happy to address whatever's blocking that directly on our next call.
+            </div>
+            <div class="compose-meta">
+              <span>VOICE · MATCHED FROM 6 PRIOR EMAILS</span>
+              <a href="#">Open in composer →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="exec-group">
+          <div class="exec-group-label">
+            <span><b>CRM updates</b> · proposed</span>
+            <span class="count">3</span>
+          </div>
+
+          <div class="crm-update">
+            <div class="crm-update-head">
+              <span><span class="stage-pill">STAGE 1 · SUGGEST</span></span>
+              <span>from call 4</span>
+            </div>
+            <div class="crm-field">MEDDPICC › Champion</div>
+            <div class="crm-diff">
+              <span class="strike">(empty)</span><span class="arrow">→</span><span class="new">Andrea Larson · Dir, Treasury Ops</span>
+            </div>
+            <div class="crm-update-actions">
+              <button class="primary">Looks right</button>
+              <button>Looks wrong</button>
+              <button>Edit</button>
+            </div>
+          </div>
+
+          <div class="crm-update">
+            <div class="crm-update-head">
+              <span><span class="stage-pill">STAGE 1 · SUGGEST</span></span>
+              <span>from call 4</span>
+            </div>
+            <div class="crm-field">MEDDPICC › Competition</div>
+            <div class="crm-diff">
+              <span class="strike">(empty)</span><span class="arrow">→</span><span class="new">GTreasury · introduced during pricing</span>
+            </div>
+            <div class="crm-update-actions">
+              <button class="primary">Looks right</button>
+              <button>Looks wrong</button>
+              <button>Edit</button>
+            </div>
+          </div>
+
+          <div class="crm-update">
+            <div class="crm-update-head">
+              <span><span class="stage-pill">STAGE 1 · SUGGEST</span></span>
+              <span>from call 4</span>
+            </div>
+            <div class="crm-field">Last activity</div>
+            <div class="crm-diff">
+              <span class="strike">May 10</span><span class="arrow">→</span><span class="new">May 17 · call 4 · 47min</span>
+            </div>
+            <div class="crm-update-actions">
+              <button class="primary">Looks right</button>
+              <button>Looks wrong</button>
+            </div>
+          </div>
+
+          <div class="crm-guard">
+            NEVER AUTO-WRITTEN · <b>Stage · Amount · Close Date · Forecast Category</b>
+          </div>
+        </div>
+
+        <div class="exec-group" style="border-bottom: none;">
+          <div class="exec-group-label">
+            <span><b>Action queue</b> · today</span>
+            <span class="count">4</span>
+          </div>
+
+          <div class="queue-item">
+            <span class="queue-mark crit"></span>
+            <div>
+              <div class="queue-title">Send the direct question to CFO before call 5</div>
+              <div class="queue-meta">PENDING APPROVAL · created 14:22</div>
+            </div>
+          </div>
+          <div class="queue-item">
+            <span class="queue-mark crit"></span>
+            <div>
+              <div class="queue-title">Loop manager into deal thread · GTreasury</div>
+              <div class="queue-meta">SLACK DRAFTED · pending send</div>
+            </div>
+          </div>
+          <div class="queue-item">
+            <span class="queue-mark warn"></span>
+            <div>
+              <div class="queue-title">Approve 3 CRM updates from call 4</div>
+              <div class="queue-meta">STAGE 1 · awaiting Looks right</div>
+            </div>
+          </div>
+          <div class="queue-item">
+            <span class="queue-mark"></span>
+            <div>
+              <div class="queue-title">Verify second-level intro on call 5</div>
+              <div class="queue-meta">PRE-CALL BRIEF · 2:00 PM</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="outro">
+  <div>
+    <div class="outro-eyebrow">— Why this matters</div>
+  </div>
+  <div class="outro-body">
+    <p>
+      Every recommendation surface renders the same five-element sequence:
+      <strong>clear risk → prescriptive move → quoted evidence → temporal
+      proof → accountable decision.</strong> No score in isolation. No
+      paraphrased evidence. No filled SaaS button competing with the
+      reasoning that earned it.
+    </p>
+    <p>
+      The architecture treats reading, interpreting, and acting as one
+      cognitive loop — not three product surfaces. Memory on the left
+      so the rep doesn't lose context across weeks. Operating decisions in
+      the center so the next move is unambiguous. Execution on the right
+      because <strong>the rep is not delegating thinking — they are
+      delegating synthesis labor.</strong>
+    </p>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 MALLIN · COCKPIT · BUILT FOR ACTIVE-CYCLE OCCUPANCY</span>
+  <span>EVERY CLAIM HAS A SOURCE · EVERY WRITE HAS AN APPROVER</span>
+</footer>
+
+</body>
+</html>

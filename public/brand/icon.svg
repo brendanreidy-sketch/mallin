@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="Mallin">
+  <title>Mallin</title>
+
+  <!-- Surface line: rolling Patagonian steppe -->
+  <path d="M 6 26 Q 18 21, 32 26 T 58 26"
+        stroke="#1a2230"
+        stroke-width="3"
+        stroke-linecap="round" />
+
+  <!-- Three vegetation tufts breaking the surface (the lush mallín cover) -->
+  <line x1="22" y1="22" x2="22" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round" />
+  <line x1="32" y1="22" x2="32" y2="14" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round" />
+  <line x1="42" y1="22" x2="42" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round" />
+
+  <!-- Hidden underground current: the stream that sustains the wetland -->
+  <path d="M 3 42 Q 17 36, 32 42 T 61 42"
+        stroke="#4a7186"
+        stroke-width="3"
+        stroke-linecap="round" />
+</svg>

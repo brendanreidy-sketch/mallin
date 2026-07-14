@@ -1,0 +1,286 @@
+/* Shared styles for the /trust hub + every legal/security page.
+ * Same warm-cream palette + Mallín wordmark as /contact and /pilot,
+ * but text-heavier: longer line-length, denser body, defined
+ * heading hierarchy for policy reading. */
+
+.page {
+  --paper:      #f4f1ea;
+  --paper-soft: #faf7f0;
+  --rule:       #e3dccc;
+  --rule-2:     #d6cfbe;
+  --ink:        #1a2230;
+  --ink-2:      #3b4658;
+  --ink-3:      #6b7689;
+  --ink-4:      #9aa3b3;
+  --blue:       #4a7186;
+  --blue-2:     #88b8d0;
+  --blue-tint:  #e7eff4;
+  --warn:       #c18e40;
+  --warn-tint:  rgba(193, 142, 64, 0.08);
+  --good:       #5a8f7a;
+
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14.5px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(.page) a { color: inherit; text-decoration: none; }
+:where(.page) ::selection { background: var(--ink); color: var(--paper); }
+
+/* ── Nav ─────────────────────────────────────────────── */
+.navWrap {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(244, 241, 234, 0.82);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--rule);
+}
+.nav {
+  max-width: 880px; margin: 0 auto;
+  padding: 16px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.wordmark {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: 18px; font-weight: 700; letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.navRight { display: flex; align-items: center; gap: 22px; }
+.navLink {
+  font-size: 14px; color: var(--ink);
+  border-bottom: 1px solid transparent;
+}
+.navLink:hover { border-bottom-color: var(--ink); }
+
+/* ── Main ─────────────────────────────────────────────── */
+.main {
+  max-width: 800px; margin: 0 auto;
+  padding: 56px 32px 96px;
+}
+.eyebrow {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--blue);
+  margin: 0 0 18px;
+}
+.h1 {
+  font-size: clamp(32px, 4.2vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+  color: var(--ink);
+  margin: 0 0 20px;
+}
+.h1 em { font-style: normal; color: var(--blue); }
+.lede {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 660px;
+  margin: 0 0 24px;
+}
+.lede strong { color: var(--ink); font-weight: 600; }
+.lastUpdated {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin: 0 0 32px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  letter-spacing: 0.02em;
+}
+
+/* ── Disclaimer banner — for pages that need it ───────── */
+.draftBanner {
+  background: var(--warn-tint);
+  border: 1px solid rgba(193, 142, 64, 0.3);
+  border-left: 3px solid var(--warn);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 0 0 32px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.draftBanner strong { color: var(--ink); font-weight: 600; }
+
+/* ── Hub grid (the /trust landing) ────────────────────── */
+.hubGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+.hubCard {
+  display: block;
+  padding: 22px 22px 24px;
+  background: var(--paper-soft);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+}
+.hubCard:hover {
+  border-color: var(--blue);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px -18px rgba(26, 34, 48, 0.18);
+}
+.hubCardLabel {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--blue);
+  margin: 0 0 8px;
+}
+.hubCardTitle {
+  font-size: 18px; font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.hubCardDesc {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-3);
+  margin: 0;
+}
+
+/* ── Section + body text styling for policy pages ───── */
+.section {
+  margin: 0 0 40px;
+}
+.section:last-child { margin-bottom: 0; }
+.h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin: 0 0 14px;
+  padding-top: 4px;
+  border-top: 1px solid var(--rule);
+  padding-top: 28px;
+}
+.section:first-of-type .h2 { border-top: none; padding-top: 0; }
+.h3 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  margin: 22px 0 8px;
+}
+.body p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  margin: 0 0 14px;
+  max-width: 680px;
+}
+.body p strong { color: var(--ink); font-weight: 600; }
+.body p em { font-style: normal; color: var(--blue); }
+.body ul, .body ol {
+  margin: 0 0 18px;
+  padding-left: 24px;
+  max-width: 680px;
+}
+.body li {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+.body li strong { color: var(--ink); font-weight: 600; }
+.body a {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(74, 113, 134, 0.4);
+}
+.body a:hover { text-decoration-color: var(--blue); }
+.body code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  padding: 1px 5px;
+  background: rgba(26, 34, 48, 0.06);
+  border-radius: 3px;
+  color: var(--ink);
+}
+
+/* ── Tables (subprocessor list, security packet) ─────── */
+.tableWrap {
+  overflow-x: auto;
+  margin: 0 0 24px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.table thead {
+  background: var(--paper-soft);
+}
+.table th {
+  text-align: left;
+  padding: 11px 14px;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule);
+}
+.table td {
+  padding: 11px 14px;
+  vertical-align: top;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+  line-height: 1.5;
+}
+.table tr:last-child td { border-bottom: none; }
+.table td strong { color: var(--ink); font-weight: 600; }
+.table td a { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Pill in status column */
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.pillGood { background: rgba(90, 143, 122, 0.12); color: var(--good); border: 0.5px solid rgba(90, 143, 122, 0.3); }
+.pillWarn { background: rgba(193, 142, 64, 0.12); color: var(--warn); border: 0.5px solid rgba(193, 142, 64, 0.35); }
+.pillInfo { background: rgba(74, 113, 134, 0.1); color: var(--blue); border: 0.5px solid rgba(74, 113, 134, 0.3); }
+
+/* ── Footer ──────────────────────────────────────────── */
+.footer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.footer a { color: var(--ink-2); }
+.footer a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.footerLinks { display: inline-flex; flex-wrap: wrap; gap: 16px; margin-left: auto; }
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 720px) {
+  .main { padding: 36px 22px 56px; }
+  .hubGrid { grid-template-columns: 1fr; }
+  .nav { padding: 12px 20px; }
+  .navRight { gap: 12px; }
+  .navLink { font-size: 12.5px; }
+  .wordmark { font-size: 17px; }
+  .footer { padding: 22px; flex-direction: column; align-items: flex-start; }
+  .footerLinks { margin-left: 0; }
+}

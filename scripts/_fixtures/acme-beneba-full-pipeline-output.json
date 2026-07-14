@@ -1,0 +1,642 @@
+{
+  "opportunity": {
+    "id": "6d072dbd-cc3d-444a-a574-520eefb15296",
+    "name": "Beneba Industries - Solution Evaluation",
+    "stage_label": "Discovery",
+    "stage_position": 2,
+    "total_stages": 8,
+    "amount": 180000,
+    "currency": "USD",
+    "close_date": "2026-07-31",
+    "owner_id": "user_clerktest123",
+    "methodology_type": "MEDDPICC",
+    "methodology_surface_mode": "full",
+    "last_activity_at": "2026-04-20T13:45:29.51573+00:00",
+    "deal_posture": "advancing",
+    "methodology": {
+      "type": "MEDDPICC",
+      "surface_mode": "full",
+      "pillars": [
+        {
+          "pillar_key": "metrics",
+          "label": "M · Metrics",
+          "display_order": 1,
+          "status": "unknown",
+          "value_text": null,
+          "value_array": null,
+          "evidence_ids": [],
+          "consumed_intelligence_version": null
+        },
+        {
+          "pillar_key": "economic_buyer",
+          "label": "E · Economic Buyer",
+          "display_order": 2,
+          "status": "partial",
+          "value_text": null,
+          "value_array": null,
+          "evidence_ids": [
+            "si_eleanor_stakeholder_map"
+          ],
+          "consumed_intelligence_version": null
+        },
+        {
+          "pillar_key": "decision_criteria",
+          "label": "D · Decision Criteria",
+          "display_order": 3,
+          "status": "partial",
+          "value_text": null,
+          "value_array": null,
+          "evidence_ids": [
+            "si_call_summary_synthesis"
+          ],
+          "consumed_intelligence_version": null
+        },
+        {
+          "pillar_key": "decision_process",
+          "label": "D · Decision Process",
+          "display_order": 4,
+          "status": "unknown",
+          "value_text": null,
+          "value_array": null,
+          "evidence_ids": [],
+          "consumed_intelligence_version": null
+        },
+        {
+          "pillar_key": "paper_process",
+          "label": "P · Paper Process",
+          "display_order": 5,
+          "status": "partial",
+          "value_text": null,
+          "value_array": null,
+          "evidence_ids": [
+            "si_meeting_procurement_intent"
+          ],
+          "consumed_intelligence_version": null
+        },
+        {
+          "pillar_key": "identify_pain",
+          "label": "I · Identify Pain",
+          "display_order": 6,
+          "status": "confirmed",
+          "value_text": null,
+          "value_array": null,
+          "evidence_ids": [
+            "si_eleanor_pain_q3"
+          ],
+          "consumed_intelligence_version": null
+        },
+        {
+          "pillar_key": "champion",
+          "label": "C · Champion",
+          "display_order": 7,
+          "status": "partial",
+          "value_text": null,
+          "value_array": null,
+          "evidence_ids": [
+            "si_eleanor_pain_q3",
+            "si_eleanor_stakeholder_map"
+          ],
+          "consumed_intelligence_version": null
+        },
+        {
+          "pillar_key": "competition",
+          "label": "C · Competition",
+          "display_order": 8,
+          "status": "unknown",
+          "value_text": null,
+          "value_array": null,
+          "evidence_ids": [],
+          "consumed_intelligence_version": null
+        }
+      ]
+    },
+    "last_activity_summary": "Discovery call (Apr 20) surfaced Q3 expansion pain and decision committee. Follow-up meeting scheduled Apr 30 with procurement on agenda."
+  },
+  "account": {
+    "id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+    "name": "Beneba Industries",
+    "industry": null,
+    "size_descriptor": null,
+    "headquarters": null,
+    "website": null,
+    "strategic_priority": null,
+    "owner_id": null
+  },
+  "activities": [
+    {
+      "id": "18a295e6-c003-4bde-9bab-6277927522e5",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "opportunity_id": "6d072dbd-cc3d-444a-a574-520eefb15296",
+      "type": "meeting",
+      "occurred_at": "2026-04-30T13:45:29.51573+00:00",
+      "subject": "Beneba follow-up - bring procurement",
+      "summary": null,
+      "rep_note": null,
+      "call_id": null,
+      "email_id": null,
+      "meeting_id": "7d688112-f4bf-4c5d-8cfb-1a6e1a6e6e16",
+      "attendee_emails": [
+        "pat@acme.com",
+        "eleanor@beneba.com",
+        "james.okoye@beneba.com"
+      ],
+      "source_system": "google_calendar",
+      "source_external_id": "gcal_act_acme_001",
+      "anchor_type": "opportunity_anchored"
+    },
+    {
+      "id": "885baed1-15f9-4780-9057-cabcb35dd1af",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "opportunity_id": "6d072dbd-cc3d-444a-a574-520eefb15296",
+      "type": "call",
+      "occurred_at": "2026-04-20T13:45:29.51573+00:00",
+      "subject": "Acme x Beneba - Discovery Call",
+      "summary": "Discovery call: Eleanor described expansion-driven ops bandwidth issues. Mentioned James (procurement) and Maria (CFO) in decision process.",
+      "rep_note": null,
+      "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+      "email_id": null,
+      "meeting_id": null,
+      "attendee_emails": [
+        "pat@acme.com",
+        "eleanor@beneba.com"
+      ],
+      "source_system": "gong",
+      "source_external_id": "gong_act_acme_001",
+      "anchor_type": "opportunity_anchored"
+    },
+    {
+      "id": "17784573-efae-4b49-a24d-09ff894d6457",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "opportunity_id": "6d072dbd-cc3d-444a-a574-520eefb15296",
+      "type": "email",
+      "occurred_at": "2026-04-06T13:45:29.51573+00:00",
+      "subject": "Following up on Beneba Q3 expansion",
+      "summary": "Cold outreach from Pat to Eleanor referencing recent expansion announcement",
+      "rep_note": null,
+      "call_id": null,
+      "email_id": "fa366f1c-852e-4ea9-82ce-2f23b1f8ead3",
+      "meeting_id": null,
+      "attendee_emails": [
+        "eleanor@beneba.com"
+      ],
+      "source_system": "gmail",
+      "source_external_id": "gmail_act_acme_001",
+      "anchor_type": "opportunity_anchored"
+    },
+    {
+      "id": "d096f8ca-6c96-4334-868f-5a63c4ae527f",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "opportunity_id": null,
+      "type": "note",
+      "occurred_at": "2026-03-13T17:57:52.176936+00:00",
+      "subject": "Pre-opportunity research note",
+      "summary": "Cold research note logged by BDR before opportunity was created. Tied to account, not deal.",
+      "rep_note": null,
+      "call_id": null,
+      "email_id": null,
+      "meeting_id": null,
+      "attendee_emails": [],
+      "source_system": "manual",
+      "source_external_id": "manual_acct_note_001",
+      "anchor_type": "account_anchored"
+    }
+  ],
+  "stakeholders": [
+    {
+      "id": "7ebfc445-0e07-4e54-9f3c-b6a6bb76aa1b",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "name": "James Okoye",
+      "email": "james.okoye@beneba.com",
+      "title": "Procurement Manager",
+      "company": "Beneba Industries",
+      "party": "external",
+      "committee_role": "technical_buyer",
+      "tenure_at_current_firm_months": 24,
+      "tenure_signal_category": "established",
+      "linkedin_url": null,
+      "linkedin_data_freshness": null,
+      "last_conversational_confirmation_at": null,
+      "is_departed": false,
+      "deal_disposition": "neutral",
+      "deal_engagement_level": "passive",
+      "deal_influence_level": "medium",
+      "is_departed_from_deal": false,
+      "source": "on_deal",
+      "disposition": "neutral",
+      "engagement_level": "passive",
+      "influence_level": "medium"
+    },
+    {
+      "id": "6607872b-fe1f-489b-8597-c41d35b433db",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "name": "Maria Chen",
+      "email": "maria.chen@beneba.com",
+      "title": "CFO",
+      "company": "Beneba Industries",
+      "party": "external",
+      "committee_role": "economic_buyer",
+      "tenure_at_current_firm_months": 84,
+      "tenure_signal_category": "veteran",
+      "linkedin_url": null,
+      "linkedin_data_freshness": null,
+      "last_conversational_confirmation_at": null,
+      "is_departed": false,
+      "deal_disposition": "unknown",
+      "deal_engagement_level": "absent",
+      "deal_influence_level": "high",
+      "is_departed_from_deal": false,
+      "source": "on_deal",
+      "disposition": "unknown",
+      "engagement_level": "absent",
+      "influence_level": "high"
+    },
+    {
+      "id": "eec477e0-d8e5-4795-9459-c0c5ef682c73",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "name": "Eleanor Beneba",
+      "email": "eleanor@beneba.com",
+      "title": "VP Operations",
+      "company": "Beneba Industries",
+      "party": "external",
+      "committee_role": "champion",
+      "tenure_at_current_firm_months": 48,
+      "tenure_signal_category": "veteran",
+      "linkedin_url": "https://linkedin.com/in/eleanor-beneba",
+      "linkedin_data_freshness": "fresh",
+      "last_conversational_confirmation_at": null,
+      "is_departed": false,
+      "deal_disposition": "champion",
+      "deal_engagement_level": "active",
+      "deal_influence_level": "medium",
+      "is_departed_from_deal": false,
+      "source": "on_deal",
+      "disposition": "champion",
+      "engagement_level": "active",
+      "influence_level": "high"
+    },
+    {
+      "id": "f23028a7-384a-4d16-9423-9fa83bf8b425",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "name": "Carlos Vega",
+      "email": "carlos.vega@beneba.com",
+      "title": "IT Director",
+      "company": "Beneba Industries",
+      "party": "external",
+      "committee_role": "influencer",
+      "tenure_at_current_firm_months": 18,
+      "tenure_signal_category": "established",
+      "linkedin_url": null,
+      "linkedin_data_freshness": null,
+      "last_conversational_confirmation_at": null,
+      "is_departed": false,
+      "deal_disposition": null,
+      "deal_engagement_level": null,
+      "deal_influence_level": null,
+      "is_departed_from_deal": null,
+      "source": "account_only"
+    }
+  ],
+  "internal_participants": [
+    {
+      "id": "97ffaf35-bb09-4df3-b216-5cba063c5c54",
+      "account_id": null,
+      "name": "Pat BDR",
+      "email": "pat@acme.com",
+      "title": null,
+      "company": "Acme",
+      "party": "internal",
+      "committee_role": null,
+      "tenure_at_current_firm_months": null,
+      "tenure_signal_category": null,
+      "linkedin_url": null,
+      "linkedin_data_freshness": null,
+      "last_conversational_confirmation_at": "2026-04-06T13:45:29.51573+00:00",
+      "is_departed": false,
+      "deal_disposition": null,
+      "deal_engagement_level": "active",
+      "deal_influence_level": null,
+      "is_departed_from_deal": false,
+      "source": "on_deal"
+    }
+  ],
+  "calls": [
+    {
+      "id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "opportunity_id": "6d072dbd-cc3d-444a-a574-520eefb15296",
+      "provider": "gong",
+      "title": "Acme x Beneba - Discovery Call",
+      "started_at": "2026-04-20T13:45:29.51573+00:00",
+      "duration_seconds": 1820,
+      "direction": "outbound",
+      "party_emails": [
+        "pat@acme.com",
+        "eleanor@beneba.com"
+      ],
+      "summary": "Discovery call covering Beneba ops challenges. Eleanor described their Q3 expansion creating bandwidth issues. Procurement and CFO review process discussed but no commitments made.",
+      "key_moments": [
+        {
+          "text": "We're evaluating solutions now — the Q3 expansion really stretched our team thin.",
+          "category": "pain",
+          "speaker_name": "Eleanor Beneba",
+          "timestamp_ms": 245000,
+          "speaker_stakeholder_id": "eec477e0-d8e5-4795-9459-c0c5ef682c73"
+        },
+        {
+          "text": "James in procurement and Maria our CFO would need to be involved in any decision.",
+          "category": "stakeholder",
+          "speaker_name": "Eleanor Beneba",
+          "timestamp_ms": 1180000,
+          "speaker_stakeholder_id": "eec477e0-d8e5-4795-9459-c0c5ef682c73"
+        }
+      ],
+      "transcript": null,
+      "topics": [],
+      "triggers": []
+    }
+  ],
+  "emails": [
+    {
+      "id": "fa366f1c-852e-4ea9-82ce-2f23b1f8ead3",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "opportunity_id": "6d072dbd-cc3d-444a-a574-520eefb15296",
+      "provider": "gmail",
+      "thread_id": "thread_acme_001",
+      "from_stakeholder_id": "97ffaf35-bb09-4df3-b216-5cba063c5c54",
+      "from_name": "Pat BDR",
+      "from_email": "pat@acme.com",
+      "to_recipients": [
+        {
+          "name": "Eleanor Beneba",
+          "email": "eleanor@beneba.com",
+          "stakeholder_id": "eec477e0-d8e5-4795-9459-c0c5ef682c73"
+        }
+      ],
+      "cc_recipients": [],
+      "subject": "Following up on Beneba Q3 expansion",
+      "snippet": "Hi Eleanor — saw your Q3 announcement and thought our cycle compression platform...",
+      "body": null,
+      "sent_at": "2026-04-06T13:45:29.51573+00:00",
+      "has_attachments": false
+    }
+  ],
+  "meetings": [
+    {
+      "id": "7d688112-f4bf-4c5d-8cfb-1a6e1a6e6e16",
+      "account_id": "784c5d10-0d49-42dd-ae00-ff05bb70b25a",
+      "opportunity_id": "6d072dbd-cc3d-444a-a574-520eefb15296",
+      "title": "Beneba follow-up - bring procurement",
+      "description": null,
+      "scheduled_at": "2026-04-30T13:45:29.51573+00:00",
+      "duration_minutes": 45,
+      "medium": "video",
+      "direction": "outbound",
+      "internal_owner_id": "user_clerktest123",
+      "attendees": [
+        {
+          "stakeholder_id": "97ffaf35-bb09-4df3-b216-5cba063c5c54",
+          "name": "Pat BDR",
+          "email": "pat@acme.com",
+          "response_status": "accepted",
+          "party": "internal",
+          "is_organizer": true
+        },
+        {
+          "stakeholder_id": "eec477e0-d8e5-4795-9459-c0c5ef682c73",
+          "name": "Eleanor Beneba",
+          "email": "eleanor@beneba.com",
+          "response_status": "accepted",
+          "party": "external",
+          "is_organizer": false
+        },
+        {
+          "stakeholder_id": "7ebfc445-0e07-4e54-9f3c-b6a6bb76aa1b",
+          "name": "James Okoye",
+          "email": "james.okoye@beneba.com",
+          "response_status": "accepted",
+          "party": "external",
+          "is_organizer": false
+        }
+      ]
+    }
+  ],
+  "intelligence": [
+    {
+      "id": "si_eleanor_pain_q3",
+      "source_channel": "call",
+      "derivation": "observed",
+      "summary": "Eleanor (champion) explicitly stated Q3 expansion has stretched team thin and they are evaluating solutions now. Direct pain articulation from a buyer who self-identifies as actively shopping.",
+      "quote": "We're evaluating solutions now — the Q3 expansion really stretched our team thin.",
+      "strength": "strong",
+      "source_span": {
+        "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+        "start_ms": 245000
+      }
+    },
+    {
+      "id": "si_eleanor_stakeholder_map",
+      "source_channel": "call",
+      "derivation": "observed",
+      "summary": "Eleanor named James (procurement) and Maria (CFO) as required participants in any decision. Champion volunteering decision committee composition unprompted.",
+      "quote": "James in procurement and Maria our CFO would need to be involved in any decision.",
+      "strength": "moderate",
+      "source_span": {
+        "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+        "start_ms": 1180000
+      }
+    },
+    {
+      "id": "si_meeting_procurement_intent",
+      "source_channel": "calendar",
+      "derivation": "inferred",
+      "summary": "Future-scheduled follow-up meeting with title 'Beneba follow-up - bring procurement' indicates seller-side awareness that procurement engagement is imminent. Paper process not yet executed but anticipated.",
+      "strength": "weak",
+      "source_span": {
+        "activity_id": "18a295e6-c003-4bde-9bab-6277927522e5"
+      }
+    },
+    {
+      "id": "si_call_summary_synthesis",
+      "source_channel": "call",
+      "derivation": "inferred",
+      "summary": "Discovery call covered Beneba ops challenges driven by Q3 expansion. Procurement and CFO review process discussed. No commitments made — deal remains in active discovery, not advanced commercial discussion.",
+      "strength": "moderate",
+      "source_span": {
+        "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a"
+      }
+    }
+  ],
+  "conflicts": [],
+  "core_intelligence_enrichments": {
+    "intelligence": [
+      {
+        "id": "si_eleanor_pain_q3",
+        "source_channel": "call",
+        "derivation": "observed",
+        "summary": "Eleanor (champion) explicitly stated Q3 expansion has stretched team thin and they are evaluating solutions now. Direct pain articulation from a buyer who self-identifies as actively shopping.",
+        "quote": "We're evaluating solutions now — the Q3 expansion really stretched our team thin.",
+        "strength": "strong",
+        "source_span": {
+          "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+          "start_ms": 245000
+        }
+      },
+      {
+        "id": "si_eleanor_stakeholder_map",
+        "source_channel": "call",
+        "derivation": "observed",
+        "summary": "Eleanor named James (procurement) and Maria (CFO) as required participants in any decision. Champion volunteering decision committee composition unprompted.",
+        "quote": "James in procurement and Maria our CFO would need to be involved in any decision.",
+        "strength": "moderate",
+        "source_span": {
+          "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+          "start_ms": 1180000
+        }
+      },
+      {
+        "id": "si_meeting_procurement_intent",
+        "source_channel": "calendar",
+        "derivation": "inferred",
+        "summary": "Future-scheduled follow-up meeting with title 'Beneba follow-up - bring procurement' indicates seller-side awareness that procurement engagement is imminent. Paper process not yet executed but anticipated.",
+        "strength": "weak",
+        "source_span": {
+          "activity_id": "18a295e6-c003-4bde-9bab-6277927522e5"
+        }
+      },
+      {
+        "id": "si_call_summary_synthesis",
+        "source_channel": "call",
+        "derivation": "inferred",
+        "summary": "Discovery call covered Beneba ops challenges driven by Q3 expansion. Procurement and CFO review process discussed. No commitments made — deal remains in active discovery, not advanced commercial discussion.",
+        "strength": "moderate",
+        "source_span": {
+          "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a"
+        }
+      }
+    ],
+    "methodology_pillar_evidence": [
+      {
+        "pillar_key": "identify_pain",
+        "evidence_ids": [
+          "si_eleanor_pain_q3"
+        ],
+        "confidence": "high",
+        "status_override": "confirmed"
+      },
+      {
+        "pillar_key": "champion",
+        "evidence_ids": [
+          "si_eleanor_pain_q3",
+          "si_eleanor_stakeholder_map"
+        ],
+        "confidence": "medium",
+        "status_override": "partial"
+      },
+      {
+        "pillar_key": "economic_buyer",
+        "evidence_ids": [
+          "si_eleanor_stakeholder_map"
+        ],
+        "confidence": "low",
+        "status_override": "partial"
+      },
+      {
+        "pillar_key": "paper_process",
+        "evidence_ids": [
+          "si_meeting_procurement_intent"
+        ],
+        "confidence": "low",
+        "status_override": "partial"
+      },
+      {
+        "pillar_key": "decision_criteria",
+        "evidence_ids": [
+          "si_call_summary_synthesis"
+        ],
+        "confidence": "low",
+        "status_override": "partial"
+      }
+    ],
+    "stakeholder_enrichments": [
+      {
+        "stakeholder_id": "eec477e0-d8e5-4795-9459-c0c5ef682c73",
+        "disposition": "champion",
+        "engagement_level": "active",
+        "influence_level": "high",
+        "notes": "Strong champion behavior: articulating pain unprompted, surfacing decision committee, attending follow-up meeting. Already disposition=champion in CRM — corroborated by call evidence.",
+        "evidence_ids": [
+          "si_eleanor_pain_q3",
+          "si_eleanor_stakeholder_map"
+        ],
+        "confidence": "high"
+      },
+      {
+        "stakeholder_id": "7ebfc445-0e07-4e54-9f3c-b6a6bb76aa1b",
+        "disposition": "neutral",
+        "engagement_level": "passive",
+        "influence_level": "medium",
+        "notes": "Technical buyer attending follow-up meeting. No call utterances captured. Disposition currently neutral in CRM; no evidence to update.",
+        "evidence_ids": [
+          "si_eleanor_stakeholder_map"
+        ],
+        "confidence": "low"
+      },
+      {
+        "stakeholder_id": "6607872b-fe1f-489b-8597-c41d35b433db",
+        "disposition": "unknown",
+        "engagement_level": "absent",
+        "influence_level": "high",
+        "notes": "Economic buyer named by champion but has not appeared on any call, email, or meeting. Influence inferred from CFO role; disposition cannot be assessed without direct contact.",
+        "evidence_ids": [
+          "si_eleanor_stakeholder_map"
+        ],
+        "confidence": "low"
+      }
+    ],
+    "conflicts": [],
+    "opportunity_enrichments": {
+      "last_activity_summary": {
+        "text": "Discovery call (Apr 20) surfaced Q3 expansion pain and decision committee. Follow-up meeting scheduled Apr 30 with procurement on agenda.",
+        "confidence": "high",
+        "evidence_ids": [
+          "si_call_summary_synthesis",
+          "si_meeting_procurement_intent"
+        ]
+      },
+      "deal_posture": {
+        "status": "advancing",
+        "rationale": "Active discovery with confirmed pain, identified champion, and forward-scheduled meeting that escalates to procurement. No stalls, no objections, no disengaged stakeholders other than economic buyer who has not yet been engaged.",
+        "confidence": "medium",
+        "evidence_ids": [
+          "si_eleanor_pain_q3",
+          "si_meeting_procurement_intent",
+          "si_call_summary_synthesis"
+        ]
+      }
+    },
+    "diagnostics": {
+      "overall_confidence": "medium",
+      "rationale": "One full discovery call with strong champion utterances anchors most pillars. Email body is null and meeting has no recap, limiting evidence breadth. Economic buyer and procurement contact have not been engaged directly. Pain and champion pillars are well-evidenced; remaining MEDDPICC pillars are partial or absent.",
+      "insufficiently_evidenced": [
+        {
+          "field_path": "methodology_pillar_evidence.metrics",
+          "reason": "No quantified business metrics surfaced on call or in any payload."
+        },
+        {
+          "field_path": "methodology_pillar_evidence.decision_process",
+          "reason": "Champion mentioned procurement and CFO involvement but did not describe sequencing, gates, or timeline."
+        },
+        {
+          "field_path": "methodology_pillar_evidence.competition",
+          "reason": "No competitive vendor mentioned in any payload."
+        },
+        {
+          "field_path": "stakeholder_enrichments.maria_chen.disposition",
+          "reason": "Economic buyer has had zero direct interaction across all activities; disposition cannot be inferred from third-party mention alone."
+        }
+      ],
+      "generated_at": "2026-04-27T22:30:00.000Z",
+      "model": "manual-golden-v1"
+    }
+  }
+}

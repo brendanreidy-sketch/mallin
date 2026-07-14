@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/refresh-intelligence",
+      "schedule": "0 13 * * 0"
+    },
+    {
+      "path": "/api/cron/sdr-nurture",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/retention-purge",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin — catch slipping deals before forecast day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:    #f4f1ea;
+    --paper-2:  #ebe6d6;
+    --paper-soft: #faf7f0;
+    --rule:     #e3dccc;
+    --rule-2:   #d6cfbe;
+    --ink:      #1a2230;
+    --ink-2:    #3b4658;
+    --ink-3:    #6b7689;
+    --ink-4:    #9aa3b3;
+    --blue:     #4a7186;
+    --blue-2:   #88b8d0;
+    --blue-tint:#e7eff4;
+    --crit:     #c25a4a;
+    --crit-tint:#f6e7e3;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); }
+  body {
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--ink); color: var(--paper); }
+
+  /* ── Nav (matches current site) ───────────────────────── */
+  .navWrap {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(244,241,234,0.82);
+    backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav {
+    max-width: 1080px; margin: 0 auto;
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mark {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 18px; font-weight: 700; letter-spacing: -0.015em;
+  }
+  .nav-right { display: flex; align-items: center; gap: 22px; }
+  .nav-link { font-size: 14px; color: var(--ink); border-bottom: 1px solid transparent; }
+  .nav-link:hover { border-bottom-color: var(--ink); }
+  .nav-cta {
+    font-size: 14px; font-weight: 600;
+    padding: 8px 14px;
+    background: rgba(26,34,48,0.04);
+    border: 1px solid var(--rule-2);
+    border-radius: 6px;
+    transition: all 120ms ease;
+  }
+  .nav-cta:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* ── Hero — one sentence, one CTA ─────────────────────── */
+  .hero {
+    max-width: 1080px; margin: 0 auto;
+    padding: 88px 32px 56px;
+    text-align: center;
+  }
+  .hero-eyebrow {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--blue);
+    margin: 0 0 24px;
+  }
+  .hero-h1 {
+    font-size: clamp(40px, 5.8vw, 76px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    color: var(--ink);
+    margin: 0 auto 24px;
+    max-width: 900px;
+  }
+  .hero-h1 em { font-style: normal; color: var(--blue); }
+  .hero-sub {
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 640px;
+    margin: 0 auto 36px;
+  }
+  .hero-sub strong { color: var(--ink); font-weight: 600; }
+  .cta-row {
+    display: inline-flex; gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .cta-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 24px;
+    background: var(--ink); color: var(--paper);
+    font-size: 15px; font-weight: 600;
+    border-radius: 8px;
+    transition: all 140ms ease;
+  }
+  .cta-primary:hover { background: var(--blue); transform: translateY(-1px); }
+  .cta-primary svg { width: 12px; height: 12px; }
+  .cta-secondary {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 14px 18px;
+    color: var(--ink); font-size: 14px; font-weight: 500;
+    border: 1px solid var(--rule-2);
+    border-radius: 8px;
+    background: rgba(26,34,48,0.02);
+    transition: all 140ms ease;
+  }
+  .cta-secondary:hover { background: var(--blue-tint); border-color: var(--blue); }
+  .hero-footnote {
+    margin: 28px 0 0;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .hero-footnote b { color: var(--ink-2); font-weight: 600; }
+
+  /* ── The product, in one picture ──────────────────────── */
+  .product {
+    max-width: 720px;
+    margin: 32px auto 0;
+    padding: 0 32px;
+  }
+  .product-shadow {
+    border-radius: 18px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 20px 40px -16px rgba(26,34,48,0.18),
+      0 60px 100px -40px rgba(26,34,48,0.22);
+    overflow: hidden;
+  }
+  .slack {
+    background: #fff;
+    border: 1px solid var(--rule-2);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .slack-chrome {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(180deg, var(--paper-2), var(--paper-soft));
+    border-bottom: 1px solid var(--rule);
+  }
+  .traffic {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--rule-2);
+  }
+  .slack-title {
+    flex: 1; text-align: center;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .slack-title b { color: var(--ink); font-weight: 600; }
+
+  .slack-msg {
+    padding: 18px 22px;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 12px;
+  }
+  .slack-avatar {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+  .slack-head {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-bottom: 8px;
+  }
+  .slack-name {
+    font-size: 15px; font-weight: 700;
+    color: #1d1c1d;
+  }
+  .slack-app {
+    font-size: 10px; font-weight: 700;
+    color: #616061;
+    background: #f8f8f8;
+    border: 1px solid #e8e8e8;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+  }
+  .slack-time {
+    font-size: 12px; color: #616061;
+  }
+
+  .alert-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 10px;
+    background: var(--crit-tint);
+    color: var(--crit);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .alert-pill .d { width: 6px; height: 6px; border-radius: 50%; background: var(--crit); }
+  .alert-label {
+    display: inline-block;
+    margin-left: 8px;
+    color: var(--ink-2);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .slack-text {
+    font-size: 14.5px; line-height: 1.5;
+    color: #1d1c1d;
+    margin: 0 0 14px;
+  }
+  .slack-text strong { color: #1d1c1d; font-weight: 700; }
+
+  .slack-quote-label {
+    font-size: 12px;
+    color: #616061;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .slack-quote {
+    padding: 10px 14px;
+    background: var(--paper-soft);
+    border-left: 3px solid var(--blue);
+    border-radius: 0 6px 6px 0;
+    font-size: 14.5px;
+    color: var(--ink);
+    font-style: italic;
+    margin: 0 0 14px;
+  }
+
+  .slack-footer {
+    display: flex; align-items: center; gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #e8e8e8;
+    font-size: 12.5px;
+    color: #616061;
+  }
+  .slack-mention {
+    color: #1264a3;
+    background: #e8f5fa;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  .product-caption {
+    margin: 18px auto 0;
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--ink-3);
+    max-width: 540px;
+    line-height: 1.5;
+  }
+  .product-caption b { color: var(--ink-2); font-weight: 600; }
+
+  /* ── How it works — three lines ───────────────────────── */
+  .how {
+    max-width: 1080px; margin: 0 auto;
+    padding: 96px 32px 24px;
+  }
+  .how-eyebrow {
+    text-align: center;
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--blue);
+    margin: 0 0 36px;
+  }
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+  }
+  .step {
+    text-align: center;
+    padding: 0 8px;
+  }
+  .step-num {
+    display: inline-flex;
+    width: 32px; height: 32px;
+    align-items: center; justify-content: center;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 50%;
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .step h3 {
+    font-size: 18px; font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0 0 8px;
+  }
+  .step p {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ── One quote ───────────────────────────────────────── */
+  .quote {
+    max-width: 880px; margin: 0 auto;
+    padding: 80px 32px;
+    text-align: center;
+  }
+  .quote-text {
+    font-size: clamp(22px, 2.6vw, 30px);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+    color: var(--ink);
+    margin: 0 0 16px;
+  }
+  .quote-attr {
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .quote-attr b { color: var(--ink-2); font-weight: 600; }
+
+  /* ── Final — dark, simple ───────────────────────────── */
+  .final {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 88px 32px;
+    text-align: center;
+  }
+  .final h2 {
+    font-size: clamp(32px, 4vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin: 0 0 16px;
+  }
+  .final p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(244,241,234,0.78);
+    max-width: 540px;
+    margin: 0 auto 28px;
+  }
+  .final-row {
+    display: inline-flex; gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .final-primary {
+    padding: 13px 22px;
+    background: var(--paper); color: var(--ink);
+    border-radius: 8px; font-size: 14px; font-weight: 600;
+  }
+  .final-secondary {
+    padding: 13px 18px;
+    background: transparent; color: var(--paper);
+    border: 1px solid rgba(244,241,234,0.3); border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+  }
+  .final-secondary:hover { background: rgba(244,241,234,0.08); }
+
+  footer {
+    max-width: 1080px; margin: 0 auto;
+    padding: 28px 32px 56px;
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--ink-3);
+  }
+  footer a { color: var(--ink-2); border-bottom: 1px solid transparent; }
+  footer a:hover { border-bottom-color: var(--ink-2); }
+
+  @media (max-width: 760px) {
+    .hero { padding: 56px 24px 32px; }
+    .product { padding: 0 24px; }
+    .how { padding: 56px 24px 16px; }
+    .how-grid { grid-template-columns: 1fr; gap: 32px; }
+    .quote { padding: 48px 24px; }
+    .final { padding: 56px 24px; }
+    footer { padding: 24px; flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="navWrap">
+  <nav class="nav">
+    <a class="mark" href="#">
+      <svg viewBox="0 0 64 64" width="22" height="22" fill="none">
+        <path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#1a2230" stroke-width="3" stroke-linecap="round"/>
+        <line x1="22" y1="22" x2="22" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="32" y1="22" x2="32" y2="14" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="42" y1="22" x2="42" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#4a7186" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      Mallin
+    </a>
+    <div class="nav-right">
+      <a class="nav-link" href="#how">How it works</a>
+      <a class="nav-link" href="mailto:hello@mallin.io">Contact</a>
+      <a class="nav-cta" href="mailto:hello@mallin.io">Request access →</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ── Hero — one sentence, anyone gets it ─────────────────────── -->
+<section class="hero">
+  <p class="hero-eyebrow">— For VP Sales, CRO, RevOps at mid-market B2B</p>
+  <h1 class="hero-h1">
+    Catch slipping deals<br/>
+    <em>before forecast day.</em>
+  </h1>
+  <p class="hero-sub">
+    Mallin listens to every sales call and reads every email on every deal.
+    When a deal is going off-track, your manager gets a Slack alert —
+    with the <strong>exact next question to ask</strong>.
+  </p>
+  <div class="cta-row">
+    <a class="cta-primary" href="mailto:hello@mallin.io">
+      Request a design-partner slot
+      <svg viewBox="0 0 12 12" fill="none"><path d="M1 6h10M7 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a class="cta-secondary" href="#">See it run on a real deal →</a>
+  </div>
+  <p class="hero-footnote">
+    <b>Two design-partner slots remain.</b> &nbsp;·&nbsp; Works with Salesforce, HubSpot, Slack, Gong.
+  </p>
+</section>
+
+<!-- ── The product, in one picture ─────────────────────────────── -->
+<section class="product">
+  <div class="product-shadow">
+    <div class="slack">
+
+      <div class="slack-chrome">
+        <span class="traffic"></span>
+        <span class="traffic"></span>
+        <span class="traffic"></span>
+        <span class="slack-title"><b>#deal-treasury-platform</b> &nbsp;·&nbsp; Slack</span>
+        <span style="width: 39px;"></span>
+      </div>
+
+      <div class="slack-msg">
+        <div class="slack-avatar">M</div>
+        <div>
+          <div class="slack-head">
+            <span class="slack-name">Mallin</span>
+            <span class="slack-app">APP</span>
+            <span class="slack-time">2:47 PM</span>
+          </div>
+
+          <div>
+            <span class="alert-pill"><span class="d"></span>HIGH</span>
+            <span class="alert-label">Champion-commitment warning</span>
+          </div>
+
+          <p class="slack-text">
+            Signer (CFO) hasn't asked a question in two consecutive calls.
+            Champion airtime collapsed <strong>40% → 8%</strong>.
+            Commitment pattern inconsistent with stage 4 on day 31.
+          </p>
+
+          <div class="slack-quote-label">The next question to ask:</div>
+          <blockquote class="slack-quote">
+            "Before we send procurement — what would it take for you to commit to a signature date by quarter-end?"
+          </blockquote>
+
+          <div class="slack-footer">
+            <span class="slack-mention">@manager</span>
+            <span>looped in &nbsp;·&nbsp; Mallin · from call 4 on May 17</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="product-caption">
+    <b>What you actually see in Slack.</b> Manager looped into the deal thread. Gap named in plain language. Verbatim next question attached.
+  </p>
+</section>
+
+<!-- ── How it works — three sentences ──────────────────────────── -->
+<section class="how" id="how">
+  <p class="how-eyebrow">— How it works</p>
+  <div class="how-grid">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Connect Gong &amp; Salesforce.</h3>
+      <p>Mallin reads every call and email on every deal — no new logging, no new workflow.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>It listens for trouble.</h3>
+      <p>Signer disengagement. Champion airtime collapse. Competitor mentioned without a plan.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Manager gets the Slack alert.</h3>
+      <p>Gap named in plain language. Exact next question to ask. Before forecast day.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── One anchor quote ─────────────────────────────────────────── -->
+<section class="quote">
+  <p class="quote-text">
+    "It would have provided a way for us to address it head-on versus skirting around it."
+  </p>
+  <p class="quote-attr">
+    — From the team that ran their last closed-lost cycle, after replaying it through Mallin &nbsp;·&nbsp; <b>May 2026</b>
+  </p>
+</section>
+
+<!-- ── Final — dark CTA ─────────────────────────────────────────── -->
+<section class="final">
+  <h2>Run Mallin on your last quarter.</h2>
+  <p>
+    We connect to your Gong and CRM, run the system across your account list,
+    and within 24 hours show you which deals weren't real — before they slipped.
+  </p>
+  <div class="final-row">
+    <a class="final-primary" href="mailto:hello@mallin.io">Get in touch</a>
+    <a class="final-secondary" href="#">See a real example →</a>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Mallin · Built for revenue teams that don't skirt.</span>
+  <span><a href="mailto:hello@mallin.io">hello@mallin.io</a></span>
+</footer>
+
+</body>
+</html>

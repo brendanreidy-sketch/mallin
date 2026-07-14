@@ -1,0 +1,106 @@
+name: Weekly blog post
+
+# Auto-publishes one post per week to content/posts/. main is a protected
+# branch, so a direct push is rejected — instead this opens a PR from a
+# short-lived branch and self-merges it. main = production, so the merge
+# ships the post via Vercel.
+#
+# REQUIRED REPO SETUP (one-time):
+#   1. Settings → Secrets and variables → Actions → New repository secret:
+#        ANTHROPIC_API_KEY = <your key>
+#   2. Settings → Actions → General → Workflow permissions → "Read and write".
+#      (Branch protection on main is fine — the PR-merge path is allowed; the
+#      old direct-push path is what used to fail.)
+
+on:
+  schedule:
+    # Mondays at 13:00 UTC = 6:00am MST (UTC-7). GitHub runs cron in fixed UTC
+    # with no DST, so during Mountain Daylight (summer) this lands at 7:00am MDT.
+    - cron: "0 13 * * 1"
+  workflow_dispatch: {}
+
+concurrency:
+  group: weekly-blog
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate weekly post
+        id: gen
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BLOG_MODEL: ${{ vars.BLOG_MODEL }}
+          BLOG_AUTHOR: ${{ vars.BLOG_AUTHOR }}
+        run: |
+          set -euo pipefail
+          POST_PATH="$(npx tsx scripts/blog/generate-weekly-post.ts | tail -n1)"
+          echo "post_path=$POST_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and publish to main
+        run: |
+          set -euo pipefail
+          POST_PATH="${{ steps.gen.outputs.post_path }}"
+          if [ -z "$POST_PATH" ] || [ ! -f "$POST_PATH" ]; then
+            echo "No post produced — nothing to do."
+            exit 0
+          fi
+
+          # Idempotency: if this exact post is already on main, don't republish.
+          git fetch origin main --quiet
+          if git cat-file -e "origin/main:$POST_PATH" 2>/dev/null; then
+            echo "$POST_PATH already on main — skipping."
+            exit 0
+          fi
+
+          SLUG="$(basename "$POST_PATH" .md)"
+          git config user.name "mallin-blog-bot"
+          git config user.email "blog-bot@mallin.io"
+          # Land on the latest main (so a main that moved during the run is no
+          # problem); the freshly-generated post is untracked, so it survives
+          # the reset.
+          git checkout -B main origin/main
+          git add "$POST_PATH"
+          if git diff --cached --quiet; then
+            echo "No changes staged — skipping."
+            exit 0
+          fi
+          git commit -m "blog: weekly post — ${SLUG}"
+          # No branch protection on this repo, so push straight to main. This
+          # sidesteps the "Actions can't create PRs" repo setting entirely, and
+          # the commit lands on main → Vercel's Git integration deploys it.
+          git push origin HEAD:main
+          echo "Published ${SLUG} to main."
+
+      # Fail loud, not silent: this job died quietly every Monday for a month
+      # (missing ANTHROPIC_API_KEY) and nobody knew. On any failure, open an
+      # issue so the next breakage is visible instead of invisible.
+      - name: Alert if the run failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "⚠️ Weekly blog post failed — $(date -u +%Y-%m-%d)" \
+            --body "The weekly-blog workflow failed and published nothing this week. Run logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            || true

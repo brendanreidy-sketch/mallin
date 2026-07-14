@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin · doctrine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f6f5f1;
+    --paper-soft: #efeee8;
+    --ink: #15161a;
+    --ink-1: #2a2c30;
+    --ink-2: #56585c;
+    --ink-3: #82848a;
+    --ink-4: #a8aaae;
+    --rule: rgba(21,22,26,0.12);
+    --rule-strong: rgba(21,22,26,0.32);
+    --accent: #1e3f29;
+    --highlight: rgba(200,255,94,0.55);
+    --serif: "Instrument Serif", "Times New Roman", serif;
+    --sans: "Inter", system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; text-decoration-color: var(--rule-strong); }
+  a:hover { text-decoration-color: var(--ink); }
+  ::selection { background: var(--ink); color: var(--paper); }
+
+  /* ── Nav ─────────────────────────────────────────────────────── */
+  .nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(246,245,241,0.82);
+    backdrop-filter: saturate(140%) blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-inner {
+    max-width: 1200px; margin: 0 auto;
+    padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .wordmark {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; letter-spacing: -0.01em; font-size: 15px;
+  }
+  .wordmark-icon { width: 18px; height: 18px; }
+  .nav-links {
+    display: flex; gap: 28px; align-items: center;
+    font-size: 13px;
+  }
+  .nav-links a { text-decoration: none; color: var(--ink-2); }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta {
+    padding: 7px 14px;
+    background: var(--ink);
+    color: var(--paper) !important;
+    border-radius: 999px;
+    font-size: 12.5px;
+    text-decoration: none !important;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────────── */
+  .masthead {
+    max-width: 1200px; margin: 0 auto;
+    padding: 96px 32px 72px;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 64px;
+  }
+  .masthead-meta {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .masthead-meta div + div { margin-top: 18px; }
+  .masthead-meta b { display: block; color: var(--ink); font-weight: 500; margin-top: 4px; letter-spacing: 0.04em; }
+  h1.masthead-h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(48px, 7vw, 96px);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin: 0 0 32px;
+    max-width: 920px;
+  }
+  h1.masthead-h1 em { font-style: italic; }
+  .masthead-deck {
+    font-family: var(--serif);
+    font-size: clamp(20px, 2.2vw, 28px);
+    line-height: 1.35;
+    color: var(--ink-1);
+    max-width: 720px;
+    font-style: italic;
+  }
+  .masthead-byline {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    display: flex; gap: 48px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.06em;
+  }
+  .masthead-byline b { color: var(--ink); font-weight: 500; }
+
+  /* ── Article body ─────────────────────────────────────────────── */
+  .article {
+    max-width: 1200px; margin: 0 auto;
+    padding: 64px 32px 96px;
+    display: grid;
+    grid-template-columns: 180px 1fr 180px;
+    gap: 64px;
+  }
+  .article-rail {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.1em;
+    text-transform: uppercase;
+    position: sticky; top: 80px;
+    align-self: start;
+    line-height: 1.8;
+  }
+  .article-rail b {
+    display: block; color: var(--ink);
+    font-weight: 500; font-family: var(--sans);
+    font-size: 12px; letter-spacing: 0.02em;
+    text-transform: none;
+    margin-bottom: 8px;
+  }
+  .article-rail ol {
+    margin: 0; padding: 0;
+    list-style: none;
+    counter-reset: section;
+  }
+  .article-rail ol li {
+    counter-increment: section;
+    padding-left: 28px;
+    position: relative;
+    cursor: pointer;
+  }
+  .article-rail ol li::before {
+    content: counter(section, decimal-leading-zero);
+    position: absolute; left: 0; top: 0;
+    color: var(--ink-4);
+  }
+  .article-rail ol li:hover { color: var(--ink); }
+  .article-rail-right {
+    text-align: right;
+  }
+  .article-rail-right b { font-family: var(--sans); }
+
+  .body { max-width: 680px; }
+  .body section { margin-bottom: 64px; }
+  .body section:last-child { margin-bottom: 0; }
+
+  .section-num {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.14em;
+    margin-bottom: 14px;
+  }
+  .body h2 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: 38px; line-height: 1.05; letter-spacing: -0.015em;
+    color: var(--ink);
+    margin: 0 0 28px;
+  }
+  .body h2 em { font-style: italic; }
+  .body h3 {
+    font-family: var(--sans); font-weight: 600;
+    font-size: 15px; letter-spacing: -0.005em;
+    color: var(--ink); margin: 32px 0 12px;
+  }
+  .body p {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--ink-1);
+    margin: 0 0 18px;
+  }
+  .body p strong { color: var(--ink); font-weight: 600; }
+  .body p em { color: var(--ink); font-style: italic; }
+  .body .lede {
+    font-family: var(--serif); font-style: italic;
+    font-size: 22px; line-height: 1.4;
+    color: var(--ink); margin-bottom: 28px;
+  }
+  .body .drop::first-letter {
+    font-family: var(--serif);
+    font-size: 88px;
+    line-height: 0.82;
+    float: left;
+    margin: 8px 12px 0 0;
+    color: var(--ink);
+  }
+
+  blockquote {
+    margin: 32px 0;
+    padding: 0 0 0 24px;
+    border-left: 2px solid var(--ink);
+    font-family: var(--serif);
+    font-size: 24px; line-height: 1.35;
+    color: var(--ink); font-style: italic;
+    max-width: 600px;
+  }
+  blockquote .attr {
+    margin-top: 14px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.06em;
+    font-style: normal;
+    text-transform: uppercase;
+  }
+
+  .highlight { background: var(--highlight); padding: 0 2px; }
+
+  /* Principle blocks */
+  .principle-row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 24px;
+    padding: 28px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .principle-row:last-of-type { border-bottom: 1px solid var(--rule); }
+  .principle-row-num {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.1em;
+    padding-top: 4px;
+  }
+  .principle-row h3 {
+    margin: 0 0 8px;
+    font-family: var(--serif); font-weight: 400;
+    font-size: 24px; letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .principle-row p {
+    font-size: 15px; line-height: 1.6;
+    color: var(--ink-1); margin: 0;
+  }
+
+  /* Definitional asymmetry chart */
+  .asym {
+    margin: 32px 0;
+    border: 1px solid var(--rule-strong);
+    background: var(--paper-soft);
+  }
+  .asym-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .asym-row > div {
+    padding: 20px 22px;
+  }
+  .asym-row + .asym-row { border-top: 1px solid var(--rule); }
+  .asym-row > div + div { border-left: 1px solid var(--rule); }
+  .asym-head {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(21,22,26,0.04);
+  }
+  .asym-label {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .asym-val {
+    font-size: 14.5px; color: var(--ink); line-height: 1.4;
+  }
+  .asym-val em { color: var(--ink-2); font-style: italic; }
+
+  /* ── Pull-quote (one big page break) ─────────────────────────── */
+  .pullquote {
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    margin: 56px 0;
+    padding: 56px 0;
+  }
+  .pullquote-text {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-style: italic;
+    font-size: clamp(28px, 3.4vw, 44px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0 0 24px;
+  }
+  .pullquote-attr {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── End matter ─────────────────────────────────────────────── */
+  .end-matter {
+    max-width: 1200px; margin: 0 auto;
+    padding: 64px 32px 96px;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 64px;
+  }
+  .end-matter-eyebrow {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .end-matter h2 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: 44px; line-height: 1.05; letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 0 0 24px;
+    max-width: 720px;
+  }
+  .end-matter h2 em { font-style: italic; }
+  .end-matter p {
+    font-size: 16px; line-height: 1.6;
+    color: var(--ink-1);
+    max-width: 620px;
+    margin: 0 0 28px;
+  }
+  .end-cta-row { display: flex; gap: 10px; align-items: center; }
+  .end-cta-primary {
+    padding: 13px 22px;
+    background: var(--ink); color: var(--paper);
+    border-radius: 999px;
+    font-size: 14px;
+    text-decoration: none;
+  }
+  .end-cta-secondary {
+    padding: 13px 18px;
+    color: var(--ink);
+    border-radius: 999px;
+    border: 1px solid var(--rule-strong);
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  /* ── Footer ─────────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 28px 32px;
+    max-width: 1200px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    letter-spacing: 0.06em;
+  }
+  footer span:last-child { color: var(--ink-4); }
+
+  @media (max-width: 1000px) {
+    .article { grid-template-columns: 1fr; gap: 32px; }
+    .article-rail { display: none; }
+    .masthead { grid-template-columns: 1fr; gap: 24px; padding: 56px 24px 48px; }
+    .end-matter { grid-template-columns: 1fr; gap: 24px; padding: 48px 24px; }
+    .body { max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="wordmark" href="#">
+      <svg class="wordmark-icon" viewBox="0 0 64 64" fill="none">
+        <path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#15161a" stroke-width="3" stroke-linecap="round"/>
+        <line x1="22" y1="22" x2="22" y2="17" stroke="#15161a" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="32" y1="22" x2="32" y2="14" stroke="#15161a" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="42" y1="22" x2="42" y2="17" stroke="#15161a" stroke-width="1.75" stroke-linecap="round"/>
+        <path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#1e3f29" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      Mallin
+    </a>
+
+    <div class="nav-links">
+      <a href="#">Product</a>
+      <a href="#">Doctrine</a>
+      <a href="#">Customers</a>
+      <a class="nav-cta" href="#">Request access</a>
+    </div>
+  </div>
+</nav>
+
+<header class="masthead">
+  <div class="masthead-meta">
+    <div>Doctrine<br/><b>I — On operating layers</b></div>
+    <div>Issued<br/><b>May 2026</b></div>
+    <div>Reading time<br/><b>11 minutes</b></div>
+  </div>
+
+  <div>
+    <h1 class="masthead-h1">An operating layer is <em>earned,</em> not installed.</h1>
+    <p class="masthead-deck">
+      A note on why we built Mallin the way we built Mallin — and what
+      it cost to do so honestly. Written for the operators we're building
+      this for, before we sell to anyone else.
+    </p>
+    <div class="masthead-byline">
+      <span>FROM <b>THE FOUNDERS</b></span>
+      <span>ISSUED <b>MAY 18, 2026</b></span>
+      <span>SERIES <b>DOCTRINE · I</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="article">
+
+  <aside class="article-rail">
+    <b>Contents</b>
+    <ol>
+      <li>The category problem</li>
+      <li>What we actually built</li>
+      <li>The trust contract</li>
+      <li>Why this is infrastructure</li>
+    </ol>
+  </aside>
+
+  <article class="body">
+
+    <section>
+      <div class="section-num">§ 01 — The category problem</div>
+      <h2>The CRM stores what was typed. <em>An operating layer understands what was heard.</em></h2>
+
+      <p class="lede">
+        Every enterprise revenue team in the world spends its days inside
+        a piece of software designed in 1999 to be a database for sales
+        managers — and treats the gap between that database and reality
+        as a fact of life.
+      </p>
+
+      <p class="drop">
+        The forecast call is the cleanest demonstration. Leadership sits down
+        on a Friday morning and asks the same question about a handful of
+        deals: <em>is this real?</em> The CRM says 75%, commit, advancing.
+        The rep says the champion is engaged. The forecast category says yes.
+      </p>
+
+      <p>
+        Meanwhile the actual signals — the CFO hasn't joined a call in six
+        weeks, the champion's airtime collapsed from 40% to 8%, procurement
+        entered late, a competitor was introduced during pricing — sit
+        <span class="highlight">fragmented across calls, Slack, email,
+        CRM activity, and stakeholder behavior</span>. The data exists. It
+        is not synthesized. It does not reach the forecast call.
+      </p>
+
+      <p>
+        By the time leadership realizes the deal isn't real, the quarter
+        is already gone.
+      </p>
+
+      <p>
+        The conventional response to this gap is more dashboards. More
+        scoring. More AI features bolted onto a system whose job was never
+        to interpret behavior in the first place. We think this is a
+        category error.
+      </p>
+
+      <blockquote>
+        The CRM is a database for sales managers. Mallin is the operating
+        environment a deal lives inside.
+        <div class="attr">— Working doctrine, March 2026</div>
+      </blockquote>
+    </section>
+
+    <section>
+      <div class="section-num">§ 02 — What we actually built</div>
+      <h2>Not features. <em>A cognitive loop.</em></h2>
+
+      <p>
+        Mallin reads every artifact on a deal — calls, emails, Slack
+        threads, calendar invites, CRM activity — and reconstructs the
+        operational state from what's already there. No new logging.
+        No new workflow. <strong>The substrate the rep produced by
+        doing the deal is the substrate Mallin runs on.</strong>
+      </p>
+
+      <p>
+        From that substrate, the same five-element sequence renders on
+        every surface — pre-call brief, Slack alert, manager DM,
+        retrospective, recap email, exec summary:
+      </p>
+
+      <div class="principle-row">
+        <div class="principle-row-num">/ 01</div>
+        <div>
+          <h3>A clear risk</h3>
+          <p>Named in plain operator language. Never a score in isolation. Never "low confidence" without saying what's actually shaky.</p>
+        </div>
+      </div>
+      <div class="principle-row">
+        <div class="principle-row-num">/ 02</div>
+        <div>
+          <h3>A prescriptive move</h3>
+          <p>One next step the rep should take. Not a list of considerations. Not three options. The recommendation, with the reasoning underneath it.</p>
+        </div>
+      </div>
+      <div class="principle-row">
+        <div class="principle-row-num">/ 03</div>
+        <div>
+          <h3>Quoted evidence</h3>
+          <p>The actual sentence from the actual call, at the actual timestamp. Paraphrased evidence is a trust failure.</p>
+        </div>
+      </div>
+      <div class="principle-row">
+        <div class="principle-row-num">/ 04</div>
+        <div>
+          <h3>Temporal proof</h3>
+          <p>When the artifact was generated, what changed since the last reading, how the signal moved across the cycle. Time is the most under-used dimension in sales software.</p>
+        </div>
+      </div>
+      <div class="principle-row">
+        <div class="principle-row-num">/ 05</div>
+        <div>
+          <h3>An accountable decision</h3>
+          <p>Approve, modify, reject. Every claim is reviewable. Every action has an approver. Nothing reaches Salesforce or the customer without a human in the loop.</p>
+        </div>
+      </div>
+
+      <p style="margin-top: 32px;">
+        This sequence is non-negotiable. It is the difference between
+        intelligent dashboard and operating environment. <strong>If a surface
+        renders only three of the five, it is not a Mallin surface.</strong>
+      </p>
+    </section>
+
+    <section>
+      <div class="section-num">§ 03 — The trust contract</div>
+      <h2>Earned reliance scales. <em>Assumed reliance fails under load.</em></h2>
+
+      <p>
+        Half the agentic AI shipping in 2026 is irresponsible — blind
+        CRM auto-writes, browser agents that hallucinate, "let me handle
+        your email" pitches that lose customers their accounts. Sales
+        leaders are correctly suspicious.
+      </p>
+
+      <p>
+        We are the opposite. Mallin is agentic where it should be and
+        human where it must be — and the distinction is encoded in the
+        product, not promised in the marketing.
+      </p>
+
+      <h3>Three stages of trust progression</h3>
+      <p>
+        Every CRM field passes through three stages before anything writes
+        itself.
+      </p>
+
+      <div class="asym">
+        <div class="asym-row">
+          <div class="asym-head">Stage</div>
+          <div class="asym-head">Behavior</div>
+        </div>
+        <div class="asym-row">
+          <div>
+            <div class="asym-label">/ STAGE 1</div>
+            <div class="asym-val">Suggest</div>
+          </div>
+          <div>
+            <div class="asym-val">Agent shows its read. <em>Looks right · Looks wrong · Edit.</em> No write to Salesforce.</div>
+          </div>
+        </div>
+        <div class="asym-row">
+          <div>
+            <div class="asym-label">/ STAGE 2</div>
+            <div class="asym-val">Apply</div>
+          </div>
+          <div>
+            <div class="asym-val">One-click approve — earned only after confirm-rate data proves the suggestions are reliable on this field, for this customer.</div>
+          </div>
+        </div>
+        <div class="asym-row">
+          <div>
+            <div class="asym-label">/ STAGE 3</div>
+            <div class="asym-val">Auto + Confirm</div>
+          </div>
+          <div>
+            <div class="asym-val">Agent writes first, surfaces Confirm/Undo — unlocked only after Stage 2 hesitation data clears. No skipping stages, no per-customer overrides.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Never-auto fields</h3>
+      <p>
+        <strong>Stage. Amount. Close Date. Forecast Category.</strong> Even
+        with full permission. Even after trust is earned. Even when
+        statistically safe. The agent never writes these. The human owns
+        revenue-critical state, because the cost of getting these wrong
+        is a missed quarter — not a deleted record.
+      </p>
+
+      <p>
+        This is encoded at the type-shape of the product, not as a setting.
+        There is no per-tenant configuration to flip. There is no edge case
+        where the agent writes Stage. The constraint is structural.
+      </p>
+
+      <h3>The manager is in the thread</h3>
+      <p>
+        High-severity alerts post into the deal Slack thread the manager
+        is already in — gap named in plain language, verbatim next
+        question to ask attached. <strong>The agent decides what's a gap.
+        The team decides the response.</strong> The manager being in the
+        thread means the rep can't quietly skirt the conversation.
+      </p>
+    </section>
+
+    <section class="pullquote">
+      <div class="pullquote-text">
+        The rep is not delegating thinking. They are delegating synthesis labor.
+      </div>
+      <div class="pullquote-attr">— Operating principle · fifth doctrine</div>
+    </section>
+
+    <section>
+      <div class="section-num">§ 04 — Why this is infrastructure</div>
+      <h2>One substrate. <em>Many governed outputs.</em></h2>
+
+      <p>
+        Once a deal's substrate is reconstructed — every call, every email,
+        every Slack thread, every stakeholder behavior across eighteen
+        months — the same substrate produces every surface the team needs.
+      </p>
+
+      <p>
+        Internal: the pre-call brief, the manager DM, the verification
+        alert, the CRM update, the action queue, the exec summary, the
+        retrospective. External: the recap email, the MAP, the customer
+        deck, the stakeholder one-pager. <strong>One substrate. Many
+        governed outputs.</strong> Nothing auto-sends. Everything
+        approved. Provenance on every claim.
+      </p>
+
+      <p>
+        That asymmetry is what makes this a category, not a feature. A
+        better prompt against a poor substrate produces a confident lie.
+        A modest prompt against the right substrate produces operator-grade
+        judgment. <strong>Substrate quality is the multiplier.</strong>
+      </p>
+
+      <p>
+        The category we are building toward is straightforward to state
+        and difficult to earn:
+      </p>
+
+      <blockquote>
+        A governed AI operating system for revenue execution.
+        <div class="attr">— Product north star</div>
+      </blockquote>
+
+      <p>
+        Not RevOps AI. Not a sales coach. Not a copilot. An operating
+        environment a rep lives inside during an active deal cycle — and
+        that a leadership team checks before the forecast call, because
+        what's true about the pipeline is what's <em>actually</em> true,
+        not what was typed.
+      </p>
+
+      <p>
+        Using a system like this in five years will feel obvious. Until
+        then, we're building it carefully, with five design partners, on a
+        substrate we trust, with a trust contract we will not break.
+      </p>
+    </section>
+
+  </article>
+
+  <aside class="article-rail article-rail-right">
+    <b>Cite</b>
+    <p style="font-family: var(--sans); font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--ink-2); margin-top: 8px; line-height: 1.5;">
+      Mallin Doctrine I, <em>On operating layers</em>, issued May 18 2026.
+      mallin.io/doctrine/01
+    </p>
+    <b style="margin-top: 24px;">Next</b>
+    <p style="font-family: var(--sans); font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--ink-2); margin-top: 8px; line-height: 1.5;">
+      Doctrine II — <em>On governed action.</em> The mechanics of the trust progression, in detail.
+    </p>
+  </aside>
+
+</main>
+
+<section class="end-matter">
+  <div class="end-matter-eyebrow">— Next step</div>
+  <div>
+    <h2>Run Mallin on <em>your last quarter.</em></h2>
+    <p>
+      We connect to your Gong library and CRM, run the intelligence agent
+      across your account list, and within 24 hours present a knowledge
+      base built from eighteen months of your own sales activity plus live
+      external profiles on every prospect in your pipeline. The demo is
+      the product.
+    </p>
+    <div class="end-cta-row">
+      <a class="end-cta-primary" href="#">Request a design-partner slot</a>
+      <a class="end-cta-secondary" href="#">See it run →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 MALLIN · DOCTRINE · ISSUED MAY 2026</span>
+  <span>BUILT FOR REVENUE TEAMS THAT DON'T SKIRT</span>
+</footer>
+
+</body>
+</html>

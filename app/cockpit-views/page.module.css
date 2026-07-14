@@ -1,0 +1,114 @@
+.page {
+  min-height: 100vh;
+  background: var(--ck-paper);
+  color: var(--ck-ink-2);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  padding: 28px 20px 64px;
+  display: flex;
+  justify-content: center;
+}
+
+.shell {
+  width: 100%;
+  max-width: 880px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ck-ink-3);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.back:hover {
+  color: var(--ck-blue);
+}
+
+.deal {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ck-ink);
+}
+.sub {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--ck-ink-3);
+}
+.templateName {
+  color: var(--ck-blue);
+}
+.viewName {
+  color: var(--ck-ink-2);
+  text-transform: capitalize;
+}
+
+.controls {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.switch {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.switchLabel {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ck-ink-3);
+}
+.seg {
+  display: inline-flex;
+  border: 0.5px solid rgba(26, 34, 48, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.segBtn {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--ck-ink-3);
+  border: none;
+  cursor: pointer;
+  text-transform: capitalize;
+  transition: background 0.15s, color 0.15s;
+}
+.segBtn:not(:last-child) {
+  border-right: 0.5px solid rgba(26, 34, 48, 0.1);
+}
+.segOn {
+  background: rgba(74, 113, 134, 0.14);
+  color: var(--ck-blue);
+}
+
+.spineWrap {
+  padding: 12px 0;
+  border-top: 0.5px solid rgba(26, 34, 48, 0.06);
+  border-bottom: 0.5px solid rgba(26, 34, 48, 0.06);
+}
+
+.referenceWrap {
+  margin-top: 14px;
+}
+
+.content {
+  margin-top: 6px;
+}

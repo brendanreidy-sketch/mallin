@@ -1,0 +1,258 @@
+/* Mallín contact page — same warm-cream palette as /pilot and the
+ * homepage. Tighter than /pilot since the form only has 3 fields. */
+
+.page {
+  --paper:      #f4f1ea;
+  --paper-soft: #faf7f0;
+  --rule:       #e3dccc;
+  --rule-2:     #d6cfbe;
+  --ink:        #1a2230;
+  --ink-2:      #3b4658;
+  --ink-3:      #6b7689;
+  --ink-4:      #9aa3b3;
+  --blue:       #4a7186;
+  --blue-2:     #88b8d0;
+  --blue-tint:  #e7eff4;
+  --crit:       #c25a4a;
+  --crit-tint:  #f6e7e3;
+  --good:       #5a8f7a;
+
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(.page) a { color: inherit; text-decoration: none; }
+:where(.page) ::selection { background: var(--ink); color: var(--paper); }
+
+/* ── Nav ────────────────────────────────────────────── */
+.navWrap {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(244, 241, 234, 0.82);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--rule);
+}
+.nav {
+  max-width: 880px; margin: 0 auto;
+  padding: 16px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.wordmark {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: 18px; font-weight: 700; letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.navRight { display: flex; align-items: center; gap: 22px; }
+.navLink {
+  font-size: 14px; color: var(--ink);
+  border-bottom: 1px solid transparent;
+}
+.navLink:hover { border-bottom-color: var(--ink); }
+
+/* ── Header ──────────────────────────────────────────── */
+.main {
+  max-width: 880px; margin: 0 auto;
+  padding: 64px 32px 96px;
+}
+.eyebrow {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--blue);
+  margin: 0 0 18px;
+}
+.h1 {
+  font-size: clamp(36px, 4.6vw, 56px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  color: var(--ink);
+  margin: 0 0 20px;
+}
+.h1 em { font-style: normal; color: var(--blue); }
+.lede {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 640px;
+  margin: 0 0 40px;
+}
+.lede strong { color: var(--ink); font-weight: 600; }
+
+/* ── Form ────────────────────────────────────────────── */
+.form {
+  background: var(--paper-soft);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 10px 24px -16px rgba(26, 34, 48, 0.08);
+}
+.fieldRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+.field:last-of-type { margin-bottom: 0; }
+.label {
+  display: block;
+  font-size: 13px; font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.req { color: var(--crit); font-weight: 700; margin-left: 1px; }
+.input,
+.textarea {
+  width: 100%;
+  padding: 11px 14px;
+  background: #fff;
+  border: 1px solid var(--rule-2);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.4;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(74, 113, 134, 0.16);
+}
+.input::placeholder,
+.textarea::placeholder { color: var(--ink-4); }
+.textarea {
+  resize: vertical;
+  min-height: 140px;
+  font-family: inherit;
+}
+
+/* ── Submit ──────────────────────────────────────────── */
+.submitRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.submit {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 22px;
+  background: var(--ink); color: var(--paper);
+  border: none; border-radius: 8px;
+  font: inherit; font-size: 14.5px; font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+.submit:hover:not(:disabled) {
+  background: var(--blue);
+  transform: translateY(-1px);
+}
+.submit:disabled { opacity: 0.65; cursor: not-allowed; }
+.submitFoot {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin: 0;
+}
+
+/* ── Error / Honeypot ───────────────────────────────── */
+.error {
+  padding: 12px 16px;
+  background: var(--crit-tint);
+  border: 1px solid rgba(194, 90, 74, 0.3);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin: 16px 0 0;
+}
+.error b { color: var(--crit); }
+.honeypot {
+  position: absolute;
+  left: -9999px; top: -9999px;
+  width: 1px; height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Success ─────────────────────────────────────────── */
+.successCard {
+  background: var(--paper-soft);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 56px 40px;
+  text-align: center;
+}
+.successMark {
+  width: 56px; height: 56px;
+  background: var(--good);
+  color: var(--paper);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  margin-bottom: 24px;
+}
+.successTitle {
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0 auto 18px;
+  max-width: 560px;
+}
+.successTitle em { font-style: normal; color: var(--blue); }
+.successBody {
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  max-width: 540px;
+  margin: 0 auto;
+}
+.successBody a {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Footer ─────────────────────────────────────────── */
+.footer {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.footer a { color: var(--ink-2); }
+.footer a:hover { text-decoration: underline; }
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 720px) {
+  .main { padding: 40px 24px 56px; }
+  .form { padding: 24px 20px; }
+  .fieldRow2 {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-bottom: 0;
+  }
+  .fieldRow2 .field { margin-bottom: 18px; }
+  .nav { padding: 12px 20px; }
+  .navRight { gap: 10px; }
+  .navLink { font-size: 12.5px; }
+  .wordmark { font-size: 17px; }
+  .footer { padding: 24px; flex-direction: column; gap: 8px; }
+}

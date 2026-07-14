@@ -1,0 +1,311 @@
+/* LiveCoach — sticky bottom panel for in-call real-time advice.
+   Monochrome with the slate accent (consistent with AccountIntelligence). */
+
+.coach {
+  margin: 16px 36px 24px;
+}
+
+/* Collapsed state — quiet button that doesn't compete with the brief */
+.toggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ck-blue-tint);
+  border: 0.5px solid var(--ck-blue);
+  color: var(--ck-ink-2);
+  padding: 14px 22px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+.toggleBtn:hover {
+  background: var(--ck-blue-tint);
+  border-color: var(--ck-blue);
+}
+.toggleDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ck-blue);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(136, 184, 208, 0.5);
+  animation: livePulse 2.4s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(136, 184, 208, 0.55); }
+  50% { box-shadow: 0 0 0 6px rgba(136, 184, 208, 0); }
+}
+.toggleHint {
+  font-size: 12.5px;
+  color: var(--ck-ink-4);
+  font-weight: 400;
+  margin-left: auto;
+}
+
+/* Expanded panel — fixed height so the surface doesn't grow as the
+   conversation accumulates. The chat area scrolls internally; the
+   input stays pinned at the bottom. */
+.panel {
+  background: var(--ck-surface);
+  border: 0.5px solid var(--ck-rule-2);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+  max-height: calc(100vh - 220px);
+  overflow: hidden;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 0.5px solid var(--ck-rule);
+  background: var(--ck-blue-tint);
+}
+.panelHeadLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.panelDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ck-blue);
+  animation: livePulse 2.4s ease-in-out infinite;
+}
+.panelTitle {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ck-blue);
+}
+.panelAccount {
+  font-size: 12px;
+  color: var(--ck-ink-3);
+  margin-left: 2px;
+}
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--ck-ink-4);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.closeBtn:hover {
+  color: var(--ck-ink);
+  background: var(--ck-surface-2);
+}
+
+/* Chat area */
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.empty {
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ck-ink-3);
+}
+.emptyPrompt {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+}
+.emptyHint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ck-ink-4);
+}
+.emptyHint em {
+  font-style: italic;
+  color: var(--ck-ink-3);
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 92%;
+}
+.turnUser {
+  align-self: flex-end;
+}
+.turnAssistant {
+  align-self: flex-start;
+}
+
+.turnLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ck-blue);
+}
+
+.turnText {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ck-ink);
+  white-space: pre-wrap;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+.turnUser .turnText {
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  color: var(--ck-ink-2);
+}
+.turnAssistant .turnText {
+  background: var(--ck-blue-tint);
+  border-left: 2px solid var(--ck-blue);
+  border-radius: 4px 8px 8px 4px;
+  color: var(--ck-ink);
+}
+
+.turnPending {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--ck-blue-tint);
+  border-radius: 8px;
+}
+.pendingDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ck-blue);
+  opacity: 0.4;
+  animation: pendingBlink 1.2s ease-in-out infinite;
+}
+.pendingDot:nth-child(2) { animation-delay: 0.15s; }
+.pendingDot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes pendingBlink {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 0.9; transform: translateY(-2px); }
+}
+
+.error {
+  background: var(--ck-crit-tint);
+  border: 0.5px solid var(--ck-crit);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--ck-crit);
+  font-size: 12.5px;
+}
+
+/* Input form — pinned at the bottom of the panel; never grows. The
+   chat area above this absorbs the available vertical space and
+   scrolls when it overflows. */
+.form {
+  border-top: 0.5px solid var(--ck-rule);
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--ck-surface-3);
+  flex-shrink: 0;
+}
+
+.input {
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--ck-ink);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: none;
+  min-height: 44px;
+  max-height: 110px;
+  overflow-y: auto;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.input:focus {
+  background: var(--ck-surface-2);
+  border-color: var(--ck-blue);
+}
+.input::placeholder {
+  color: var(--ck-ink-4);
+}
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.formFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.formHint {
+  font-size: 11px;
+  color: var(--ck-ink-4);
+}
+.formHint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule-2);
+  border-radius: 3px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ck-ink-3);
+}
+
+.submitBtn {
+  background: var(--ck-blue-tint);
+  color: var(--ck-blue);
+  border: 0.5px solid var(--ck-blue);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 18px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.submitBtn:hover:not(:disabled) {
+  background: var(--ck-blue-tint);
+  border-color: var(--ck-blue);
+  color: var(--ck-blue);
+}
+.submitBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .coach {
+    margin: 12px 18px 18px;
+  }
+  .panel {
+    min-height: 320px;
+  }
+}

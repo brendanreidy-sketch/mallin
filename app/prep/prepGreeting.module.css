@@ -1,0 +1,84 @@
+/* PrepGreeting — the top-of-page warm-up bar.
+   Three-column layout: Mallín brand | rep greeting | account context.
+   Quiet by design — typography-only, no boxes, sits above the chrome. */
+
+.greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 36px 12px;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+
+.left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.brand {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ck-ink);
+  letter-spacing: 0.01em;
+}
+
+.center {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+.hi {
+  font-size: 13px;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.01em;
+}
+
+.right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.accountLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ck-ink-3);
+}
+
+/* Customize trigger — quiet text-only button, slate-blue on hover.
+   Accent variables make this honor the live theme. */
+.customizeBtn {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ck-ink-3);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.customizeBtn:hover {
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  background: hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.06);
+}
+.divider {
+  color: var(--ck-ink-4);
+  font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  .greeting {
+    padding: 12px 18px 10px;
+    gap: 10px;
+  }
+  .accountLabel {
+    display: none; /* tight surfaces — keep logo only */
+  }
+}

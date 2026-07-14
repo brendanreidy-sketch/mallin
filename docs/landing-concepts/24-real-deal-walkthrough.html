@@ -1,0 +1,1193 @@
+<!doctype html>
+<!--
+ ─────────────────────────────────────────────────────────────────────
+ MARKETING SECTION — "How Mallin works" via one real sanitized deal.
+
+ This is the website section between the hero and the pricing/CTA
+ block. It replaces any "feature matrix" or "agents dropdown" with a
+ single end-to-end walkthrough of one deal: Maven Beauty (publicly-
+ known Heritage acquisition, public stakeholders).
+
+ Five sections, in order:
+ 1. The call — transcript excerpt, intentionally messy
+ 2. What Mallin noticed — the contradiction + one decision
+ 3. What the rep asks next — 6 questions, each with one-line "why"
+ 4. The deck — 3 generated slide previews
+ 5. What changes — three operational outcomes
+
+ Voice rules (memory):
+ - voice_compression_rule.md: every line changes what the rep does next
+ - marketing_voice_rule.md: Baseten-style polish, no signaling theater
+ - product_north_star.md: monochrome + one accent, evidence as primitive
+ - feedback_design_ai_tells.md: avoid Inter+JetBrains Mono, no acid
+ lime, no animated pulse dots, no "01 — Section" eyebrow clichés
+
+ No: "agents," "AI-powered," "automate," pipeline graphics, capability
+ matrices, generic headcount-replacement copy.
+ ─────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin · How it works — Maven Beauty walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet" />
+<style>
+ :root {
+   /* Mallin canonical brand palette (per landing-concepts/21-full-homepage-preview.html) */
+   --paper:      #f4f1ea;
+   --paper-2:    #ebe6d6;
+   --paper-soft: #faf7f0;
+   --rule:       #e3dccc;
+   --rule-2:     #d6cfbe;
+   --ink:        #1a2230;
+   --ink-2:      #3b4658;
+   --ink-3:      #6b7689;
+   --ink-4:      #9aa3b3;
+   --blue:       #4a7186;
+   --blue-2:     #88b8d0;
+   --blue-tint:  #e7eff4;
+   --crit:       #c25a4a;
+
+   /* Aliases used throughout this file (kept for minimal churn) */
+   --bg:         var(--paper);
+   --surface:    var(--paper-soft);
+   --surface-2:  var(--paper-2);
+   --line:       var(--rule);
+   --line-2:     var(--rule-2);
+   --ink-soft:   var(--ink-2);
+   --muted:      var(--ink-3);
+   --accent:     var(--blue);
+   --accent-d:   var(--blue-tint);
+   --accent-m:   rgba(74, 113, 134, 0.30);
+
+   --sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+   --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+   --mono:  ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+ }
+ * { box-sizing: border-box; }
+ html, body {
+ margin: 0;
+ background: var(--bg);
+ color: var(--ink);
+ font-family: var(--sans);
+ font-size: 16px;
+ line-height: 1.55;
+ -webkit-font-smoothing: antialiased;
+ }
+ a { color: inherit; }
+ ::selection { background: var(--accent-m); color: var(--ink); }
+
+ .container {
+ max-width: 980px;
+ margin: 0 auto;
+ padding: 0 32px;
+ }
+
+ /* ───────────── Section frame ───────────── */
+ .section {
+ padding: 96px 0;
+ border-top: 1px solid var(--line);
+ }
+ .section:first-of-type { border-top: none; }
+
+ .section-eyebrow {
+ font-family: var(--mono);
+ font-size: 11px;
+ letter-spacing: 0.16em;
+ text-transform: uppercase;
+ color: var(--accent);
+ margin: 0 0 18px;
+ }
+ .section-headline {
+ font-family: var(--serif);
+ font-size: 38px;
+ line-height: 1.15;
+ letter-spacing: -0.012em;
+ color: var(--ink);
+ margin: 0 0 14px;
+ font-weight: 500;
+ max-width: 760px;
+ }
+ .section-headline em {
+ font-style: italic;
+ color: var(--accent);
+ }
+ .section-deck {
+ font-size: 17px;
+ line-height: 1.55;
+ color: var(--ink-soft);
+ margin: 0 0 48px;
+ max-width: 680px;
+ }
+
+ /* ───────────── Frame intro (above the walkthrough) ───────────── */
+ .frame-intro {
+ padding-top: 72px;
+ padding-bottom: 40px;
+ }
+ .frame-context {
+ font-family: var(--mono);
+ font-size: 12px;
+ color: var(--muted);
+ letter-spacing: 0.06em;
+ margin-bottom: 24px;
+ text-transform: uppercase;
+ }
+ .frame-headline {
+ font-family: var(--serif);
+ font-size: 56px;
+ line-height: 1.08;
+ letter-spacing: -0.018em;
+ margin: 0 0 26px;
+ color: var(--ink);
+ font-weight: 500;
+ max-width: 880px;
+ }
+ .frame-headline em {
+ color: var(--accent);
+ font-style: italic;
+ }
+ .frame-sub {
+ font-size: 18px;
+ line-height: 1.55;
+ color: var(--ink-soft);
+ max-width: 720px;
+ margin: 0;
+ }
+ .frame-meta {
+ margin-top: 36px;
+ display: inline-flex;
+ align-items: center;
+ gap: 14px;
+ padding: 8px 14px;
+ border: 1px solid var(--line-2);
+ border-radius: 999px;
+ font-family: var(--mono);
+ font-size: 11px;
+ color: var(--ink-soft);
+ letter-spacing: 0.04em;
+ }
+ .frame-meta-dot {
+ width: 6px; height: 6px;
+ background: var(--accent);
+ border-radius: 50%;
+ }
+
+ /* ───────────── 1. THE CALL — transcript ───────────── */
+ .transcript {
+ background: var(--surface);
+ border: 1px solid var(--line);
+ border-radius: 10px;
+ padding: 30px 32px;
+ font-family: var(--mono);
+ font-size: 13.5px;
+ line-height: 1.7;
+ color: var(--ink-soft);
+ box-shadow: 0 8px 24px rgba(26, 34, 48, 0.06);
+ }
+ .transcript-header {
+ display: flex;
+ align-items: baseline;
+ justify-content: space-between;
+ margin-bottom: 22px;
+ padding-bottom: 16px;
+ border-bottom: 1px dashed var(--line);
+ font-size: 11.5px;
+ letter-spacing: 0.04em;
+ color: var(--muted);
+ text-transform: uppercase;
+ }
+ .transcript-header b {
+ color: var(--ink);
+ font-weight: 600;
+ letter-spacing: 0.02em;
+ }
+ .turn { margin: 0 0 14px; }
+ .turn:last-of-type { margin-bottom: 0; }
+ .turn-speaker {
+ color: var(--accent);
+ font-weight: 600;
+ margin-right: 8px;
+ }
+ .turn-ts {
+ color: var(--muted);
+ margin-right: 8px;
+ }
+ .turn-text { color: var(--ink); }
+ .transcript-fade {
+ color: var(--muted);
+ font-style: italic;
+ margin: 18px 0 0;
+ border-top: 1px dashed var(--line);
+ padding-top: 16px;
+ }
+
+ /* ───────────── 2. WHAT MALLIN NOTICED ───────────── */
+ .noticed-grid {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 24px;
+ }
+ .noticed-card {
+ background: var(--surface);
+ border: 1px solid var(--line);
+ border-radius: 10px;
+ padding: 28px;
+ }
+ .noticed-label {
+ font-family: var(--mono);
+ font-size: 11px;
+ color: var(--muted);
+ letter-spacing: 0.14em;
+ text-transform: uppercase;
+ margin: 0 0 14px;
+ }
+ .noticed-statement {
+ font-family: var(--serif);
+ font-size: 18px;
+ line-height: 1.45;
+ color: var(--ink);
+ margin: 0 0 14px;
+ }
+ .noticed-statement em {
+ color: var(--accent);
+ font-style: italic;
+ }
+ .noticed-substrate {
+ font-size: 14.5px;
+ line-height: 1.6;
+ color: var(--ink-soft);
+ margin: 0;
+ }
+
+ .decision {
+ margin-top: 24px;
+ padding: 26px 28px;
+ background: var(--surface);
+ border: 1px solid var(--accent-m);
+ border-left: 3px solid var(--accent);
+ border-radius: 10px;
+ }
+ .decision-label {
+ font-family: var(--mono);
+ font-size: 11px;
+ color: var(--accent);
+ letter-spacing: 0.14em;
+ text-transform: uppercase;
+ margin: 0 0 10px;
+ }
+ .decision-text {
+ font-family: var(--serif);
+ font-size: 22px;
+ line-height: 1.4;
+ color: var(--ink);
+ margin: 0;
+ font-weight: 500;
+ }
+
+ /* ───────────── 3. WHAT THE REP ASKS NEXT ───────────── */
+ .questions-list {
+ list-style: none;
+ padding: 0;
+ margin: 0;
+ }
+ .question {
+ padding: 22px 0;
+ border-top: 1px solid var(--line);
+ display: grid;
+ grid-template-columns: 36px 1fr;
+ column-gap: 20px;
+ }
+ .question:first-child { border-top: none; }
+ .question-number {
+ font-family: var(--mono);
+ font-size: 12px;
+ color: var(--muted);
+ padding-top: 4px;
+ }
+ .question-body {}
+ .question-text {
+ font-family: var(--serif);
+ font-size: 18.5px;
+ line-height: 1.42;
+ color: var(--ink);
+ margin: 0 0 8px;
+ font-weight: 500;
+ }
+ .question-why {
+ font-size: 14px;
+ line-height: 1.55;
+ color: var(--ink-soft);
+ margin: 0;
+ }
+ .question-why b {
+ color: var(--accent);
+ font-weight: 500;
+ margin-right: 4px;
+ }
+
+ /* ───────────── 4. THE DECK — slide thumbnails ───────────── */
+ .deck-row {
+ display: grid;
+ grid-template-columns: repeat(2, 1fr);
+ gap: 22px;
+ margin-top: 8px;
+ }
+ @media (min-width: 1100px) {
+ .deck-row { grid-template-columns: repeat(2, 1fr); }
+ }
+
+ /* Customer-story slide — spans both columns, taller aspect ratio */
+ .slide.wide {
+   grid-column: 1 / -1;
+   aspect-ratio: auto;
+   padding: 26px 30px;
+ }
+ .slide.wide .slide-title {
+   font-size: 22px;
+   line-height: 1.25;
+   margin-bottom: 14px;
+ }
+ .slide.wide .slide-eyebrow {
+   font-size: 10px;
+   margin-bottom: 12px;
+ }
+ .story-stats {
+   display: grid;
+   grid-template-columns: repeat(4, 1fr);
+   gap: 22px;
+   margin: 18px 0 16px;
+ }
+ .story-stat-num {
+   font-family: var(--serif);
+   font-size: 22px;
+   font-weight: 500;
+   color: var(--ink);
+   line-height: 1;
+   letter-spacing: -0.01em;
+   margin-bottom: 4px;
+ }
+ .story-stat-cap {
+   font-size: 10px;
+   color: var(--ink-3);
+   line-height: 1.4;
+ }
+ .story-quote {
+   font-family: var(--serif);
+   font-style: italic;
+   font-size: 13px;
+   line-height: 1.5;
+   color: var(--ink-2);
+   border-left: 2px solid var(--accent);
+   padding-left: 12px;
+   margin: 0 0 8px;
+ }
+ .story-attrib {
+   font-family: var(--mono);
+   font-size: 9.5px;
+   color: var(--ink-3);
+   letter-spacing: 0.04em;
+   text-transform: uppercase;
+ }
+ .story-footer {
+   margin-top: 14px;
+   padding-top: 12px;
+   border-top: 1px solid var(--line);
+   font-family: var(--mono);
+   font-size: 9.5px;
+   color: var(--ink-3);
+   letter-spacing: 0.04em;
+ }
+ .story-footer b { color: var(--accent); font-weight: 600; }
+ @media (max-width: 760px) {
+   .story-stats { grid-template-columns: repeat(2, 1fr); }
+ }
+ .slide {
+ aspect-ratio: 16 / 9;
+ background: var(--paper-soft); border-color: var(--rule-2);
+ border: 1px solid var(--line-2);
+ border-radius: 8px;
+ padding: 18px 20px;
+ position: relative;
+ overflow: hidden;
+ transition: transform 220ms ease, box-shadow 220ms ease;
+ }
+ .slide:hover { transform: translateY(-2px); }
+ .slide.dark {
+ background: var(--ink);
+ }
+ .slide-eyebrow {
+ font-family: var(--mono);
+ font-size: 8.5px;
+ letter-spacing: 0.16em;
+ text-transform: uppercase;
+ color: var(--accent);
+ margin-bottom: 8px;
+ }
+ .slide-title {
+ font-family: var(--serif);
+ font-size: 16px;
+ line-height: 1.2;
+ color: var(--ink);
+ margin: 0 0 10px;
+ font-weight: 600;
+ }
+ .slide-stats {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 6px;
+ margin-top: 6px;
+ }
+ .slide-stat {
+ border-top: 1px solid var(--line);
+ padding-top: 6px;
+ }
+ .slide-stat-num {
+ font-family: var(--serif);
+ font-size: 16px;
+ color: var(--ink);
+ line-height: 1;
+ font-weight: 500;
+ }
+ .slide-stat-label {
+ font-size: 7.5px;
+ color: var(--muted);
+ text-transform: uppercase;
+ letter-spacing: 0.06em;
+ margin-top: 2px;
+ font-family: var(--mono);
+ }
+ .slide-body {
+ font-size: 9.5px;
+ line-height: 1.45;
+ color: var(--ink-soft);
+ margin: 0;
+ }
+ .slide-quote {
+ font-family: var(--serif);
+ font-style: italic;
+ font-size: 12.5px;
+ line-height: 1.35;
+ color: var(--ink);
+ border-left: 2px solid var(--accent);
+ padding-left: 10px;
+ margin: 8px 0 0;
+ }
+ .slide-attrib {
+ font-family: var(--mono);
+ font-size: 8px;
+ color: var(--muted);
+ margin-top: 6px;
+ text-transform: uppercase;
+ letter-spacing: 0.06em;
+ }
+ .slide-stake-row {
+ display: flex;
+ align-items: center;
+ gap: 6px;
+ padding: 4px 0;
+ border-top: 1px solid var(--line);
+ font-size: 9px;
+ }
+ .slide-stake-row:nth-of-type(1) { border-top: none; padding-top: 8px; }
+ .slide-stake-name {
+ color: var(--ink);
+ font-weight: 600;
+ }
+ .slide-stake-role {
+ color: var(--muted);
+ flex: 1;
+ }
+ .slide-stake-tag {
+ font-family: var(--mono);
+ font-size: 7.5px;
+ color: var(--accent);
+ letter-spacing: 0.06em;
+ text-transform: uppercase;
+ }
+
+ /* Slide variant — module/outcome mapping */
+ .slide-product-pill {
+ display: inline-block;
+ padding: 2px 7px;
+ background: var(--accent-d);
+ border: 1px solid var(--accent-m);
+ border-radius: 999px;
+ font-family: var(--mono);
+ font-size: 7.5px;
+ letter-spacing: 0.08em;
+ text-transform: uppercase;
+ color: var(--accent);
+ margin-bottom: 8px;
+ }
+ .slide-mapping-row {
+   border-top: 1px solid var(--line);
+   padding: 7px 0 5px;
+ }
+ .slide-mapping-row:first-of-type {
+   border-top: none;
+   padding-top: 8px;
+ }
+ .slide-mapping-cap {
+   display: block;
+   color: var(--ink);
+   font-weight: 600;
+   font-size: 10.5px;
+   line-height: 1.3;
+   margin-bottom: 2px;
+ }
+ .slide.dark .slide-mapping-cap { color: var(--paper); }
+ .slide-mapping-arrow {
+   color: var(--accent);
+   margin-right: 4px;
+   font-family: var(--mono);
+   font-weight: 700;
+ }
+ .slide-mapping-outcome {
+   display: inline;
+   color: var(--ink-2);
+   font-size: 9.5px;
+   line-height: 1.45;
+ }
+ .slide.dark .slide-mapping-outcome { color: var(--ink-4); }
+
+ .deck-caption {
+ margin-top: 22px;
+ font-family: var(--serif);
+ font-style: italic;
+ font-size: 17px;
+ line-height: 1.5;
+ color: var(--ink-soft);
+ max-width: 620px;
+ }
+ .deck-caption b {
+ color: var(--ink);
+ font-style: normal;
+ font-weight: 500;
+ }
+
+ /* ───────────── Bridge band ───────────── */
+ .bridge {
+ margin: 64px 0 0;
+ padding: 36px 40px;
+ background: var(--surface);
+ border: 1px solid var(--line);
+ border-radius: 10px;
+ }
+ .bridge-label {
+ font-family: var(--mono);
+ font-size: 11px;
+ letter-spacing: 0.14em;
+ text-transform: uppercase;
+ color: var(--accent);
+ margin: 0 0 18px;
+ }
+ .bridge-row {
+ display: grid;
+ grid-template-columns: repeat(3, 1fr);
+ gap: 32px;
+ }
+ .bridge-item {}
+ .bridge-h {
+ font-family: var(--serif);
+ font-size: 18px;
+ line-height: 1.3;
+ color: var(--ink);
+ margin: 0 0 6px;
+ font-weight: 500;
+ }
+ .bridge-d {
+ font-size: 13px;
+ line-height: 1.55;
+ color: var(--ink-soft);
+ margin: 0;
+ }
+ .bridge-source {
+ margin-top: 24px;
+ padding-top: 18px;
+ border-top: 1px solid var(--line);
+ font-family: var(--mono);
+ font-size: 10.5px;
+ color: var(--muted);
+ letter-spacing: 0.02em;
+ }
+ @media (max-width: 760px) {
+ .bridge { padding: 28px 24px; }
+ .bridge-row { grid-template-columns: 1fr; gap: 22px; }
+ }
+
+ /* ───────────── 5. WHAT CHANGES ───────────── */
+ .changes-grid {
+ display: grid;
+ grid-template-columns: repeat(3, 1fr);
+ gap: 32px;
+ }
+ .change {
+ padding-top: 8px;
+ border-top: 2px solid var(--accent);
+ }
+ .change-h {
+ font-family: var(--serif);
+ font-size: 21px;
+ line-height: 1.25;
+ margin: 16px 0 12px;
+ color: var(--ink);
+ font-weight: 500;
+ }
+ .change-d {
+ font-size: 14.5px;
+ line-height: 1.55;
+ color: var(--ink-soft);
+ margin: 0;
+ }
+
+ /* ───────────── Closer ───────────── */
+ .closer {
+ text-align: center;
+ padding: 64px 0 96px;
+ border-top: 1px solid var(--line);
+ }
+ .closer-q {
+ font-family: var(--serif);
+ font-size: 28px;
+ line-height: 1.3;
+ color: var(--ink);
+ margin: 0 0 24px;
+ font-weight: 500;
+ font-style: italic;
+ }
+ .closer-cta {
+   display: inline-block;
+   margin-top: 8px;
+   padding: 14px 28px;
+   background: var(--ink);
+   color: #f4f1ea;
+   border-radius: 8px;
+   text-decoration: none;
+   font-weight: 600;
+   font-size: 15px;
+   letter-spacing: -0.01em;
+   transition: background 140ms ease, transform 140ms ease;
+ }
+ .closer-cta:hover {
+   background: var(--blue);
+   transform: translateY(-1px);
+ }
+
+ /* Slide dark variant — emphasis card with inverted color treatment */
+ .slide.dark .slide-title,
+ .slide.dark .slide-quote { color: var(--paper); }
+ .slide.dark .slide-eyebrow { color: var(--blue-2); }
+ .slide.dark .slide-attrib { color: var(--ink-4); }
+ .slide.dark .slide-quote { border-left-color: var(--blue-2); }
+
+ /* ───────────── Responsive ───────────── */
+ @media (max-width: 760px) {
+ .frame-headline { font-size: 38px; }
+ .section-headline { font-size: 28px; }
+ .noticed-grid { grid-template-columns: 1fr; }
+ .deck-row { grid-template-columns: 1fr; }
+ .changes-grid { grid-template-columns: 1fr; gap: 28px; }
+ .section { padding: 64px 0; }
+ }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- FRAME — the setup before the walkthrough -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section frame-intro">
+ <div class="container">
+ <div class="frame-context">How it works · one deal, end to end</div>
+ <h1 class="frame-headline">
+ Marcus walked into a 45-minute discovery call with Maven Beauty. He didn't
+ know their new FP&A hire was already steering the deal to a competitor,
+ <em>Corveon</em>.
+ </h1>
+ <p class="frame-sub">
+ Here's the call. Here's what Mallin noticed. Here's what Marcus asked next, and the
+ deck he walked into the follow-up with. No slide of it was written by him.
+ </p>
+ <div class="frame-meta">
+ <span class="frame-meta-dot"></span>
+ <span>Meridian Cloud · enterprise ERP</span>
+ <span style="color: var(--muted)">·</span>
+ <span>~4 min from transcript to brief</span>
+ </div>
+ </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 1. THE CALL -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section">
+ <div class="container">
+ <p class="section-eyebrow">The call</p>
+ <h2 class="section-headline">
+ Six lines of transcript. The whole deal hinges on one of them.
+ </h2>
+ <p class="section-deck">
+ Pulled from a 45-minute discovery call. Real cadence — speakers cut each other off,
+ timeline questions get vague answers, the load-bearing fact arrives sideways.
+ </p>
+
+ <div class="transcript">
+ <div class="transcript-header">
+ <span><b>Maven Beauty</b> · Discovery call</span>
+ <span>45m · Microsoft Teams</span>
+ </div>
+
+ <p class="turn">
+ <span class="turn-ts">12:43</span><span class="turn-speaker">Cara</span>
+ <span class="turn-text">…yeah, so we're on QuickBooks plus Shopify Plus, and, um, the wholesale chargebacks from Target — Diana and I are spending like two days a week on this. Between us. It's bad. We've, you know, we've outgrown the stack.</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:08</span><span class="turn-speaker">Marcus</span>
+ <span class="turn-text">Two days a week — wow, okay. Is this — sorry, is this a project Heritage Brands IT is leading, or are you guys, like, running this independently from the parent?</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:14</span><span class="turn-speaker">Cara</span>
+ <span class="turn-text">We're running it. I mean —</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:15</span><span class="turn-speaker">Marcus</span>
+ <span class="turn-text">— sorry, yeah —</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:15</span><span class="turn-speaker">Cara</span>
+ <span class="turn-text">no, no, you're good. We're running it. We'll loop them in eventually, but right now it's me and Diana figuring out what's right for us specifically.</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:22</span><span class="turn-speaker">Marcus</span>
+ <span class="turn-text">Got it. And — sorry, just to make sure I understand — Heritage Brands IT, when you say "loop them in," that's after you've picked something? Or like —</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:27</span><span class="turn-speaker">Cara</span>
+ <span class="turn-text">After. Yeah. They'll have to bless it but they're not in the room right now. the Heritage CFO — he'll want to see whatever we land on.</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:35</span><span class="turn-speaker">Marcus</span>
+ <span class="turn-text">Okay. What's the timeline looking like?</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:37</span><span class="turn-speaker">Cara</span>
+ <span class="turn-text">We'd love to be on something by end of year. Has to be running before holiday 2026 — the Ulta launch is January and Diana's been killing herself on the SKU isolation piece, which is — actually let me come back to that. Where were we?</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:51</span><span class="turn-speaker">Marcus</span>
+ <span class="turn-text">Timeline.</span>
+ </p>
+ <p class="turn">
+ <span class="turn-ts">13:52</span><span class="turn-speaker">Cara</span>
+ <span class="turn-text">Right. End of year, ideally. The Heritage CFO's been hands-off so far. But he'll want to see it.</span>
+ </p>
+
+ <p class="transcript-fade">…38 more minutes. Pricing range stays vague; demo timing gets a "we'll get back to you."</p>
+ </div>
+ </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 2. WHAT MALLIN NOTICED -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section">
+ <div class="container">
+ <p class="section-eyebrow">What changed the read</p>
+ <h2 class="section-headline">
+ The real signal is <em>who Cara is</em> — not what she said.
+ </h2>
+ <p class="section-deck">
+ Mallin connects two facts Marcus can't hold in his head mid-call:
+ who Cara was 9 weeks ago, and what her end-of-2026 deadline really means.
+ </p>
+
+ <div class="noticed-grid">
+ <div class="noticed-card">
+ <p class="noticed-label">What she said</p>
+ <p class="noticed-statement">
+ “We're running it. <em>We'll loop them in eventually.</em>”
+ </p>
+ <p class="noticed-substrate">
+ Sounds reasonable. It's misleading.
+ </p>
+ </div>
+ <div class="noticed-card">
+ <p class="noticed-label">What Mallin already knew</p>
+ <p class="noticed-statement">
+ Cara joined Maven Beauty 9 weeks ago from
+ <em>Lumen Botanicals</em> — another Heritage Brands portfolio brand.
+ </p>
+ <p class="noticed-substrate">
+ She came from another Heritage brand — so she already knows how Heritage operates.
+ Her end-of-2026 deadline matches when Heritage plans to fold Maven Beauty in.
+ Heritage is already shaping this deal, even if its IT team isn't in the room yet.
+ </p>
+ </div>
+ </div>
+
+ <div class="decision">
+ <p class="decision-label">The one decision that matters most</p>
+ <p class="decision-text">
+ Find out who you're really up against — before you talk price.
+ Walk out with one answer: has Heritage IT formally engaged on system selection,
+ or is Maven Beauty running this independently? Everything else depends on
+ the answer.
+ </p>
+ </div>
+ </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 3. WHAT THE REP ASKS NEXT -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section">
+ <div class="container">
+ <p class="section-eyebrow">What the rep asks next</p>
+ <h2 class="section-headline">
+ Six questions. Each one resolves a specific unknown.
+ </h2>
+ <p class="section-deck">
+ Not a methodology checklist. The questions are written for THIS deal — Cara's
+ lateral move, the holiday timeline, the Heritage CFO mention. Each line ties to what
+ the answer actually tells the rep.
+ </p>
+
+ <ol class="questions-list">
+ <li class="question">
+ <span class="question-number">01</span>
+ <div class="question-body">
+ <p class="question-text">
+ “How are you scoping this with Heritage IT — joint decision, or running independently?”
+ </p>
+ <p class="question-why">
+ <b>Why →</b> The single fact that tells you whether you're closing a deal
+ or just doing their homework for them.
+ </p>
+ </div>
+ </li>
+ <li class="question">
+ <span class="question-number">02</span>
+ <div class="question-body">
+ <p class="question-text">
+ “What systems are you running today — Maven Beauty side AND any shared with the parent?”
+ </p>
+ <p class="question-why">
+ <b>Why →</b> Surfaces the silent Corveon competitor without naming it first.
+ </p>
+ </div>
+ </li>
+ <li class="question">
+ <span class="question-number">03</span>
+ <div class="question-body">
+ <p class="question-text">
+ “Where's the most painful manual work right now — month-end close, EDI compliance, or inventory visibility?”
+ </p>
+ <p class="question-why">
+ <b>Why →</b> Anchors discovery on pain. Forces a specific answer instead of “lots of things.”
+ </p>
+ </div>
+ </li>
+ <li class="question">
+ <span class="question-number">04</span>
+ <div class="question-body">
+ <p class="question-text">
+ “What does the integration roadmap with Heritage look like over the next 12 months?”
+ </p>
+ <p class="question-why">
+ <b>Why →</b> Tells you whether the FY26 integration mandate is hands-on or arms-length.
+ </p>
+ </div>
+ </li>
+ <li class="question">
+ <span class="question-number">05</span>
+ <div class="question-body">
+ <p class="question-text">
+ “Who else should be in the next conversation — Diana? Heritage IT? An implementation partner?”
+ </p>
+ <p class="question-why">
+ <b>Why →</b> The honest answer reveals who really decides — not who the org chart says.
+ </p>
+ </div>
+ </li>
+ <li class="question">
+ <span class="question-number">06</span>
+ <div class="question-body">
+ <p class="question-text">
+ “If we got to commercial terms, does sign-off stay inside Maven Beauty or escalate to Heritage?”
+ </p>
+ <p class="question-why">
+ <b>Why →</b> Surfaces the budget threshold. Above it, you're selling to two companies.
+ </p>
+ </div>
+ </li>
+ </ol>
+ </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 4. THE DECK -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section">
+ <div class="container">
+ <p class="section-eyebrow">The deck</p>
+ <h2 class="section-headline">
+ The next meeting starts from what was already said.
+ </h2>
+ <p class="section-deck">
+ Four slides from the deck Mallin built for Marcus's follow-up. Specific to the call,
+ specific to where the deal is. No slide of it was written from a template.
+ </p>
+
+ <div class="deck-row">
+ <!-- Slide 1: stats -->
+ <div class="slide">
+ <div class="slide-eyebrow">Context · May 2026</div>
+ <h3 class="slide-title">The deal in 30 seconds</h3>
+ <div class="slide-stats">
+ <div class="slide-stat">
+ <div class="slide-stat-num">$240M</div>
+ <div class="slide-stat-label">acquisition</div>
+ </div>
+ <div class="slide-stat">
+ <div class="slide-stat-num">~17 mo</div>
+ <div class="slide-stat-label">post-close</div>
+ </div>
+ <div class="slide-stat">
+ <div class="slide-stat-num">~$92M</div>
+ <div class="slide-stat-label">FY24 sales</div>
+ </div>
+ <div class="slide-stat">
+ <div class="slide-stat-num">Corveon</div>
+ <div class="slide-stat-label">the parent's ERP</div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Slide 2: decision -->
+ <div class="slide dark">
+ <div class="slide-eyebrow">01 · Primary decision focus</div>
+ <h3 class="slide-title" style="margin-bottom: 4px;">Is this deal real — or already routed to Corveon?</h3>
+ <p class="slide-quote">
+ Walk out with one answer: has Heritage IT formally engaged on system selection?
+ </p>
+ <div class="slide-attrib">Everything else is downstream</div>
+ </div>
+
+ <!-- Slide 3: stakeholders -->
+ <div class="slide">
+ <div class="slide-eyebrow">02 · Stakeholders</div>
+ <h3 class="slide-title">Who's in the room</h3>
+ <div class="slide-stake-row">
+ <span class="slide-stake-name">The founder</span>
+ <span class="slide-stake-role">CEO, retained post-acq</span>
+ <span class="slide-stake-tag">EB</span>
+ </div>
+ <div class="slide-stake-row">
+ <span class="slide-stake-name">Cara</span>
+ <span class="slide-stake-role">Sr. Dir, FP&amp;A</span>
+ <span class="slide-stake-tag">Operator</span>
+ </div>
+ <div class="slide-stake-row">
+ <span class="slide-stake-name">Diana</span>
+ <span class="slide-stake-role">SVP Operations</span>
+ <span class="slide-stake-tag">Operator</span>
+ </div>
+ </div>
+
+ <!-- Slide 4: Meridian functional mapping -->
+ <div class="slide dark">
+ <div class="slide-product-pill">Meridian ERP · Cloud</div>
+ <h3 class="slide-title">What changes for Maven Beauty</h3>
+ <div class="slide-mapping-row">
+ <span class="slide-mapping-cap">AR + Disputes</span>
+ <span class="slide-mapping-arrow">→</span><span class="slide-mapping-outcome">Automates the 2-day/wk Target chargeback recon</span>
+ </div>
+ <div class="slide-mapping-row">
+ <span class="slide-mapping-cap">EDI / vendor compliance</span>
+ <span class="slide-mapping-arrow">→</span><span class="slide-mapping-outcome">Target + Ulta + Walmart pre-configured for retail handshake</span>
+ </div>
+ <div class="slide-mapping-row">
+ <span class="slide-mapping-cap">Financial consolidation</span>
+ <span class="slide-mapping-arrow">→</span><span class="slide-mapping-outcome">Real-time parent visibility, autonomy preserved</span>
+ </div>
+ <div class="slide-mapping-row">
+ <span class="slide-mapping-cap">Multi-channel inventory</span>
+ <span class="slide-mapping-arrow">→</span><span class="slide-mapping-outcome">Ulta-exclusive SKUs isolated from mass-market replen</span>
+ </div>
+ </div>
+
+ <!-- Slide 5: Customer story · matched to the deal (spans both columns) -->
+ <div class="slide wide">
+ <div class="slide-eyebrow">03 · Customer story · matched to this deal</div>
+ <h3 class="slide-title">Pine + Honey Skincare — same shape, live in 5 months.</h3>
+ <div class="story-stats">
+ <div>
+ <div class="story-stat-num">$45M</div>
+ <div class="story-stat-cap">ARR at acquisition · same scale as Maven Beauty</div>
+ </div>
+ <div>
+ <div class="story-stat-num">5 mo</div>
+ <div class="story-stat-cap">post-close to go-live on Meridian</div>
+ </div>
+ <div>
+ <div class="story-stat-num">2 days/wk</div>
+ <div class="story-stat-cap">chargeback recon eliminated in Q1</div>
+ </div>
+ <div>
+ <div class="story-stat-num">3 channels</div>
+ <div class="story-stat-cap">DTC + Sephora-exclusive + Walmart on one ledger by Q3</div>
+ </div>
+ </div>
+ <p class="story-quote">
+ “Going from QuickBooks to Meridian while we were still closing the parent transaction felt impossible. Six months in we were running cleaner than we did at $20M.”
+ </p>
+ <p class="story-attrib">— CFO, Pine + Honey Skincare · acquired by Sundial Brands Group, 2023</p>
+ <p class="story-footer">
+ <b>Why this story:</b> matched on deal shape — boutique beauty acquired into a CPG conglomerate, retail-chargeback pain, multi-channel inventory split, founder retained as CEO.
+ </p>
+ </div>
+ </div>
+
+ <p class="deck-caption">
+ <b>“I didn't write a slide of this.”</b> — Marcus, looking at the deck four minutes
+ after his discovery call ended. The product mapping — which Meridian modules
+ address which Maven Beauty pain — comes from what Mallin already knows
+ about the deal. The rep doesn't research it again.
+ </p>
+ </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 4b. THE MOVE, EXECUTED — governed action -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section">
+ <div class="container">
+  <p class="section-eyebrow">The move, executed</p>
+  <h2 class="section-headline">
+   It doesn't just name the move. It makes it — with your hand on the approval.
+  </h2>
+  <p class="section-deck">
+   The read told Marcus what matters. Then Mallin does the work: it drafts the CRM
+   update and the deck to the room, and executes each only when he approves — from
+   his own systems. Nothing touches a prospect or the record on autopilot.
+  </p>
+
+  <div class="deck-row">
+   <div style="background:var(--paper-soft);border:1px solid var(--rule-2);border-radius:8px;padding:20px 22px;">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">Mallin → Salesforce</div>
+    <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:12px;">Update the record from the call</div>
+    <div style="font-size:13px;color:var(--ink-soft);line-height:1.6;">
+     <div style="margin-bottom:8px;"><span style="color:var(--ink-3);">Next step</span> &rarr; <span style="background:var(--blue-tint);color:var(--blue);padding:1px 6px;border-radius:4px;">Send Q3 comps, book legal review</span></div>
+     <div style="margin-bottom:8px;"><span style="color:var(--ink-3);">Champion</span> &rarr; <span style="background:var(--blue-tint);color:var(--blue);padding:1px 6px;border-radius:4px;">Cara (FP&amp;A) &mdash; confirmed</span></div>
+     <div><span style="color:var(--ink-3);">Call summary</span> &rarr; <span style="background:var(--blue-tint);color:var(--blue);padding:1px 6px;border-radius:4px;">auto-drafted</span></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+     <span style="background:var(--ink);color:var(--paper);border-radius:7px;padding:8px 14px;font-size:12.5px;font-weight:600;">Approve &amp; write</span>
+     <span style="font-family:var(--mono);font-size:11px;color:var(--ink-4);">never Stage &middot; Amount &middot; Close</span>
+    </div>
+   </div>
+
+   <div style="background:var(--paper-soft);border:1px solid var(--rule-2);border-radius:8px;padding:20px 22px;">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">Send to the room</div>
+    <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:12px;">The deck, to each attendee</div>
+    <div style="font-size:13px;color:var(--ink-soft);line-height:1.6;">
+     To: Cara &middot; Diana &middot; the founder<br>
+     <span style="font-style:italic;color:var(--ink-3);">&ldquo;Great walking through the renewal &mdash; here's the deck + the comps Cara asked for&hellip;&rdquo;</span>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+     <span style="background:var(--ink);color:var(--paper);border-radius:7px;padding:8px 14px;font-size:12.5px;font-weight:600;">Approve &amp; send</span>
+     <span style="font-family:var(--mono);font-size:11px;color:var(--ink-4);">from your Gmail</span>
+    </div>
+   </div>
+  </div>
+
+  <p class="deck-caption">One approval queue. One audit trail. Nothing on autopilot.</p>
+ </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 5. WHAT CHANGES OPERATIONALLY -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section">
+ <div class="container">
+ <p class="section-eyebrow">What changes operationally</p>
+ <h2 class="section-headline">
+ Three things the rep's week stops needing.
+ </h2>
+ <p class="section-deck">
+ Not “features.” Not “workflows.” What the rep's calendar actually loses.
+ </p>
+
+ <div class="changes-grid">
+ <div class="change">
+ <h3 class="change-h">The brief updates itself.</h3>
+ <p class="change-d">
+ When a call lands, Mallin re-reads the deal and re-renders the brief.
+ The next prep is already done before you sit down for it.
+ </p>
+ </div>
+ <div class="change">
+ <h3 class="change-h">Coaching that knows your deal.</h3>
+ <p class="change-d">
+ Not a methodology playbook. The questions, the warnings, the framing — all
+ reference your account by name. Generic MEDDPICC becomes specific decision math.
+ </p>
+ </div>
+ <div class="change">
+ <h3 class="change-h">Decks start from what was actually said.</h3>
+ <p class="change-d">
+ Stop rebuilding slides every Monday. The follow-up deck is generated from
+ what Mallin already knows about this deal — recent events, stakeholders,
+ the decision frame, the questions you got real answers to.
+ </p>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- BRIDGE BAND — small CRO-economics tap (subtle, not its own section) -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section" style="padding-top: 48px; padding-bottom: 48px;">
+ <div class="container">
+ <div class="bridge">
+ <p class="bridge-label">What this gives back</p>
+ <div class="bridge-row">
+ <div class="bridge-item">
+ <p class="bridge-h">Fewer hours rebuilding prep.</p>
+ <p class="bridge-d">45 minutes scanning a transcript becomes 4 minutes reading a brief that already named the load-bearing fact.</p>
+ </div>
+ <div class="bridge-item">
+ <p class="bridge-h">Fewer repeated deck edits.</p>
+ <p class="bridge-d">The next deck starts from what was actually said on the last call, not from a generic template.</p>
+ </div>
+ <div class="bridge-item">
+ <p class="bridge-h">Fewer forecast reviews on stale reads.</p>
+ <p class="bridge-d">Pipeline reads stay current between meetings. Reviews triage what changed, not what happened weeks ago.</p>
+ </div>
+ </div>
+ <p class="bridge-source">Directionally consistent with sales-productivity research from Salesforce State of Sales, McKinsey, Gartner CSO, and Forrester field studies on rep time allocation.</p>
+ </div>
+ </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- CLOSER -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="section closer">
+ <div class="container">
+ <p class="closer-q">
+ What does your Tuesday morning look like<br/>
+ when every brief is already this specific?
+ </p>
+ <a class="closer-cta" href="https://mallin.io/contact">Start a pilot →</a>
+ </div>
+</section>
+
+</body>
+</html>

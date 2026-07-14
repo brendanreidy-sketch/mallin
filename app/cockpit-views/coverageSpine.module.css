@@ -1,0 +1,59 @@
+.spine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(26, 34, 48, 0.08);
+  background: rgba(26, 34, 48, 0.02);
+  cursor: pointer;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ck-ink-2);
+  transition: border-color 0.15s, background 0.15s;
+}
+.chip:hover {
+  border-color: rgba(74, 113, 134, 0.5);
+}
+.active {
+  border-color: var(--ck-blue);
+  background: rgba(74, 113, 134, 0.08);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.present .dot {
+  background: var(--ck-good);
+}
+.empty .dot {
+  background: var(--ck-rule-2);
+}
+.gap .dot {
+  background: var(--ck-crit);
+}
+
+.label {
+  letter-spacing: 0.02em;
+}
+.empty .label {
+  color: var(--ck-ink-3);
+}
+
+.count {
+  font-size: 10px;
+  color: var(--ck-ink-3);
+  background: rgba(26, 34, 48, 0.05);
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 15px;
+}

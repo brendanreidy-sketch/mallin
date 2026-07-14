@@ -1,0 +1,150 @@
+.card {
+  border: 0.5px solid rgba(26, 34, 48, 0.08);
+  border-radius: 10px;
+  background: rgba(26, 34, 48, 0.015);
+  padding: 14px 16px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ck-ink-3);
+}
+
+.outcome {
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ck-good);
+  white-space: nowrap;
+}
+
+.body {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lead {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ck-ink);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition: color 0.15s;
+}
+.name:hover {
+  color: var(--ck-blue);
+}
+
+.open {
+  color: var(--ck-ink-3);
+  transition: color 0.15s;
+}
+.name:hover .open {
+  color: var(--ck-blue);
+}
+
+.reason {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reasonLabel {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ck-ink-3);
+  flex: 0 0 auto;
+}
+
+.reasonText {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ck-ink-2);
+}
+
+.competitor {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(74, 113, 134, 0.35);
+  background: rgba(74, 113, 134, 0.06);
+  font-size: 10px;
+  letter-spacing: 0.01em;
+  color: var(--ck-blue);
+}
+
+.competitorDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ck-blue);
+  flex: 0 0 auto;
+}
+
+.proof {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ck-ink-2);
+}
+
+.modules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modulesLabel {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ck-ink-3);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.chip {
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 0.5px solid rgba(26, 34, 48, 0.07);
+  background: rgba(26, 34, 48, 0.03);
+  font-size: 10px;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.01em;
+}
+
+.foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(26, 34, 48, 0.05);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.01em;
+}

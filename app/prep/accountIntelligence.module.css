@@ -1,0 +1,824 @@
+/* AccountIntelligence — pre-call brief surface in the cockpit.
+   Monochrome with one subtle accent. Evidence + source as primitives. */
+
+.intel {
+  /* Density-scaled vertical rhythm — the customizer's density choice
+     visibly tightens / opens the brief's whitespace. Horizontal values
+     stay fixed so column width doesn't shift. */
+  margin: calc(16px * var(--density-scale, 1)) 36px
+    calc(8px * var(--density-scale, 1));
+  padding: calc(24px * var(--density-scale, 1)) 26px
+    calc(22px * var(--density-scale, 1));
+  /* Match the cockpit card treatment: white surface, 12px radius, the shell
+     shadow + a 1px rule border — so the pre-call card and the post-call
+     cockpit cards read as the same system. */
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-rule);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px var(--ck-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: calc(22px * var(--density-scale, 1));
+  position: relative;
+}
+.intel::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  background: var(--ck-blue);
+  border-radius: 0 2px 2px 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.eyebrow {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ck-blue);
+}
+.generatedAt {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ck-ink-4);
+  letter-spacing: 0.06em;
+}
+
+/* Account one-liner */
+.oneLine {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.accountName {
+  /* Match the cockpit deal title (.h1) exactly so pre-call and post-call
+     read as one product: 28px / 600 / -0.02em / line-height 1.2. */
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--ck-ink);
+}
+.oneLineText {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+  max-width: 760px;
+}
+
+/* Primary Decision Focus — the hero block. Single most load-bearing
+   piece of cognitive gravity on the page. Visually distinct from the
+   rest: slate-blue tint, prominent typography, breathing room. The
+   block answers "if I have 8 seconds before this call starts, what
+   should I see?" Everything else on the brief is supporting evidence. */
+.primaryFocus {
+  margin-top: 6px;
+  padding: calc(18px * var(--density-scale, 1)) 22px
+    calc(20px * var(--density-scale, 1));
+  background: hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.06);
+  border: 0.5px solid hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.22);
+  border-left: 3px solid hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.primaryFocusLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), calc(var(--accent-l, 67%) + 5%));
+}
+.primaryFocusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  display: inline-block;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.5);
+  animation: primaryFocusPulse 2.6s ease-in-out infinite;
+}
+@keyframes primaryFocusPulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.55); }
+  50% { box-shadow: 0 0 0 7px hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0); }
+}
+.primaryFocusText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ck-ink);
+  max-width: 800px;
+  font-weight: 450;
+}
+
+/* Generic block */
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--ck-rule);
+}
+.blockLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ck-ink-4);
+}
+.smallLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ck-ink-4);
+  margin-right: 6px;
+}
+
+/* Events */
+.eventsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(12px * var(--density-scale, 1));
+}
+.event {
+  padding-left: 12px;
+  border-left: 1px solid var(--ck-rule-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.eventHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.eventDate {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ck-ink-3);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+.eventHeadline {
+  font-size: 14px;
+  color: var(--ck-ink);
+  font-weight: 500;
+  line-height: 1.4;
+}
+/* "New" badge — surfaced by the daily refresh, visible for 24h. Quiet
+ * accent so it reads as informational, not alarming. Theme-aware. */
+.newBadge {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  background: hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.1);
+  border: 0.5px solid hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.3);
+  padding: 1px 6px;
+  border-radius: 3px;
+  align-self: center;
+  flex-shrink: 0;
+}
+.eventRelevance {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+  max-width: 720px;
+}
+
+/* Priorities */
+.priorityList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(8px * var(--density-scale, 1));
+}
+.priority {
+  padding-left: 12px;
+  position: relative;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+  max-width: 720px;
+}
+.priority::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--ck-rule-2);
+}
+
+/* Stakeholders */
+.stakeholder {
+  display: flex;
+  flex-direction: column;
+  gap: calc(8px * var(--density-scale, 1));
+  padding: calc(12px * var(--density-scale, 1)) 0
+    calc(8px * var(--density-scale, 1));
+  border-top: 0.5px dashed var(--ck-rule);
+}
+.stakeholder:first-of-type {
+  border-top: none;
+  padding-top: 4px;
+}
+.stakeholderHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.stakeholderName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ck-ink);
+}
+.stakeholderTitle {
+  font-size: 12.5px;
+  color: var(--ck-ink-3);
+}
+.roleBadge {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+}
+.roleBadgeMed {
+  background: var(--ck-warn-tint);
+  color: var(--ck-warn);
+}
+.roleBadgeLow {
+  background: var(--ck-crit-tint);
+  color: var(--ck-crit);
+}
+.stakeholderBg {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+}
+.stakeholderRationale {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+  padding-left: 4px;
+}
+.watchFor {
+  margin-top: 4px;
+}
+.watchList {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.watchList li {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-3);
+  padding-left: 12px;
+  position: relative;
+}
+.watchList li::before {
+  content: "·";
+  position: absolute;
+  left: 0;
+  color: var(--ck-ink-4);
+  font-weight: 700;
+}
+/* Stakeholder name as a hyperlink (when linkedin_url is present).
+ * Theme-aware: reads the live --accent-h/-s/-l variables so changing
+ * the accent color updates this immediately. Always-visible underline
+ * + accent color make clickability unmistakable even before hover. */
+.stakeholderNameLink {
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), calc(var(--accent-l, 67%) + 5%));
+  text-decoration: underline;
+  text-decoration-color: hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.45);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 1px 2px;
+  margin: -1px -2px;
+  border-radius: 3px;
+  transition: color 0.15s ease, background 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+.stakeholderNameLink:hover {
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), calc(var(--accent-l, 67%) + 12%));
+  background: hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.08);
+  text-decoration-color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+}
+.stakeholderNameLink:hover .linkIconInline {
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  transform: translate(1px, -1px);
+}
+.linkIconInline {
+  font-size: 11px;
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  font-weight: 400;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+/* Pre-call brief block (deal-specific) */
+.briefBlock {
+  padding: 20px 0 4px;
+  border-top: 0.5px solid var(--ck-rule-2);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.briefLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ck-warn);
+}
+
+.briefRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.briefRowLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ck-ink-4);
+}
+.briefRowText {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ck-ink);
+  font-weight: 500;
+  max-width: 740px;
+}
+
+/* Questions */
+.questionList {
+  list-style: none;
+  counter-reset: q;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.questionItem {
+  counter-increment: q;
+  padding-left: 28px;
+  position: relative;
+}
+.questionItem::before {
+  content: counter(q, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ck-ink-4);
+  letter-spacing: 0.04em;
+}
+.questionText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ck-ink);
+  font-weight: 500;
+}
+.questionRationale {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+}
+
+/* Objections */
+.objectionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.objection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.objectionText {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-2);
+  font-style: italic;
+}
+.objectionMark {
+  color: var(--ck-ink-4);
+  font-weight: 700;
+  margin: 0 1px;
+}
+.objectionResponse {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+  padding-left: 4px;
+}
+
+/* Landmines */
+.landmineList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.landmineList li {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+  padding-left: 14px;
+  position: relative;
+}
+.landmineList li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--ck-ink-4);
+}
+
+/* Gaps disclosure */
+.gaps {
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 0.5px dashed var(--ck-rule);
+}
+.gapsSummary {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ck-ink-4);
+  padding: 4px 0;
+}
+.gapsSummary::-webkit-details-marker { display: none; }
+.gapsSummary:hover { color: var(--ck-ink-2); }
+.gapsList {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gapsList li {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+  padding-left: 14px;
+  position: relative;
+}
+.gapsList li::before {
+  content: "·";
+  position: absolute;
+  left: 0;
+  color: var(--ck-ink-4);
+  font-weight: 700;
+}
+.gapsNote {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ck-ink-4);
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .intel {
+    margin: 12px 18px;
+    padding: 18px 18px 14px;
+  }
+  .accountName { font-size: 18px; }
+  .briefRowText { font-size: 13.5px; }
+}
+
+/* ── Stakeholder profile: clickable name + in-app drawer ─────────────── */
+
+/* The name renders as a button (opens the in-app card) — styled to match
+ * the old LinkedIn link so clickability stays unmistakable, but the arrow
+ * points inward (→ a card) rather than out (↗ to LinkedIn). */
+.stakeholderNameBtn {
+  appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), calc(var(--accent-l, 67%) + 5%));
+  text-decoration: underline;
+  text-decoration-color: hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.45);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+  border-radius: 3px;
+  transition: color 0.15s ease, background 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+.stakeholderNameBtn:hover {
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), calc(var(--accent-l, 67%) + 12%));
+  background: hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.08);
+  text-decoration-color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+}
+.stakeholderNameBtn:hover .linkIconInline {
+  transform: translateX(2px);
+}
+
+/* Overlay + right-anchored drawer (mirrors the theme-customizer modal). */
+.shOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  animation: shFade 0.16s ease;
+}
+@keyframes shFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.shDrawer {
+  position: relative;
+  width: min(440px, 100vw);
+  height: 100%;
+  overflow-y: auto;
+  background: var(--ck-surface);
+  border-left: 0.5px solid var(--ck-rule-2);
+  box-shadow: -16px 0 48px var(--ck-shadow);
+  padding: 26px 26px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: shSlide 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes shSlide {
+  from { transform: translateX(24px); opacity: 0.4; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.shClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  appearance: none;
+  border: 0.5px solid var(--ck-rule);
+  background: var(--ck-surface-2);
+  color: var(--ck-ink-3);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.shClose:hover {
+  color: var(--ck-ink);
+  background: var(--ck-surface-3);
+}
+
+.shCardHead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 30px;
+  padding-bottom: 4px;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.shCardName {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ck-ink);
+  letter-spacing: -0.01em;
+}
+.shCardTitle {
+  font-size: 13px;
+  color: var(--ck-ink-3);
+}
+.shCardHead .roleBadge {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.shSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.shSectionTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.shResearchMeta {
+  font-size: 11px;
+  color: var(--ck-ink-4);
+}
+.shSummary {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ck-ink-2);
+}
+.shBody {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+}
+.shHighlights,
+.shList {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.shHighlights li,
+.shList li {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-2);
+  padding-left: 13px;
+  position: relative;
+}
+.shHighlights li::before,
+.shList li::before {
+  content: "–";
+  position: absolute;
+  left: 0;
+  color: var(--ck-ink-4);
+}
+
+.shSources {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 2px;
+}
+.shSourceChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.shSourceChip {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ck-ink-3);
+  background: var(--ck-surface-2);
+  border: 0.5px solid var(--ck-rule);
+  border-radius: 4px;
+  padding: 2px 7px;
+  text-decoration: none;
+}
+a.shSourceChip:hover {
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  border-color: hsla(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%), 0.5);
+}
+
+.shEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 4px 0;
+}
+.shEmptyText {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ck-ink-3);
+}
+.shResearchBtn {
+  appearance: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ck-surface);
+  background: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  border: none;
+  border-radius: 7px;
+  padding: 8px 14px;
+  transition: filter 0.15s ease;
+}
+.shResearchBtn:hover {
+  filter: brightness(1.06);
+}
+.shResearchBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.shTextBtn {
+  appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.shTextBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.shError {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--ck-crit);
+}
+
+.shFooter {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 0.5px solid var(--ck-rule);
+}
+.shFooterLink {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: hsl(var(--accent-h, 204), var(--accent-s, 40%), var(--accent-l, 67%));
+  text-decoration: none;
+}
+.shFooterLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  .shDrawer {
+    width: 100vw;
+    border-left: none;
+  }
+}

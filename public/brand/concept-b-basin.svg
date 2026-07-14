@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">
+  <title>Mallin — Concept B: The Basin</title>
+  <desc>A single contained vessel — the depression of the mallín — with the current alive inside it. The icon IS the wetland viewed in cross-section.</desc>
+
+  <!-- The basin (depression in the landscape) -->
+  <path d="M 8 22 Q 8 44, 32 44 Q 56 44, 56 22"
+        fill="#faf7ef"
+        stroke="#1a2230"
+        stroke-width="3"
+        stroke-linejoin="round" />
+
+  <!-- Water flow inside the basin: one prominent wave -->
+  <path d="M 14 36 Q 21 32, 28 36 T 42 36 T 50 36"
+        fill="none"
+        stroke="#4a7186"
+        stroke-width="2.5"
+        stroke-linecap="round" />
+
+  <!-- Subtle deeper line beneath water -->
+  <path d="M 16 41 Q 24 38, 32 41 T 48 41"
+        fill="none"
+        stroke="#4a7186"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        opacity="0.5" />
+</svg>

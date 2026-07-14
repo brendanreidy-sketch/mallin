@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin — the operating layer for revenue execution</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:    #f4f1ea;
+    --paper-2:  #ebe6d6;
+    --paper-3:  #e3dccc;
+    --paper-soft: #faf7f0;
+    --rule:     #e3dccc;
+    --rule-2:   #d6cfbe;
+    --ink:      #1a2230;
+    --ink-2:    #3b4658;
+    --ink-3:    #6b7689;
+    --ink-4:    #9aa3b3;
+    --blue:     #4a7186;
+    --blue-2:   #88b8d0;
+    --blue-tint:#e7eff4;
+    --crit:     #c25a4a;
+    --warn:     #c69150;
+    --good:     #5a8f7a;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); }
+  body {
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--ink); color: var(--paper); }
+
+  /* ── Nav (matches current site) ────────────────────────── */
+  .navWrap {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(244,241,234,0.82);
+    backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav {
+    max-width: 1280px; margin: 0 auto;
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mark {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 18px; font-weight: 700; letter-spacing: -0.015em;
+  }
+  .nav-right { display: flex; align-items: center; gap: 22px; }
+  .nav-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .nav-status .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--blue-2);
+    box-shadow: 0 0 0 0 rgba(136,184,208,0.55);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(136,184,208,0.55); }
+    50% { box-shadow: 0 0 0 6px rgba(136,184,208,0); }
+  }
+  .nav-link { font-size: 14px; color: var(--ink); border-bottom: 1px solid transparent; }
+  .nav-link:hover { border-bottom-color: var(--ink); }
+  .nav-cta {
+    font-size: 14px; font-weight: 600;
+    padding: 8px 14px;
+    background: rgba(26,34,48,0.04);
+    border: 1px solid var(--rule-2);
+    border-radius: 6px;
+    transition: all 120ms ease;
+  }
+  .nav-cta:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* ── Hero ─────────────────────────────────────────────── */
+  .hero {
+    max-width: 1280px; margin: 0 auto;
+    padding: 64px 32px 0;
+  }
+  .hero-eyebrow {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--blue); margin: 0 0 24px;
+  }
+  .hero-h1 {
+    font-size: clamp(44px, 6vw, 80px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+    color: var(--ink);
+    margin: 0 0 28px;
+    max-width: 1080px;
+  }
+  .hero-h1 em { font-style: normal; color: var(--blue); }
+
+  .hero-sub {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 660px;
+    margin: 0 0 36px;
+  }
+  .hero-sub strong { color: var(--ink); font-weight: 600; }
+
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .cta-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 22px;
+    background: var(--ink); color: var(--paper);
+    font-size: 14px; font-weight: 600;
+    border-radius: 8px;
+    transition: all 140ms ease;
+  }
+  .cta-primary:hover { background: var(--blue); transform: translateY(-1px); }
+  .cta-primary svg { width: 12px; height: 12px; }
+  .cta-secondary {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 13px 18px;
+    color: var(--ink); font-size: 14px; font-weight: 500;
+    border: 1px solid var(--rule-2);
+    border-radius: 8px;
+    background: rgba(26,34,48,0.02);
+    transition: all 140ms ease;
+  }
+  .cta-secondary:hover { background: var(--blue-tint); border-color: var(--blue); }
+
+  /* ── Live readout (the "system is running" proof) ─────── */
+  .readout {
+    max-width: 1280px; margin: 64px auto 0;
+    padding: 0 32px 56px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .readout-card {
+    border: 1px solid var(--rule-2);
+    border-radius: 14px;
+    background: var(--paper-soft);
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 10px 24px -12px rgba(26,34,48,0.12);
+  }
+  .readout-head {
+    padding: 14px 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, var(--paper-2), var(--paper-soft));
+  }
+  .readout-title {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 13px; font-weight: 600;
+    color: var(--ink);
+  }
+  .readout-title .live {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--blue);
+  }
+  .readout-title .live .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--blue-2);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  .readout-meta {
+    font-size: 12px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .readout-meta b { color: var(--ink-2); font-weight: 600; }
+  .readout-meta .sep { color: var(--ink-4); margin: 0 8px; }
+
+  table.readout-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.readout-table thead th {
+    text-align: left;
+    padding: 10px 22px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-3);
+  }
+  table.readout-table thead th.r { text-align: right; }
+  table.readout-table tbody td {
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  table.readout-table tbody tr:last-child td { border-bottom: none; }
+  table.readout-table tbody tr:hover { background: rgba(74,113,134,0.04); }
+  .sev-tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .sev-tag .d { width: 6px; height: 6px; border-radius: 50%; }
+  .sev-tag.high {
+    background: rgba(194,90,74,0.1);
+    color: var(--crit);
+  }
+  .sev-tag.high .d { background: var(--crit); }
+  .sev-tag.warn {
+    background: rgba(198,145,80,0.12);
+    color: var(--warn);
+  }
+  .sev-tag.warn .d { background: var(--warn); }
+  .sev-tag.info {
+    background: var(--blue-tint);
+    color: var(--blue);
+  }
+  .sev-tag.info .d { background: var(--blue); }
+
+  .deal-name {
+    font-size: 13.5px; font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .deal-meta {
+    font-size: 11.5px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .finding {
+    font-size: 13px; color: var(--ink-2); line-height: 1.55;
+    max-width: 460px;
+  }
+  .finding .ev {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px; color: var(--ink-3);
+  }
+  .finding .ev b { color: var(--ink-2); font-weight: 600; }
+  .action {
+    font-size: 11.5px; color: var(--ink-3);
+    line-height: 1.55;
+  }
+  .action b { color: var(--blue); font-weight: 600; }
+
+  /* ── Ticker — restrained, single-line strip ──────────── */
+  .ticker {
+    background: var(--ink);
+    color: var(--paper);
+    overflow: hidden;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
+  .ticker-track {
+    display: flex; gap: 56px;
+    padding: 12px 0;
+    white-space: nowrap;
+    animation: scroll 60s linear infinite;
+    font-size: 12px;
+    color: rgba(244,241,234,0.7);
+    letter-spacing: 0.04em;
+  }
+  .ticker-track b { color: var(--paper); font-weight: 600; }
+  .ticker-track em { color: var(--blue-2); font-style: normal; }
+  @keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ── Triad: how it works ─────────────────────────────── */
+  .triad-wrap {
+    max-width: 1280px; margin: 0 auto;
+    padding: 96px 32px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 64px;
+  }
+  .triad-eyebrow {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--blue);
+  }
+  .triad-eyebrow-num {
+    color: var(--ink-4); margin-right: 8px;
+  }
+  .triad-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .tri {
+    padding: 32px 28px 32px 0;
+    border-right: 1px solid var(--rule);
+  }
+  .tri:last-child { border-right: none; padding-right: 0; }
+  .tri:not(:first-child) { padding-left: 28px; }
+  .tri-num {
+    font-size: 12px; color: var(--ink-3);
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .tri h3 {
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.015em; line-height: 1.2;
+    color: var(--ink);
+    margin: 0 0 12px;
+  }
+  .tri p {
+    font-size: 14px; line-height: 1.6;
+    color: var(--ink-2);
+    margin: 0;
+  }
+  .tri p strong { color: var(--ink); font-weight: 600; }
+
+  /* ── Validation strip ───────────────────────────────── */
+  .validation {
+    max-width: 1280px; margin: 0 auto 96px;
+    padding: 0 32px;
+  }
+  .val-eyebrow {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--blue);
+    margin-bottom: 16px;
+  }
+  .val-eyebrow-num { color: var(--ink-4); margin-right: 8px; }
+  .val-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+  }
+  .val-cell {
+    padding: 28px 24px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .val-num {
+    font-size: 56px; font-weight: 700;
+    letter-spacing: -0.04em; line-height: 0.95;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 10px;
+  }
+  .val-lab {
+    font-size: 13px; color: var(--ink-2); line-height: 1.5;
+  }
+  .val-lab b { color: var(--ink); font-weight: 600; }
+
+  /* ── Final ───────────────────────────────────────────── */
+  .final {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 96px 32px;
+  }
+  .final-inner {
+    max-width: 880px; margin: 0 auto;
+  }
+  .final h2 {
+    font-size: clamp(36px, 4.6vw, 56px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin: 0 0 24px;
+  }
+  .final p {
+    font-size: 17px;
+    line-height: 1.65;
+    color: rgba(244,241,234,0.78);
+    max-width: 640px;
+    margin: 0 0 32px;
+  }
+  .final .cta-row a {
+    padding: 13px 22px;
+    font-size: 14px;
+  }
+  .final-primary {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .final-secondary {
+    background: transparent;
+    color: var(--paper);
+    border: 1px solid rgba(244,241,234,0.3);
+    border-radius: 8px;
+    font-weight: 500;
+  }
+  .final-secondary:hover { background: rgba(244,241,234,0.08); }
+
+  footer {
+    max-width: 1280px; margin: 0 auto;
+    padding: 24px 32px 56px;
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--ink-3);
+  }
+  footer a { color: var(--ink-2); border-bottom: 1px solid transparent; }
+  footer a:hover { border-bottom-color: var(--ink-2); }
+
+  @media (max-width: 900px) {
+    .nav-status { display: none; }
+    .hero { padding: 40px 24px 0; }
+    .readout { padding: 0 24px 40px; }
+    table.readout-table thead th:nth-child(4),
+    table.readout-table tbody td:nth-child(4),
+    table.readout-table thead th:nth-child(5),
+    table.readout-table tbody td:nth-child(5) { display: none; }
+    .triad-wrap { grid-template-columns: 1fr; gap: 24px; padding: 56px 24px; }
+    .triad-grid { grid-template-columns: 1fr; }
+    .tri { border-right: none; border-bottom: 1px solid var(--rule); padding: 24px 0; }
+    .tri:last-child { border-bottom: none; }
+    .tri:not(:first-child) { padding-left: 0; }
+    .validation { padding: 0 24px; margin-bottom: 56px; }
+    .val-grid { grid-template-columns: 1fr 1fr; }
+    .final { padding: 56px 24px; }
+    footer { padding: 24px; flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="navWrap">
+  <nav class="nav">
+    <a class="mark" href="#">
+      <svg viewBox="0 0 64 64" width="22" height="22" fill="none">
+        <path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#1a2230" stroke-width="3" stroke-linecap="round"/>
+        <line x1="22" y1="22" x2="22" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="32" y1="22" x2="32" y2="14" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="42" y1="22" x2="42" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#4a7186" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      Mallin
+    </a>
+    <div class="nav-right">
+      <span class="nav-status"><span class="dot"></span> System operational · cohort 01</span>
+      <a class="nav-link" href="#">How it works</a>
+      <a class="nav-link" href="#">Doctrine</a>
+      <a class="nav-cta" href="#">Request access →</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ── Hero ──────────────────────────────────────────────────────── -->
+<section class="hero">
+  <p class="hero-eyebrow">— For VP Sales, CRO, RevOps at mid-market B2B</p>
+  <h1 class="hero-h1">
+    Revenue is run on activity reports.<br/>
+    <em>It should be run on judgment.</em>
+  </h1>
+  <p class="hero-sub">
+    Mallin reads every call, email, and Slack thread on every deal and
+    tells you what's <strong>actually true</strong> about it, with
+    evidence, before forecast day. The CRM stores what was typed.
+    Mallin understands what was heard.
+  </p>
+  <div class="cta-row">
+    <a class="cta-primary" href="mailto:hello@mallin.io">
+      Request a design-partner slot
+      <svg viewBox="0 0 12 12" fill="none"><path d="M1 6h10M7 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a class="cta-secondary" href="#">See it run on the closed-lost retro →</a>
+  </div>
+</section>
+
+<!-- ── The live readout — system-is-running proof ───────────────── -->
+<section class="readout">
+  <div class="readout-card">
+    <div class="readout-head">
+      <div class="readout-title">
+        <span class="live"><span class="dot"></span> LIVE</span>
+        Verification alerts · last 24 hours
+      </div>
+      <div class="readout-meta">
+        <b>12</b> fired <span class="sep">·</span> <b>4</b> open <span class="sep">·</span> 0 false-positive <span class="sep">·</span> updated <b>09:47 PT</b>
+      </div>
+    </div>
+
+    <table class="readout-table">
+      <thead>
+        <tr>
+          <th style="width: 100px;">Severity</th>
+          <th style="width: 260px;">Deal</th>
+          <th>Finding</th>
+          <th style="width: 200px;">Evidence</th>
+          <th class="r" style="width: 180px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sev-tag high"><span class="d"></span>HIGH</span></td>
+          <td>
+            <div class="deal-name">Mid-market treasury platform</div>
+            <div class="deal-meta">$450K · stage 4 · day 31</div>
+          </td>
+          <td class="finding">
+            Signer (CFO) has not asked a question in two consecutive calls. Champion airtime collapsed 40% → 8%. Commitment pattern inconsistent with stage.
+            <span class="ev">— call 4 · 11:14 AM · <b>Nathan Reed</b> @ 24:18</span>
+          </td>
+          <td class="action">
+            <b>call 4</b> · 11:14 PT<br/>
+            + 6 prior artifacts
+          </td>
+          <td class="action" style="text-align: right;">
+            manager DM fired<br/>
+            <b>3 actions queued</b>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sev-tag high"><span class="d"></span>HIGH</span></td>
+          <td>
+            <div class="deal-name">Industrial logistics co.</div>
+            <div class="deal-meta">$280K · stage 5 · day 47</div>
+          </td>
+          <td class="finding">
+            Champion has never introduced anyone above their direct manager. Power-map gap entering closing motion.
+            <span class="ev">— across <b>6 calls</b> · 0 second-level intros</span>
+          </td>
+          <td class="action">
+            <b>multi-artifact</b><br/>
+            stakeholder map
+          </td>
+          <td class="action" style="text-align: right;">
+            manager DM fired<br/>
+            <b>1 action queued</b>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sev-tag warn"><span class="d"></span>WARN</span></td>
+          <td>
+            <div class="deal-name">Multi-brand holdco</div>
+            <div class="deal-meta">$620K · stage 6 · day 62</div>
+          </td>
+          <td class="finding">
+            Procurement template sent · no signature date confirmed. Champion has not said "we're choosing you."
+            <span class="ev">— call 7 · 14:22 PT · verbatim absence</span>
+          </td>
+          <td class="action">
+            <b>call 7</b> · 14:22 PT<br/>
+            verbatim audit
+          </td>
+          <td class="action" style="text-align: right;">
+            forecast watch<br/>
+            <b>2 actions queued</b>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sev-tag info"><span class="d"></span>INFO</span></td>
+          <td>
+            <div class="deal-name">PE portfolio holding</div>
+            <div class="deal-meta">$180K · stage 3 · day 18</div>
+          </td>
+          <td class="finding">
+            New stakeholder identified via calendar invite. Director of FP&amp;A, reports to CFO. Not in stakeholder map.
+            <span class="ev">— calendar invite · 8:30 PT · RocketReach confirmed</span>
+          </td>
+          <td class="action">
+            <b>cal invite</b><br/>
+            external enrich
+          </td>
+          <td class="action" style="text-align: right;">
+            stakeholder added<br/>
+            <b>verify next call</b>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Ticker — quiet "what runs underneath" strip ─────────────── -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span><b>RETROSPECTIVE</b> · 5 enterprise cycles tested</span>
+    <span><b>FALSE POSITIVES</b> · <em>0</em></span>
+    <span><b>VERIFICATION ALERTS</b> · 12 fired on the closed-lost cycle</span>
+    <span><b>NEVER-AUTO</b> · Stage · Amount · Close Date · Forecast</span>
+    <span><b>APPROVAL GATE</b> · Stage-1 Suggest before every CRM write</span>
+    <span><b>SUBSTRATE</b> · every call, email, Slack thread, calendar invite</span>
+    <span><b>RETROSPECTIVE</b> · 5 enterprise cycles tested</span>
+    <span><b>FALSE POSITIVES</b> · <em>0</em></span>
+    <span><b>VERIFICATION ALERTS</b> · 12 fired on the closed-lost cycle</span>
+    <span><b>NEVER-AUTO</b> · Stage · Amount · Close Date · Forecast</span>
+    <span><b>APPROVAL GATE</b> · Stage-1 Suggest before every CRM write</span>
+    <span><b>SUBSTRATE</b> · every call, email, Slack thread, calendar invite</span>
+  </div>
+</div>
+
+<!-- ── Triad ───────────────────────────────────────────────────── -->
+<section class="triad-wrap">
+  <div>
+    <div class="triad-eyebrow"><span class="triad-eyebrow-num">01</span>How it works</div>
+  </div>
+  <div class="triad-grid">
+    <div class="tri">
+      <div class="tri-num">— READ</div>
+      <h3>Every artifact on the deal becomes substrate.</h3>
+      <p>
+        Calls, emails, Slack threads, calendar invites, CRM activity.
+        Mallin reconstructs the operational state from what's already
+        there — <strong>without asking the rep to log anything new</strong>.
+      </p>
+    </div>
+    <div class="tri">
+      <div class="tri-num">— INTERPRET</div>
+      <h3>Behavior is the signal. Activity is the noise.</h3>
+      <p>
+        Signer engagement decay, champion airtime collapse, procurement
+        entered late, competitor introduced during pricing. Mallin
+        measures <strong>what the deal is actually doing</strong> — not
+        what the CRM says it's doing.
+      </p>
+    </div>
+    <div class="tri">
+      <div class="tri-num">— ACT</div>
+      <h3>The manager is in the thread before the rep can skirt.</h3>
+      <p>
+        High-severity alerts post into the deal Slack thread the manager
+        is already in — gap named in plain language, verbatim next
+        question attached. <strong>The agent decides what's a gap. The
+        team decides the response.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Validation ─────────────────────────────────────────────── -->
+<section class="validation">
+  <div class="val-eyebrow"><span class="val-eyebrow-num">02</span>Evidence · retrospective on 5 enterprise cycles</div>
+  <div class="val-grid">
+    <div class="val-cell">
+      <div class="val-num">5</div>
+      <div class="val-lab"><b>Enterprise cycles</b> — closed-won, stalled, closed-lost</div>
+    </div>
+    <div class="val-cell">
+      <div class="val-num">12</div>
+      <div class="val-lab"><b>Verification alerts</b> on the closed-lost retrospective</div>
+    </div>
+    <div class="val-cell">
+      <div class="val-num">0</div>
+      <div class="val-lab"><b>False-positive escalations</b> across the retrospective set</div>
+    </div>
+    <div class="val-cell">
+      <div class="val-num">4</div>
+      <div class="val-lab"><b>Never-auto fields</b> · Stage · Amount · Close Date · Forecast</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Final ──────────────────────────────────────────────────── -->
+<section class="final">
+  <div class="final-inner">
+    <h2>Run Mallin on your last quarter.</h2>
+    <p>
+      We connect to your Gong library and CRM, run the intelligence
+      agent across your account list, and within 24 hours present a
+      knowledge base built from eighteen months of your own sales
+      activity plus live external profiles on every prospect in your
+      pipeline. The demo is the product. Two design-partner slots
+      remain.
+    </p>
+    <div class="cta-row">
+      <a class="final-primary" href="mailto:hello@mallin.io">Get in touch</a>
+      <a class="final-secondary" href="#">See it run on the closed-lost retro →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Mallin · Built for revenue teams that don't skirt.</span>
+  <span><a href="mailto:hello@mallin.io">hello@mallin.io</a> · SOC 2 in scope</span>
+</footer>
+
+</body>
+</html>

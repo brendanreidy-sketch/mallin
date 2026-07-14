@@ -1,0 +1,304 @@
+.section {
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-rule);
+  border-radius: 10px;
+  padding: 22px;
+  margin-top: 24px;
+  /* Clear the sticky CockpitActionBar's height when anchor-jumped to. */
+  scroll-margin-top: 80px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ck-ink);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.providerBadge {
+  padding: 4px 10px;
+  background: var(--ck-blue-tint);
+  color: var(--ck-blue);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+.empty {
+  color: var(--ck-ink-4);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  background: var(--ck-surface-2);
+  border: 1px solid var(--ck-rule);
+  border-radius: 8px;
+  padding: 14px 16px;
+  transition: opacity 0.2s ease;
+}
+
+.cardApplied {
+  opacity: 0.65;
+  background: var(--ck-good-tint);
+  border-color: var(--ck-good-tint);
+}
+
+.cardRejected {
+  opacity: 0.45;
+  background: var(--ck-crit-tint);
+  border-color: var(--ck-crit-tint);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.stageTag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ck-blue);
+  background: var(--ck-blue-tint);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.confidence {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ck-ink-4);
+  letter-spacing: 0.02em;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.fieldName {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  color: var(--ck-ink-2);
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-rule);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.arrow {
+  color: var(--ck-ink-3);
+}
+
+.fieldValue {
+  font-weight: 600;
+  color: var(--ck-ink);
+}
+
+.editInput {
+  flex: 1;
+  border: 1px solid var(--ck-blue);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ck-ink);
+  background: var(--ck-surface);
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: #2c5266;
+  box-shadow: 0 0 0 2px var(--ck-blue-tint);
+}
+
+.rationale {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-4);
+  margin: 0 0 4px;
+  font-style: italic;
+}
+
+.capturedFrom {
+  font-size: 11px;
+  color: var(--ck-ink-3);
+  margin: 0 0 10px;
+  letter-spacing: 0.01em;
+}
+
+.bannerApplied {
+  margin: 8px 0;
+  padding: 6px 10px;
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+  border: 1px solid var(--ck-good-tint);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bannerRejected {
+  margin: 8px 0;
+  padding: 6px 10px;
+  background: var(--ck-crit-tint);
+  color: var(--ck-crit);
+  border: 1px solid var(--ck-crit-tint);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bannerError {
+  margin: 8px 0;
+  padding: 6px 10px;
+  background: var(--ck-crit-tint);
+  color: var(--ck-crit);
+  border: 1px solid var(--ck-crit-tint);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bannerQueued {
+  margin: 8px 0;
+  padding: 6px 10px;
+  background: var(--ck-warn-tint);
+  color: var(--ck-warn);
+  border: 1px solid var(--ck-warn-tint);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.btnQueue {
+  padding: 6px 14px;
+  background: var(--ck-warn-tint);
+  color: var(--ck-warn);
+  border: 1px solid var(--ck-warn-tint);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnQueue:hover {
+  background: var(--ck-warn-tint);
+}
+
+.applying {
+  font-size: 12px;
+  color: var(--ck-ink-4);
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btnApply {
+  padding: 6px 14px;
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+  border: 1px solid var(--ck-good-tint);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnApply:hover {
+  background: var(--ck-good-tint);
+}
+
+.btnReject {
+  padding: 6px 14px;
+  background: var(--ck-crit-tint);
+  color: var(--ck-crit);
+  border: 1px solid var(--ck-crit-tint);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnReject:hover {
+  background: var(--ck-crit-tint);
+}
+
+.btnEdit {
+  padding: 6px 14px;
+  background: var(--ck-surface);
+  color: var(--ck-ink);
+  border: 1px solid var(--ck-rule);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnEdit:hover {
+  background: var(--ck-surface-2);
+}
+
+.btnAsk {
+  margin-left: auto;
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--ck-blue);
+  border: 1px dashed var(--ck-rule-2);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnAsk:hover {
+  background: var(--ck-blue-tint);
+  border-style: solid;
+}
+
+.neverAuto {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: var(--ck-warn-tint);
+  border: 1px solid var(--ck-warn-tint);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--ck-warn);
+  letter-spacing: 0.01em;
+}

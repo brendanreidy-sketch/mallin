@@ -1,0 +1,125 @@
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* ─── Cockpit brand tokens (--ck-*) ──────────────────────────────────────
+     The warm-cream + navy + stream-blue system shared with the marketing
+     landing (app/home.module.css). Defined here at :root — and deliberately
+     OUTSIDE the prefers-color-scheme block — so the cockpit renders the brand
+     light theme regardless of the visitor's system dark-mode setting. The
+     cockpit surfaces (app/cockpit-views/*) reference these instead of the
+     old dark/orange/mono palette so the product reads as one brand. */
+  --ck-paper:     #f4f1ea; /* page background */
+  --ck-surface:   #ffffff; /* raised card */
+  --ck-surface-2: #f7f4ec; /* subtle alt / hover */
+  --ck-surface-3: #efeadd; /* dimmer tier-3 / reference */
+  --ck-rule:      #e3dccc; /* hairline border */
+  --ck-rule-2:    #d6cfbe; /* stronger border / inert dot */
+  --ck-ink:       #1a2230; /* primary text */
+  --ck-ink-2:     #3b4658; /* body text */
+  --ck-ink-3:     #6b7689; /* secondary text / labels */
+  --ck-ink-4:     #9aa3b3; /* faint text / footnotes */
+  --ck-blue:      #4a7186; /* accent (matches landing --blue) */
+  --ck-blue-2:    #88b8d0;
+  --ck-blue-tint: #e7eff4; /* accent fill */
+  --ck-crit:      #c25a4a; /* critical / risk */
+  --ck-crit-tint: #f6e7e3; /* risk fill */
+  --ck-good:      #5a8f7a; /* positive / approved / advancing */
+  --ck-good-tint: #e2efe9; /* positive fill */
+  --ck-warn:      #9a6a1a; /* decision-pending / amber */
+  --ck-warn-tint: #f5ecd6; /* pending fill */
+  /* Primary action. In the cream brand the action accent collapses into
+     the brand's filled-ink treatment (matches the landing's ctaPrimary);
+     in dark it stays the established orange. --ck-action is a fill; text
+     on that fill is --ck-action-ink. */
+  --ck-action:     #1a2230;
+  --ck-action-ink: #f4f1ea;
+  --ck-shadow:     rgba(26, 34, 48, 0.10); /* card elevation */
+}
+
+/* ── Cockpit dark theme ──────────────────────────────────────────────────
+   The same --ck-* tokens, re-valued for the dark operating environment.
+   Applied when ThemeProvider sets <html data-mode="dark"> (lib/theme/apply).
+   Values preserve the prior hardcoded /prep palette (deep navy base, the
+   monochrome-plus-one-accent system) so dark stays the terminal-dense
+   surface the design doctrine calls for — now toggleable against cream.
+   See lib/theme/types.ts (ThemeConfig.mode) and memory cockpit_as_
+   operating_environment.md. */
+html[data-mode="dark"] {
+  --ck-paper:      #0a0e16;
+  --ck-surface:    #11161f;
+  --ck-surface-2:  #131318;
+  --ck-surface-3:  #0e0e11;
+  --ck-rule:       rgba(255, 255, 255, 0.06);
+  --ck-rule-2:     rgba(255, 255, 255, 0.10);
+  --ck-ink:        #f3f3f6;
+  --ck-ink-2:      #c8c8d0;
+  --ck-ink-3:      #9898a3;
+  --ck-ink-4:      #6a6a76;
+  --ck-blue:       #88b8d0;
+  --ck-blue-2:     #7ea7e8;
+  --ck-blue-tint:  rgba(136, 184, 208, 0.14);
+  --ck-crit:       #e5484d;
+  --ck-crit-tint:  rgba(229, 72, 77, 0.14);
+  --ck-good:       #4cc38a;
+  --ck-good-tint:  rgba(76, 195, 138, 0.14);
+  --ck-warn:       #e8b04a;
+  --ck-warn-tint:  rgba(232, 176, 74, 0.14);
+  --ck-action:     #f4a261;
+  --ck-action-ink: #1a1a1f;
+  --ck-shadow:     rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Deep navy base — May 16 2026 per Gianna feedback ("background should
+       maybe be a brown or blue"). Subtle warmth shift from pure black to
+       muted navy; preserves the monochrome-plus-one-accent system while
+       softening the terminal severity. */
+    --background: #0a0e16;
+    --foreground: #ededed;
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Smooth in-page anchor scrolling (e.g. the nav "Pricing" link → #pricing).
+   Disabled for visitors who prefer reduced motion. */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}

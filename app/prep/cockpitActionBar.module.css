@@ -1,0 +1,82 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--ck-surface);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--ck-rule);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  /* Hide horizontal scrollbar on most browsers while keeping the
+     scroll behavior so a constrained header doesn't visually break. */
+  scrollbar-width: thin;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-rule);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ck-ink);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  scroll-snap-align: start;
+}
+
+.chip:hover {
+  border-color: var(--ck-rule-2);
+  transform: translateY(-1px);
+}
+
+.emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background: var(--ck-action);
+  color: var(--ck-action-ink);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  margin-left: 2px;
+}
+
+.primary {
+  margin-left: auto;
+  padding: 8px 16px;
+  background: var(--ck-action);
+  color: var(--ck-action-ink);
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+.primary:hover {
+  background: #2a3340;
+}
+
+/* Note: scroll-margin-top for anchor targets (#cockpit-email, etc.)
+ * lives on the .composer + .section classes in their own CSS modules
+ * (emailComposer.module.css, suggestedUpdates.module.css). CSS modules
+ * disallow bare :global selectors, so each section opts in via its own
+ * class. */

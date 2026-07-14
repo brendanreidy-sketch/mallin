@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>mallin // operating layer for revenue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Warm terminal palette — not the AI-default navy/black + lime stack. */
+    --bg:           #181613;
+    --bg-1:         #1f1c18;
+    --bg-2:         #26221c;
+    --rule:         #2d2925;
+    --rule-strong:  #45413a;
+    --ink-0:        #ece6d8;
+    --ink-1:        #c8c2b3;
+    --ink-2:        #97928a;
+    --ink-3:        #6c6862;
+    --ink-4:        #4a4742;
+    --amber:        #e89441;
+    --amber-dim:    #b6743a;
+    --red:          #d65a45;
+    --green:        #7a9d6b;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink-1);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    font-variant-ligatures: none;
+    -webkit-font-smoothing: subpixel-antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--amber); color: var(--bg); }
+
+  /* ── Top bar — terminal session header, not a SaaS nav ─────────── */
+  .topbar {
+    border-bottom: 1px solid var(--rule);
+    background: var(--bg);
+  }
+  .topbar-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 24px;
+    align-items: center;
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .topbar-left, .topbar-right { display: flex; gap: 18px; }
+  .topbar-right { justify-content: flex-end; }
+  .topbar-prompt {
+    color: var(--ink-0);
+  }
+  .topbar-prompt .u { color: var(--amber); }
+  .topbar-prompt .p { color: var(--ink-2); }
+  .topbar-prompt .c { color: var(--ink-0); }
+  .topbar-center {
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+  }
+  .topbar a { color: var(--ink-2); }
+  .topbar a:hover { color: var(--ink-0); }
+  .topbar .sep { color: var(--ink-4); padding: 0 2px; }
+
+  /* ── Page ──────────────────────────────────────────────────────── */
+  .page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Hero ──────────────────────────────────────────────────────── */
+  .hero {
+    padding: 96px 0 64px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .hero-meta {
+    color: var(--ink-3);
+    font-size: 11.5px;
+    margin-bottom: 36px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .hero-meta b { color: var(--ink-1); font-weight: 500; }
+  .hero-meta .sep { color: var(--ink-4); }
+
+  h1 {
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: clamp(34px, 5vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--ink-0);
+    margin: 0 0 32px;
+    max-width: 1080px;
+  }
+  h1 .dim {
+    color: var(--ink-3);
+  }
+  h1 .a { color: var(--amber); }
+
+  .hero-body {
+    max-width: 620px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-1);
+    margin: 0 0 40px;
+  }
+  .hero-body strong { color: var(--ink-0); font-weight: 500; }
+
+  /* CTA — bracketed text-buttons. No fill. Sharp corners. */
+  .cta-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--rule-strong);
+    background: transparent;
+    color: var(--ink-0);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: background 100ms linear, border-color 100ms linear;
+  }
+  .cta:hover { background: var(--bg-1); border-color: var(--ink-3); }
+  .cta.primary {
+    background: var(--amber);
+    color: var(--bg);
+    border-color: var(--amber);
+  }
+  .cta.primary:hover {
+    background: var(--ink-0);
+    border-color: var(--ink-0);
+  }
+  .cta .br { color: var(--ink-3); }
+  .cta.primary .br { color: var(--bg-2); }
+
+  .blink { animation: blink 1.05s steps(2) infinite; }
+  @keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* ── Readout block (terminal-style data table) ─────────────────── */
+  .readout {
+    margin: 56px 0 0;
+    border: 1px solid var(--rule-strong);
+    background: var(--bg-1);
+  }
+  .readout-head {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--rule-strong);
+    color: var(--ink-3);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .readout-head .title { color: var(--ink-0); }
+  .readout-head .right { color: var(--ink-2); }
+  .readout-head .right b { color: var(--ink-0); font-weight: 500; }
+
+  table.readout-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.readout-table thead th {
+    text-align: left;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--bg);
+    color: var(--ink-3);
+    font-weight: 400;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  table.readout-table thead th.r { text-align: right; }
+  table.readout-table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    color: var(--ink-1);
+  }
+  table.readout-table tbody tr:last-child td { border-bottom: none; }
+  table.readout-table tbody td.r { text-align: right; color: var(--ink-2); }
+  table.readout-table tbody td.num {
+    text-align: right;
+    color: var(--ink-0);
+    font-weight: 500;
+  }
+  .sev {
+    display: inline-block;
+    padding: 1px 6px;
+    border: 1px solid var(--rule-strong);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+  }
+  .sev.high { color: var(--red); border-color: var(--red); }
+  .sev.warn { color: var(--amber); border-color: var(--amber); }
+  .sev.info { color: var(--ink-2); border-color: var(--rule-strong); }
+  .deal-name { color: var(--ink-0); }
+  .reason-cell {
+    color: var(--ink-1);
+    max-width: 520px;
+    line-height: 1.5;
+  }
+  .reason-cell .ev {
+    display: block;
+    color: var(--ink-3);
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  .reason-cell .ev b { color: var(--ink-1); font-weight: 500; }
+  .action-cell {
+    color: var(--ink-2);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .action-cell b { color: var(--amber); font-weight: 500; }
+
+  /* ── ASCII rule ────────────────────────────────────────────────── */
+  .ascii-rule {
+    margin: 0;
+    padding: 14px 0;
+    color: var(--ink-4);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: none;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* ── Three-block: how it works (no serif headlines) ───────────── */
+  .triblock {
+    padding: 72px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .triblock-head {
+    color: var(--ink-3);
+    font-size: 11.5px;
+    margin-bottom: 36px;
+  }
+  .triblock-head b { color: var(--ink-0); font-weight: 500; }
+  .triblock-head .a { color: var(--amber); }
+  .tri {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-top: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+  }
+  .tri-cell {
+    padding: 32px 28px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .tri-cell-num {
+    color: var(--ink-3);
+    font-size: 11px;
+    margin-bottom: 16px;
+    letter-spacing: 0.04em;
+  }
+  .tri-cell-num b { color: var(--amber); font-weight: 500; }
+  .tri-cell h3 {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--ink-0);
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+  .tri-cell p {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--ink-1);
+  }
+  .tri-cell p strong { color: var(--ink-0); font-weight: 500; }
+
+  /* ── Validation ──────────────────────────────────────────────── */
+  .validation {
+    padding: 72px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .validation-head {
+    color: var(--ink-3);
+    font-size: 11.5px;
+    margin-bottom: 24px;
+  }
+  .validation-head b { color: var(--ink-0); font-weight: 500; }
+  .val-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+  }
+  .val-cell {
+    padding: 28px 24px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .val-num {
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 48px;
+    line-height: 1;
+    color: var(--ink-0);
+    letter-spacing: -0.04em;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .val-label {
+    color: var(--ink-2);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .val-label b { color: var(--ink-0); font-weight: 500; }
+
+  /* ── Footer ─────────────────────────────────────────────────── */
+  footer {
+    padding: 32px 0 56px;
+    color: var(--ink-3);
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer a { color: var(--ink-2); }
+  footer a:hover { color: var(--ink-0); }
+
+  /* ── Responsive ─────────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .tri, .val-grid { grid-template-columns: 1fr; }
+    .topbar-inner { grid-template-columns: 1fr; gap: 8px; }
+    .topbar-right, .topbar-left { justify-content: flex-start; }
+    .topbar-center { display: none; }
+    table.readout-table thead th:nth-child(4),
+    table.readout-table tbody td:nth-child(4),
+    table.readout-table thead th:nth-child(5),
+    table.readout-table tbody td:nth-child(5) { display: none; }
+    .hero { padding: 56px 0 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Top bar: terminal session, not SaaS nav ─────────────────────── -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <span class="topbar-prompt">
+        <span class="u">mallin</span><span class="p">@operator</span>:<span class="p">~</span><span class="c">$ status</span>
+      </span>
+    </div>
+    <div class="topbar-center">
+      OPERATING LAYER FOR REVENUE EXECUTION
+    </div>
+    <div class="topbar-right">
+      <a href="#how">/how</a>
+      <span class="sep">·</span>
+      <a href="#evidence">/evidence</a>
+      <span class="sep">·</span>
+      <a href="#contact">/contact</a>
+      <span class="sep">·</span>
+      <a href="#access" style="color: var(--amber);">[request-access]</a>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ── Hero ──────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-meta">
+      <span>v0.4.0</span>
+      <span class="sep">/</span>
+      <span>build 2026.05.18</span>
+      <span class="sep">/</span>
+      <span>cohort: <b>design-partner-01</b></span>
+      <span class="sep">/</span>
+      <span>tenant: <b>5</b></span>
+    </div>
+
+    <h1>
+      The CRM stores what was typed.<br/>
+      <span class="dim">Mallin reads what was </span><span class="a">heard.</span><span class="blink" style="color: var(--amber); margin-left: 6px;">_</span>
+    </h1>
+
+    <p class="hero-body">
+      Every call, every email, every Slack thread on every deal — reconstructed
+      into operational state, surfaced as <strong>verification alerts before
+      forecast day</strong>. No new logging. No new workflow. Provenance on
+      every claim. Approval gate on every CRM write. Stage / amount / close
+      date / forecast never auto-written.
+    </p>
+
+    <div class="cta-row">
+      <a class="cta primary" href="#access">
+        <span class="br">[</span> request design-partner slot <span class="br">]</span>
+      </a>
+      <a class="cta" href="#run">
+        <span class="br">[</span> see it run on a closed-lost retro <span class="br">]</span>
+      </a>
+    </div>
+
+    <!-- ── Live readout: actual terminal output, not a SaaS table ─── -->
+    <div class="readout">
+      <div class="readout-head">
+        <span class="title">$ mallin alerts --severity=warn+ --window=24h</span>
+        <span class="right">12 fired / <b>4 open</b> / 0 false-positive · <b>09:47:12 PT</b></span>
+      </div>
+      <table class="readout-table">
+        <thead>
+          <tr>
+            <th style="width: 70px;">sev</th>
+            <th style="width: 260px;">deal</th>
+            <th>finding</th>
+            <th style="width: 200px;">evidence</th>
+            <th class="r" style="width: 180px;">action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="sev high">HIGH</span></td>
+            <td>
+              <div class="deal-name">cipher-mining-platform</div>
+              <div style="color: var(--ink-3); font-size: 11px; margin-top: 4px;">$450K · stage 4 · day 31</div>
+            </td>
+            <td class="reason-cell">
+              Signer (CFO) has not asked a question in two consecutive calls. Champion airtime collapsed 40% → 8%. Commitment pattern inconsistent with stage.
+              <span class="ev">└─ call 4 · 11:14 PT · <b>Nathan Reed</b> @ 24:18/47:00</span>
+            </td>
+            <td>call 4 · 11:14 PT<br/><span style="color: var(--ink-3); font-size: 11px;">+ 6 prior artifacts</span></td>
+            <td class="action-cell">
+              manager DM fired<br/>
+              <b>3 actions queued</b>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="sev high">HIGH</span></td>
+            <td>
+              <div class="deal-name">industrial-logistics-co</div>
+              <div style="color: var(--ink-3); font-size: 11px; margin-top: 4px;">$280K · stage 5 · day 47</div>
+            </td>
+            <td class="reason-cell">
+              Champion has never introduced anyone above their direct manager. Power-map gap entering closing motion.
+              <span class="ev">└─ across <b>6 calls</b> · 0 second-level introductions</span>
+            </td>
+            <td>multi-artifact<br/><span style="color: var(--ink-3); font-size: 11px;">stakeholder map</span></td>
+            <td class="action-cell">
+              manager DM fired<br/>
+              <b>1 action queued</b>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="sev warn">WARN</span></td>
+            <td>
+              <div class="deal-name">multi-brand-holdco</div>
+              <div style="color: var(--ink-3); font-size: 11px; margin-top: 4px;">$620K · stage 6 · day 62</div>
+            </td>
+            <td class="reason-cell">
+              Procurement template sent. No signature date confirmed. Champion has not said "we're choosing you."
+              <span class="ev">└─ call 7 · verbatim absence · audited 6 calls</span>
+            </td>
+            <td>call 7 · 14:22 PT<br/><span style="color: var(--ink-3); font-size: 11px;">verbatim audit</span></td>
+            <td class="action-cell">
+              forecast watch<br/>
+              <b>2 actions queued</b>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="sev info">INFO</span></td>
+            <td>
+              <div class="deal-name">pe-portfolio-holding</div>
+              <div style="color: var(--ink-3); font-size: 11px; margin-top: 4px;">$180K · stage 3 · day 18</div>
+            </td>
+            <td class="reason-cell">
+              New stakeholder identified via calendar invite. Director of FP&amp;A, reports to CFO. Not in stakeholder map.
+              <span class="ev">└─ cal invite · 8:30 PT · RocketReach confirmed</span>
+            </td>
+            <td>cal invite<br/><span style="color: var(--ink-3); font-size: 11px;">external enrich</span></td>
+            <td class="action-cell">
+              stakeholder added<br/>
+              <b>verify on next call</b>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── ASCII rule ────────────────────────────────────────────────── -->
+  <pre class="ascii-rule">// — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —</pre>
+
+  <!-- ── How it works ─────────────────────────────────────────────── -->
+  <section class="triblock" id="how">
+    <div class="triblock-head">
+      <span class="a">// how it works</span> &nbsp; <b>three primitives</b>, no AI magic, no chatbot
+    </div>
+
+    <div class="tri">
+      <div class="tri-cell">
+        <div class="tri-cell-num"><b>01.</b> READ</div>
+        <h3>Every artifact on the deal becomes substrate.</h3>
+        <p>
+          Calls, emails, Slack threads, calendar invites, CRM activity.
+          Mallin reconstructs operational state from what is already there —
+          <strong>without asking the rep to log anything new</strong>.
+        </p>
+      </div>
+      <div class="tri-cell">
+        <div class="tri-cell-num"><b>02.</b> INTERPRET</div>
+        <h3>Behavior is the signal. Activity is the noise.</h3>
+        <p>
+          Signer disengagement, champion airtime collapse, procurement entered
+          late, competitor introduced during pricing. Mallin measures
+          <strong>what the deal is actually doing</strong> — not what the CRM
+          says it is doing.
+        </p>
+      </div>
+      <div class="tri-cell">
+        <div class="tri-cell-num"><b>03.</b> ACT</div>
+        <h3>The manager is in the thread before the rep can skirt.</h3>
+        <p>
+          High-severity alerts post into the deal Slack thread the manager is
+          already in — gap named in plain language, verbatim next question
+          attached. <strong>The agent decides what's a gap. The team decides
+          the response.</strong>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Validation ────────────────────────────────────────────────── -->
+  <section class="validation" id="evidence">
+    <div class="validation-head">
+      <span style="color: var(--amber);">// evidence</span> &nbsp; <b>retrospective on 5 enterprise sales cycles</b> · closed-won, stalled, closed-lost
+    </div>
+
+    <div class="val-grid">
+      <div class="val-cell">
+        <div class="val-num">05</div>
+        <div class="val-label"><b>cycles tested</b> · five real enterprise deals replayed across the system</div>
+      </div>
+      <div class="val-cell">
+        <div class="val-num">12</div>
+        <div class="val-label"><b>verification alerts</b> fired on the closed-lost retrospective alone</div>
+      </div>
+      <div class="val-cell">
+        <div class="val-num">00</div>
+        <div class="val-label"><b>false-positive escalations</b> across the retrospective set</div>
+      </div>
+    </div>
+
+    <p style="max-width: 720px; color: var(--ink-1); font-size: 13px; line-height: 1.7; margin: 36px 0 0;">
+      One of the five was the team's most recent closed-lost — mid-six-figure
+      ARR, slipped late in the cycle to a named competitor. Mallin fired 12
+      alerts across calls 2–6. Three at once on call 5: signer commitment
+      warning, competitive escalation without a head-to-head plan, power-map
+      gap. After replaying the deal through the system, the operator who ran
+      the cycle said: <em style="color: var(--ink-0);">"It would have provided
+      a way for us to address it head-on versus skirting around it."</em>
+    </p>
+  </section>
+
+  <!-- ── Footer ───────────────────────────────────────────────────── -->
+  <footer>
+    <span>© 2026 mallin · operating layer for revenue execution</span>
+    <span>
+      <a href="#access">[request-access]</a> &nbsp;
+      <a href="mailto:hello@mallin.io">hello@mallin.io</a> &nbsp;
+      <span style="color: var(--ink-4);">soc 2 in scope · enterprise rollout after design-partner cohort</span>
+    </span>
+  </footer>
+
+</div>
+
+</body>
+</html>

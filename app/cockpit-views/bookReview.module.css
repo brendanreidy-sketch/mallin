@@ -1,0 +1,612 @@
+.brief {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 24px;
+  border: 0.5px solid rgba(74, 113, 134, 0.28);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(74, 113, 134, 0.045), rgba(74, 113, 134, 0) 60%);
+  background-color: var(--ck-surface);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ck-blue);
+}
+.mark {
+  font-size: 11px;
+}
+.date {
+  color: var(--ck-ink-3);
+  letter-spacing: 0.04em;
+}
+.headline {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ck-ink);
+}
+.note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-3);
+  max-width: 620px;
+}
+
+/* Cross-deal mechanical signals. */
+.signals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.signal {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 0.5px solid rgba(194, 90, 74, 0.22);
+  border-radius: 9px;
+  background: rgba(194, 90, 74, 0.05);
+}
+.signalDot {
+  flex: none;
+  margin-top: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ck-crit);
+}
+.signalLabel {
+  font-size: 13px;
+  color: var(--ck-ink);
+  letter-spacing: -0.005em;
+}
+.signalDeals {
+  margin-top: 3px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ck-ink-3);
+}
+
+.decisions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 0.5px solid rgba(26, 34, 48, 0.08);
+  border-radius: 11px;
+  background: var(--ck-surface);
+}
+
+.cardHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex-wrap: wrap;
+}
+.rank {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ck-ink-3);
+}
+.deal {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ck-ink);
+  text-decoration: none;
+}
+.deal:hover {
+  color: var(--ck-blue);
+}
+.posture {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 0.5px solid currentColor;
+}
+.rankReason {
+  font-size: 12px;
+  color: var(--ck-blue);
+  opacity: 0.85;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.blockLabel {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ck-ink-4);
+}
+.why {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.why li {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ck-ink-2);
+}
+.quote {
+  margin: 0;
+  padding: 9px 13px;
+  border-left: 2px solid rgba(74, 113, 134, 0.5);
+  background: rgba(26, 34, 48, 0.015);
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-style: italic;
+  color: var(--ck-ink-2);
+}
+.temporal {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-2);
+}
+.rec {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ck-ink);
+}
+
+/* Stage-aware next action — the Phase 2 channeled move. */
+.action {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px 16px;
+  border: 0.5px solid rgba(74, 113, 134, 0.22);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(74, 113, 134, 0.05), rgba(74, 113, 134, 0) 70%);
+  background-color: var(--ck-surface-2);
+}
+.actionTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.channelTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ck-blue);
+  padding: 3px 9px;
+  border: 0.5px solid rgba(74, 113, 134, 0.4);
+  border-radius: 5px;
+}
+.channelIcon {
+  font-size: 11px;
+}
+.cycleStage {
+  font-size: 11px;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.01em;
+}
+.actionTitle {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ck-ink);
+}
+.actionTarget {
+  font-size: 12.5px;
+  color: var(--ck-ink-2);
+}
+.targetRole {
+  color: var(--ck-ink-3);
+}
+.actionWhy {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-3);
+}
+
+.draft {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 2px;
+  padding: 12px 14px;
+  border: 0.5px solid rgba(26, 34, 48, 0.08);
+  border-radius: 8px;
+  background: rgba(26, 34, 48, 0.015);
+}
+.draftSubject {
+  font-size: 12.5px;
+  color: var(--ck-ink);
+}
+.draftLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ck-ink-4);
+  margin-right: 6px;
+}
+.draftBody {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-2);
+  white-space: pre-wrap;
+}
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.field {
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--ck-ink);
+  background: rgba(26, 34, 48, 0.02);
+  border: 0.5px solid rgba(26, 34, 48, 0.1);
+  border-radius: 6px;
+  padding: 6px 9px;
+}
+.field:focus {
+  outline: none;
+  border-color: rgba(74, 113, 134, 0.5);
+}
+.bodyField {
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink);
+  background: rgba(26, 34, 48, 0.02);
+  border: 0.5px solid rgba(26, 34, 48, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.bodyField:focus {
+  outline: none;
+  border-color: rgba(74, 113, 134, 0.5);
+}
+.draftNote {
+  font-size: 10.5px;
+  color: var(--ck-ink-3);
+}
+.prep {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 10px 13px;
+  border-left: 2px solid rgba(26, 34, 48, 0.14);
+  border-radius: 0 6px 6px 0;
+  background: rgba(26, 34, 48, 0.02);
+}
+.prepLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ck-ink-3);
+}
+.prepText {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-2);
+}
+.points {
+  margin: 2px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.points li {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ck-ink-2);
+}
+
+.actionBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+.draftToggle {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  padding: 6px 13px;
+  border-radius: 7px;
+  border: 0.5px solid rgba(26, 34, 48, 0.14);
+  background: transparent;
+  color: var(--ck-ink-2);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.draftToggle:hover {
+  border-color: rgba(26, 34, 48, 0.28);
+  color: var(--ck-ink);
+}
+.sendRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.sendBtn {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  padding: 6px 13px;
+  border-radius: 7px;
+  border: 0.5px solid rgba(26, 34, 48, 0.14);
+  background: transparent;
+  color: var(--ck-ink-2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.sendBtn:hover {
+  border-color: rgba(26, 34, 48, 0.28);
+  color: var(--ck-ink);
+}
+.gmail {
+  border-color: rgba(74, 113, 134, 0.4);
+  color: var(--ck-blue);
+}
+.gmail:hover {
+  background: rgba(74, 113, 134, 0.12);
+  border-color: rgba(74, 113, 134, 0.6);
+  color: var(--ck-blue);
+}
+.outlook {
+  border-color: rgba(74, 113, 134, 0.4);
+  color: var(--ck-blue);
+}
+.outlook:hover {
+  background: rgba(74, 113, 134, 0.12);
+  border-color: rgba(74, 113, 134, 0.6);
+  color: var(--ck-blue);
+}
+.execNote {
+  margin-top: 8px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-4);
+}
+
+/* Governed send — confirm gate, undo window, audit line, error. */
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border: 0.5px solid rgba(74, 113, 134, 0.4);
+  border-radius: 9px;
+  background: rgba(74, 113, 134, 0.06);
+}
+.confirmHead {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ck-ink);
+}
+.confirmLine {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ck-ink-2);
+}
+.confirmLine strong {
+  color: var(--ck-ink);
+  font-weight: 600;
+}
+.confirmBar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.holding {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 11px 14px;
+  border: 0.5px solid rgba(74, 113, 134, 0.45);
+  border-radius: 9px;
+  background: rgba(74, 113, 134, 0.08);
+}
+.holdingText {
+  font-size: 12.5px;
+  color: var(--ck-blue);
+  font-variant-numeric: tabular-nums;
+}
+.undoSend {
+  margin-left: auto;
+  border-color: rgba(194, 90, 74, 0.5);
+  color: var(--ck-crit);
+}
+.undoSend:hover {
+  background: rgba(194, 90, 74, 0.12);
+  border-color: rgba(194, 90, 74, 0.7);
+  color: var(--ck-crit);
+}
+
+.audit {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 11px 14px;
+  border: 0.5px solid rgba(90, 143, 122, 0.35);
+  border-radius: 9px;
+  background: rgba(90, 143, 122, 0.06);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ck-ink-2);
+}
+.audit strong {
+  color: var(--ck-ink);
+  font-weight: 600;
+}
+.auditCheck {
+  flex: none;
+  color: var(--ck-good);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.sendError {
+  margin-top: 4px;
+  padding: 9px 13px;
+  border: 0.5px solid rgba(194, 90, 74, 0.4);
+  border-radius: 8px;
+  background: rgba(194, 90, 74, 0.06);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ck-crit);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+.btn {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  padding: 7px 16px;
+  border-radius: 7px;
+  border: 0.5px solid rgba(26, 34, 48, 0.14);
+  background: transparent;
+  color: var(--ck-ink-2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn:hover {
+  border-color: rgba(26, 34, 48, 0.28);
+  color: var(--ck-ink);
+}
+.approve {
+  border-color: rgba(90, 143, 122, 0.4);
+  color: var(--ck-good);
+}
+.approve:hover {
+  background: rgba(90, 143, 122, 0.12);
+  border-color: rgba(90, 143, 122, 0.6);
+  color: var(--ck-good);
+}
+.dismiss {
+  color: var(--ck-ink-3);
+}
+.dismiss:hover {
+  border-color: rgba(194, 90, 74, 0.5);
+  color: var(--ck-crit);
+}
+
+/* Resolved (approved / deferred) collapsed state. */
+.resolved {
+  padding: 13px 18px;
+}
+.resolvedLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ck-ink-2);
+}
+.resolvedLine strong {
+  color: var(--ck-ink);
+  font-weight: 600;
+}
+.check {
+  color: var(--ck-good);
+  font-size: 14px;
+}
+.later {
+  color: var(--ck-blue);
+  font-size: 14px;
+}
+.undo {
+  margin-left: auto;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  background: transparent;
+  border: none;
+  color: var(--ck-ink-3);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.undo:hover {
+  color: var(--ck-ink-2);
+}
+
+.foot {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ck-ink-4);
+  border-top: 0.5px solid rgba(26, 34, 48, 0.06);
+  padding-top: 12px;
+}
+
+/* Tones. */
+.tNeutral {
+  color: var(--ck-ink-3);
+}
+.tPositive {
+  color: var(--ck-good);
+}
+.tCaution {
+  color: var(--ck-blue);
+}
+.tCritical {
+  color: var(--ck-crit);
+}
+.tAccent {
+  color: var(--ck-blue);
+}

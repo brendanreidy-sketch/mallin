@@ -1,0 +1,168 @@
+/**
+ * "How you win this" + "What could go wrong" — the two framing blocks that
+ * sit above the per-call tactics in the cockpit. Read-only in this pass;
+ * the confirm/acknowledge mechanics (× to confirm the play was discussed,
+ * acknowledge the risk plan) land in a later feature.
+ */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 18px 0 0;
+}
+
+.block {
+  position: relative;
+  background: var(--ck-surface);
+  border: 1px solid var(--ck-rule);
+  border-radius: 12px;
+  padding: 16px 18px 16px 20px;
+  box-shadow: var(--ck-shadow);
+}
+
+/* Left accent rail — sage for the play, warn for the risks. */
+.block::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
+}
+.win::before {
+  background: var(--ck-good);
+}
+.watch::before {
+  background: var(--ck-warn);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+/* ✕ that the rep clears to confirm they discussed the play. Sits at the
+   far right of the header. */
+.ackx {
+  margin-left: auto;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ck-rule);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ck-ink-3);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.ackx:hover {
+  border-color: var(--ck-good);
+  color: var(--ck-good);
+  background: var(--ck-good-tint);
+}
+
+/* "✓ Confirmed …" / "✓ Acknowledged …" pill replacing the control. */
+.confirmedPill {
+  margin-left: auto;
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ck-good);
+  background: var(--ck-good-tint);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+.watch .confirmedPill {
+  color: var(--ck-warn);
+  background: var(--ck-warn-tint);
+}
+
+/* Acknowledge affordance under the risk list. */
+.ackBtn {
+  margin-top: 12px;
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ck-warn);
+  background: transparent;
+  border: 1px solid var(--ck-rule);
+  border-radius: 7px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.ackBtn:hover {
+  border-color: var(--ck-warn);
+  background: var(--ck-warn-tint);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.win .label {
+  color: var(--ck-good);
+}
+.watch .label {
+  color: var(--ck-warn);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.win .dot {
+  background: var(--ck-good);
+}
+.watch .dot {
+  background: var(--ck-warn);
+}
+
+/* The play — one dominant sentence. */
+.play {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ck-ink);
+  font-weight: 500;
+}
+
+/* Silent-killer risks — a short list, each with a marker. */
+.riskList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.riskItem {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ck-ink-2);
+}
+
+.riskMark {
+  flex: none;
+  margin-top: 2px;
+  width: 14px;
+  height: 14px;
+  color: var(--ck-warn);
+}

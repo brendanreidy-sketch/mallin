@@ -1,0 +1,788 @@
+/* ─── Cockpit mockup styles ───────────────────────────────────────────── */
+/* Static design preview. Brand-cohesive with mallin.io landing page.    */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.page {
+  min-height: 100vh;
+  background: #faf7ef;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  color: #1a2230;
+}
+
+/* ─── Sticky header ─────────────────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(244, 241, 234, 0.92);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid #e3dccc;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.back {
+  font-size: 22px;
+  color: #6b7585;
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.back:hover {
+  background: #f4f1ea;
+  color: #1a2230;
+}
+
+.dealName {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.dealMeta {
+  font-size: 12px;
+  color: #6b7585;
+  margin-top: 2px;
+  letter-spacing: 0.01em;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.severityChip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.severityChip[data-sev="warn"] {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+/* ─── Action bar ────────────────────────────────────────────────────── */
+.actionBar {
+  position: sticky;
+  top: 67px;
+  z-index: 40;
+  background: #faf7ef;
+  border-bottom: 1px solid #e3dccc;
+  padding: 12px 32px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.actionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid #e3dccc;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a2230;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.actionChip:hover {
+  border-color: #c8c0ab;
+  transform: translateY(-1px);
+}
+
+.actionEmoji {
+  font-size: 14px;
+}
+
+.actionCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background: #1a2230;
+  color: #faf7ef;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  margin-left: 2px;
+}
+
+.actionAsk {
+  margin-left: auto;
+  padding: 8px 16px;
+  background: #1a2230;
+  color: #faf7ef;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.actionAsk:hover {
+  background: #2a3340;
+}
+
+/* ─── Main + sections ───────────────────────────────────────────────── */
+.main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 32px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.section {
+  scroll-margin-top: 130px; /* clears sticky headers */
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 0 4px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.sectionMeta {
+  font-size: 12px;
+  color: #8a92a3;
+}
+
+/* ─── Alerts ────────────────────────────────────────────────────────── */
+.alertCard {
+  background: #ffffff;
+  border: 1px solid #e3dccc;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  border-left-width: 4px;
+}
+
+.alertHigh {
+  border-left-color: #c2410c;
+}
+
+.alertWarn {
+  border-left-color: #d97706;
+}
+
+.alertCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.alertSev {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.alertSev[data-sev="high"] {
+  background: #fef2f2;
+  color: #c2410c;
+}
+
+.alertSev[data-sev="warn"] {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.alertRule {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a2230;
+}
+
+.alertWhen {
+  margin-left: auto;
+  font-size: 12px;
+  color: #8a92a3;
+}
+
+.alertBody {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #3b4658;
+  margin: 0 0 10px;
+}
+
+.alertAction {
+  background: #f8f8f6;
+  border: 1px solid #ebe4d2;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #1a2230;
+  margin-bottom: 10px;
+}
+
+.alertFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  background: #eef3f6;
+  color: #4a7186;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.alertLink {
+  color: #4a7186;
+  text-decoration: none;
+  margin-left: auto;
+  font-weight: 500;
+}
+.alertLink:hover {
+  text-decoration: underline;
+}
+
+/* ─── Email composer ────────────────────────────────────────────────── */
+.composer {
+  background: #ffffff;
+  border: 1px solid #e3dccc;
+  border-radius: 10px;
+  padding: 22px;
+}
+
+.composerField {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f4f1ea;
+}
+
+.composerLabel {
+  font-size: 12px;
+  color: #8a92a3;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.composerValue {
+  font-size: 14px;
+  color: #1a2230;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composerTag {
+  padding: 2px 8px;
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.composerBody {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #1a2230;
+  padding-top: 4px;
+}
+
+.composerBody p {
+  margin: 0 0 10px;
+}
+
+.composerMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f4f1ea;
+  font-size: 12px;
+  color: #8a92a3;
+}
+
+.draftSource {
+  font-style: italic;
+}
+
+.confidenceTag {
+  padding: 3px 8px;
+  background: #eef3f6;
+  color: #4a7186;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.composerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  padding: 10px 18px;
+  background: #1a2230;
+  color: #faf7ef;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnPrimary:hover {
+  background: #2a3340;
+}
+
+.btnSecondary {
+  padding: 10px 16px;
+  background: #ffffff;
+  color: #1a2230;
+  border: 1px solid #c8c0ab;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnSecondary:hover {
+  background: #f4f1ea;
+}
+
+.btnTertiary {
+  padding: 10px 12px;
+  background: transparent;
+  color: #6b7585;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnTertiary:hover {
+  color: #1a2230;
+}
+
+.composerNever {
+  margin-left: auto;
+  font-size: 12px;
+  color: #8a92a3;
+  font-style: italic;
+}
+
+/* ─── CRM Suggest cards ─────────────────────────────────────────────── */
+.suggestCard {
+  background: #ffffff;
+  border: 1px solid #e3dccc;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+}
+
+.suggestHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.stageTag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #4a7186;
+  background: #eef3f6;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.suggestCrm {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7585;
+  letter-spacing: 0.02em;
+}
+
+.suggestField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.suggestFieldName {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  color: #3b4658;
+  background: #f4f1ea;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.arrow {
+  color: #8a92a3;
+}
+
+.suggestNewValue {
+  font-weight: 600;
+  color: #1a2230;
+}
+
+.suggestCapture {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #6b7585;
+  margin: 0 0 12px;
+  font-style: italic;
+}
+
+.suggestActions {
+  display: flex;
+  gap: 8px;
+}
+
+.btnApply {
+  padding: 6px 14px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnApply:hover {
+  background: #d1fae5;
+}
+
+.btnReject {
+  padding: 6px 14px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnReject:hover {
+  background: #fee2e2;
+}
+
+.btnEdit {
+  padding: 6px 14px;
+  background: #ffffff;
+  color: #1a2230;
+  border: 1px solid #e3dccc;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnEdit:hover {
+  background: #f4f1ea;
+}
+
+.btnWhy {
+  margin-left: auto;
+  padding: 6px 14px;
+  background: transparent;
+  color: #4a7186;
+  border: 1px dashed #c8c0ab;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btnWhy:hover {
+  background: #eef3f6;
+  border-style: solid;
+}
+
+.neverAuto {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #9a3412;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Critical risks ────────────────────────────────────────────────── */
+.riskCard {
+  background: #ffffff;
+  border: 1px solid #e3dccc;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  border-left-width: 4px;
+  border-left-color: #c2410c;
+}
+
+.riskCard:nth-child(odd) {
+  border-left-color: #d97706;
+}
+
+.riskCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.riskSev {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.riskSev[data-sev="high"] {
+  background: #fef2f2;
+  color: #c2410c;
+}
+
+.riskSev[data-sev="warn"] {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.riskBody {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #3b4658;
+  margin: 0 0 10px;
+}
+
+.riskMetaRow {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7585;
+  padding: 4px 0;
+}
+
+.riskMetaLabel {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #c2410c;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.riskAskRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* ─── Slack activity ────────────────────────────────────────────────── */
+.activityRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e3dccc;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.activityWhen {
+  font-size: 12px;
+  color: #8a92a3;
+  width: 70px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.activityBody {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.activityTarget {
+  padding: 2px 8px;
+  background: #eef3f6;
+  color: #4a7186;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
+.activityText {
+  font-size: 13px;
+  color: #3b4658;
+}
+
+.activityOpen {
+  font-size: 12px;
+  color: #4a7186;
+  text-decoration: none;
+  font-weight: 500;
+}
+.activityOpen:hover {
+  text-decoration: underline;
+}
+
+.activityFooter {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f4f1ea;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.activityHint {
+  font-size: 12px;
+  color: #8a92a3;
+  font-style: italic;
+}
+
+/* ─── Insights grid ─────────────────────────────────────────────────── */
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.insightCard {
+  background: #ffffff;
+  border: 1px solid #e3dccc;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.insightLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a92a3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.insightValue {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a2230;
+  margin-bottom: 4px;
+}
+
+.scoreNum {
+  font-size: 22px;
+  font-weight: 700;
+  color: #c2410c;
+}
+
+.insightDetail {
+  font-size: 12px;
+  color: #6b7585;
+  line-height: 1.5;
+}
+
+/* ─── Footer ────────────────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding: 18px 0;
+  border-top: 1px solid #e3dccc;
+  font-size: 12px;
+  color: #8a92a3;
+}
+
+.footerLink {
+  color: #4a7186;
+  text-decoration: none;
+  font-weight: 500;
+}
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .insightsGrid {
+    grid-template-columns: 1fr;
+  }
+  .header {
+    padding: 12px 18px;
+  }
+  .actionBar {
+    padding: 10px 18px;
+  }
+  .main {
+    padding: 20px 18px 60px;
+  }
+}

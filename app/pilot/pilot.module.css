@@ -1,0 +1,516 @@
+/* Mallín pilot signup page — matches the warm paper palette of the live
+   landing. Colors are not duplicated from landing.module.css; they're
+   the same brand variables so visual continuity is maintained even when
+   the user navigates from the marketing page into this form. */
+
+.page {
+  min-height: 100vh;
+  background: #f4f1ea;
+  color: #1a2230;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+}
+
+/* ─── Nav ─────────────────────────────────────────────────── */
+.navWrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(244, 241, 234, 0.82);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid #e3dccc;
+}
+.nav {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #1a2230;
+  text-decoration: none;
+}
+.wordmarkIcon {
+  display: block;
+}
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.navLink {
+  font-size: 14px;
+  color: #1a2230;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.navLink:hover {
+  border-bottom-color: #1a2230;
+}
+
+/* ─── Header ──────────────────────────────────────────────── */
+.main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 56px 32px 96px;
+}
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4a7186;
+  margin: 0 0 18px;
+}
+.h1 {
+  font-size: clamp(36px, 4.6vw, 56px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  color: #1a2230;
+  margin: 0 0 20px;
+}
+.h1 em {
+  font-style: normal;
+  color: #4a7186;
+}
+.lede {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #3b4658;
+  max-width: 640px;
+  margin: 0 0 16px;
+}
+.lede strong {
+  color: #1a2230;
+  font-weight: 600;
+}
+.fastFacts {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 24px 0 48px;
+  font-size: 13px;
+  color: #3b4658;
+}
+.fastFacts b {
+  color: #1a2230;
+  font-weight: 600;
+}
+.fastFacts .sep {
+  color: #9aa3b3;
+}
+
+/* ─── Form ────────────────────────────────────────────────── */
+.form {
+  background: #faf7f0;
+  border: 1px solid #e3dccc;
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 10px 24px -16px rgba(26, 34, 48, 0.08);
+}
+.section {
+  padding: 0 0 28px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #e3dccc;
+}
+.section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4a7186;
+  margin: 0 0 12px;
+}
+.sectionHint {
+  font-size: 13.5px;
+  color: #6b7689;
+  margin: 0 0 20px;
+  max-width: 540px;
+}
+
+/* ─── Field ───────────────────────────────────────────────── */
+.fieldRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+.field:last-of-type {
+  margin-bottom: 0;
+}
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a2230;
+  margin-bottom: 8px;
+}
+.req {
+  color: #c25a4a;
+  font-weight: 700;
+  margin-left: 1px;
+}
+.optional {
+  color: #9aa3b3;
+  font-weight: 400;
+}
+.input,
+.textarea {
+  width: 100%;
+  padding: 11px 14px;
+  background: #fff;
+  border: 1px solid #d6cfbe;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1a2230;
+  line-height: 1.4;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #4a7186;
+  box-shadow: 0 0 0 3px rgba(74, 113, 134, 0.16);
+}
+.input::placeholder,
+.textarea::placeholder {
+  color: #9aa3b3;
+}
+.textarea {
+  resize: vertical;
+  min-height: 84px;
+  font-family: inherit;
+}
+
+/* ─── Pill row (team size) ────────────────────────────────── */
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pill {
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid #d6cfbe;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13.5px;
+  color: #1a2230;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.pill:hover {
+  background: #e7eff4;
+  border-color: #4a7186;
+}
+.pillActive {
+  background: #1a2230;
+  color: #f4f1ea;
+  border-color: #1a2230;
+}
+.pillActive:hover {
+  background: #1a2230;
+}
+
+/* ─── Stack checkboxes ───────────────────────────────────── */
+.checkGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 12px;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: #fff;
+  border: 1px solid #e3dccc;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #1a2230;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.check:hover {
+  border-color: #4a7186;
+  background: #e7eff4;
+}
+.checkInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.checkBox {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #d6cfbe;
+  border-radius: 4px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  flex-shrink: 0;
+  transition: all 120ms ease;
+}
+.check:has(.checkInput:checked) .checkBox {
+  background: #1a2230;
+  border-color: #1a2230;
+  color: #f4f1ea;
+}
+.check:has(.checkInput:checked) {
+  border-color: #1a2230;
+  background: #fff;
+}
+
+/* ─── Radios (trigger) ────────────────────────────────────── */
+.radioGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e3dccc;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.radio:hover {
+  border-color: #4a7186;
+  background: #fafafa;
+}
+.radioActive {
+  border-color: #1a2230;
+  background: #f4f1ea;
+}
+.radioInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.radioMark {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #d6cfbe;
+  background: #fff;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: block;
+  position: relative;
+  transition: all 120ms ease;
+}
+.radioActive .radioMark {
+  border-color: #1a2230;
+  background: #1a2230;
+}
+.radioActive .radioMark::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #f4f1ea;
+}
+.radioLabel {
+  font-size: 14px;
+  color: #1a2230;
+  line-height: 1.4;
+}
+
+/* ─── Submit ──────────────────────────────────────────────── */
+.submitRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+.submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 22px;
+  background: #1a2230;
+  color: #f4f1ea;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+.submit:hover:not(:disabled) {
+  background: #4a7186;
+  transform: translateY(-1px);
+}
+.submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.submitFoot {
+  font-size: 12.5px;
+  color: #6b7689;
+  margin: 0;
+}
+
+/* ─── Error ───────────────────────────────────────────────── */
+.error {
+  padding: 12px 16px;
+  background: #f6e7e3;
+  border: 1px solid rgba(194, 90, 74, 0.3);
+  border-radius: 8px;
+  color: #1a2230;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin: 16px 0 0;
+}
+.error b {
+  color: #c25a4a;
+}
+
+/* ─── Honeypot (hidden from humans) ───────────────────────── */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ─── Success state ───────────────────────────────────────── */
+.successCard {
+  background: #faf7f0;
+  border: 1px solid #e3dccc;
+  border-radius: 14px;
+  padding: 56px 40px;
+  text-align: center;
+}
+.successMark {
+  width: 56px;
+  height: 56px;
+  background: #5a8f7a;
+  color: #f4f1ea;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.successTitle {
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: #1a2230;
+  margin: 0 0 18px;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.successTitle em {
+  font-style: normal;
+  color: #4a7186;
+}
+.successBody {
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: #3b4658;
+  max-width: 540px;
+  margin: 0 auto;
+}
+.successBody a {
+  color: #4a7186;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ─── Footer ─────────────────────────────────────────────── */
+.footer {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  border-top: 1px solid #e3dccc;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #6b7689;
+}
+.footer a {
+  color: #3b4658;
+  text-decoration: none;
+}
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .main {
+    padding: 40px 24px 56px;
+  }
+  .form {
+    padding: 24px 20px;
+  }
+  .fieldRow2 {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-bottom: 0;
+  }
+  .fieldRow2 .field {
+    margin-bottom: 18px;
+  }
+  .checkGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .radioGrid {
+    grid-template-columns: 1fr;
+  }
+  .nav {
+    padding: 12px 20px;
+  }
+  .navRight {
+    gap: 10px;
+  }
+  .navLink {
+    font-size: 12.5px;
+  }
+  .wordmark {
+    font-size: 17px;
+  }
+  .footer {
+    padding: 24px;
+    flex-direction: column;
+    gap: 8px;
+  }
+}

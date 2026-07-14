@@ -1,0 +1,779 @@
+/* ============================================================================
+   /sf/diff — read-only Salesforce ↔ substrate diff debug view.
+
+   Same dark-theme tokens as the prep page. Strictly internal/admin.
+   ========================================================================== */
+
+.page {
+  min-height: 100vh;
+  background: #0a0a0d;
+  color: #e8e8ed;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 40px 32px 80px;
+}
+
+.shell {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+
+.subtle {
+  color: #8a8a93;
+  font-size: 13px;
+  margin: 0 0 28px;
+}
+
+.subtle code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+}
+
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a8a93;
+  margin: 28px 0 10px;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.metaCard {
+  background: #0e0e11;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.metaCard .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a8a93;
+  margin-bottom: 6px;
+}
+
+.metaCard .value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.safeBanner {
+  background: rgba(80, 200, 120, 0.08);
+  border: 0.5px solid rgba(80, 200, 120, 0.3);
+  color: #a4dcb6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.safeBanner b {
+  color: #c8efd4;
+}
+
+.errorCard {
+  background: rgba(220, 60, 60, 0.08);
+  border: 0.5px solid rgba(220, 60, 60, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  color: #f0b3b3;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.errorCard h2 {
+  color: #ffb3b3;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.errorCard pre {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+/* ── Diff item rows ───────────────────────────────────────────────── */
+
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  background: #0e0e11;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.itemTitle {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.sfFieldName {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: #6a6a73;
+}
+
+.itemBody {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.kv {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.kv .k {
+  color: #6a6a73;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.kv .v {
+  color: #e8e8ed;
+  word-break: break-word;
+}
+
+.kv .v.empty {
+  color: #555560;
+  font-style: italic;
+}
+
+.itemReason {
+  font-size: 11px;
+  color: #8a8a93;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Pills (action / tier / status) ──────────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.tier_auto {
+  background: rgba(80, 200, 120, 0.12);
+  color: #6dd49a;
+}
+
+.tier_suggest {
+  background: rgba(255, 180, 50, 0.12);
+  color: #ffc46d;
+}
+
+.tier_readonly {
+  background: rgba(140, 140, 150, 0.14);
+  color: #a8a8b3;
+}
+
+.action_write_now {
+  background: rgba(80, 200, 120, 0.14);
+  color: #7ee0a4;
+  border: 0.5px solid rgba(80, 200, 120, 0.35);
+}
+
+.action_suggest {
+  background: rgba(255, 180, 50, 0.12);
+  color: #ffc46d;
+  border: 0.5px solid rgba(255, 180, 50, 0.3);
+}
+
+.action_surface_only {
+  background: rgba(120, 140, 200, 0.1);
+  color: #9eb0d8;
+  border: 0.5px solid rgba(120, 140, 200, 0.25);
+}
+
+.action_no_op {
+  background: rgba(120, 120, 130, 0.08);
+  color: #888893;
+  border: 0.5px solid rgba(120, 120, 130, 0.2);
+}
+
+/* ── Auditable surface_only collapse ─────────────────────────────── */
+
+.auditDetails {
+  margin-top: 16px;
+  background: #0c0c0f;
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.auditSummary {
+  cursor: pointer;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #9eb0d8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  list-style: none;
+}
+
+.auditSummary::-webkit-details-marker {
+  display: none;
+}
+
+.auditSummary::before {
+  content: "▸";
+  font-size: 9px;
+  transition: transform 0.15s;
+}
+
+details[open] .auditSummary::before {
+  transform: rotate(90deg);
+}
+
+.auditBody {
+  padding: 4px 14px 14px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Form for changing dealId / sfOppId inline ──────────────────── */
+
+.queryForm {
+  background: #0e0e11;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.queryForm input {
+  flex: 1;
+  min-width: 200px;
+  background: #0a0a0d;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #e8e8ed;
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+}
+
+.queryForm input:focus {
+  outline: none;
+  border-color: rgba(255, 180, 50, 0.4);
+}
+
+.queryForm button {
+  background: rgba(255, 180, 50, 0.14);
+  border: 0.5px solid rgba(255, 180, 50, 0.3);
+  color: #ffc46d;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.queryForm button:hover {
+  background: rgba(255, 180, 50, 0.22);
+}
+
+/* ── Dry-run preview ──────────────────────────────────────────────
+   Shows the literal SF PATCH payload that WOULD fire if writes were
+   enabled. Visually distinct so it's clear nothing is being sent. */
+
+.dryRunBanner {
+  background: rgba(120, 140, 200, 0.08);
+  border: 0.5px solid rgba(120, 140, 200, 0.3);
+  color: #b6c3e0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+
+.dryRunBanner b {
+  color: #d2dcef;
+}
+
+.dryRunBlock {
+  background: #0c0c0f;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.dryRunBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dryRunBlockTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8e8ed;
+}
+
+.dryRunBlockTitle .count {
+  color: #6a6a73;
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.dryRunRequest {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-top: 8px;
+  overflow-x: auto;
+  white-space: pre;
+  color: #d8d8e0;
+  line-height: 1.55;
+}
+
+.dryRunRequest .verb {
+  color: #6dd49a;
+  font-weight: 600;
+}
+
+.dryRunRequest .url {
+  color: #ffc46d;
+}
+
+.dryRunRequest .key {
+  color: #9eb0d8;
+}
+
+.dryRunRequest .string {
+  color: #f0b3b3;
+}
+
+.dryRunRequest .number {
+  color: #ffc46d;
+}
+
+.dryRunRequest .null {
+  color: #888893;
+  font-style: italic;
+}
+
+.dryRunFieldList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: #b8b8c0;
+  line-height: 1.55;
+}
+
+.dryRunFieldList li {
+  padding: 4px 0;
+  border-bottom: 0.5px dashed rgba(255, 255, 255, 0.04);
+}
+
+.dryRunFieldList li:last-child {
+  border-bottom: none;
+}
+
+.dryRunFieldName {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #9eb0d8;
+}
+
+.dryRunArrow {
+  color: #6a6a73;
+  margin: 0 6px;
+}
+
+.dryRunValue {
+  color: #e8e8ed;
+}
+
+.dryRunNote {
+  font-size: 11px;
+  color: #8a8a93;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.5;
+}
+
+.dryRunSummary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.dryRunSummary .metaCard .value.positive {
+  color: #7ee0a4;
+}
+
+.dryRunSummary .metaCard .value.warn {
+  color: #ffc46d;
+}
+
+.dryRunSummary .metaCard .value.muted {
+  color: #888893;
+}
+
+/* ── Link banners (substrate ↔ SF link state) ────────────────────── */
+
+.linkBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.linkBanner.confirmed {
+  background: rgba(80, 200, 120, 0.08);
+  border: 0.5px solid rgba(80, 200, 120, 0.3);
+  color: #a4dcb6;
+}
+
+.linkBanner.unconfirmed {
+  background: rgba(255, 180, 50, 0.06);
+  border: 0.5px solid rgba(255, 180, 50, 0.25);
+  color: #ffc46d;
+}
+
+.linkBanner.warn {
+  background: rgba(220, 100, 60, 0.08);
+  border: 0.5px solid rgba(220, 100, 60, 0.3);
+  color: #f0b3a3;
+}
+
+.linkBanner b {
+  color: inherit;
+  font-weight: 600;
+}
+
+.linkBanner .linkText {
+  flex: 1;
+}
+
+.linkBanner code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+}
+
+.linkActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.linkButton {
+  background: rgba(80, 200, 120, 0.14);
+  border: 0.5px solid rgba(80, 200, 120, 0.35);
+  color: #7ee0a4;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.linkButton:hover:not(:disabled) {
+  background: rgba(80, 200, 120, 0.22);
+}
+
+.linkButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.linkButtonDanger {
+  background: rgba(220, 60, 60, 0.14);
+  border: 0.5px solid rgba(220, 60, 60, 0.35);
+  color: #f0b3b3;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.linkButtonDanger:hover:not(:disabled) {
+  background: rgba(220, 60, 60, 0.22);
+}
+
+.linkButtonSubtle {
+  background: transparent;
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
+  color: #b8b8c0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.linkButtonSubtle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.linkButtonSubtle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.linkError {
+  color: #f0b3b3;
+  font-size: 11px;
+}
+
+/* ── Match candidate cards (when only dealId provided) ──────────── */
+
+.confirmBanner {
+  background: rgba(255, 180, 50, 0.06);
+  border: 0.5px solid rgba(255, 180, 50, 0.25);
+  color: #ffc46d;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.confirmBanner b {
+  color: #ffd28a;
+}
+
+.candidateList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.candidate {
+  background: #0e0e11;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.candidate:hover {
+  border-color: rgba(255, 180, 50, 0.4);
+  background: #101015;
+}
+
+.candidateHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.candidateName {
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.confidenceBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confidenceTrack {
+  width: 140px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.confidenceFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.confidenceFill.strong {
+  background: #6dd49a;
+}
+
+.confidenceFill.weak {
+  background: #ffc46d;
+}
+
+.confidenceFill.uncertain {
+  background: #9eb0d8;
+}
+
+.confidenceText {
+  font-size: 13px;
+  font-family: ui-monospace, monospace;
+  color: #d8d8e0;
+  min-width: 50px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.candidateMeta {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  font-size: 13px;
+}
+
+.candidateMeta .k {
+  color: #6a6a73;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  margin-bottom: 3px;
+}
+
+.candidateMeta .v {
+  color: #d8d8e0;
+  font-weight: 500;
+}
+
+.evidenceList {
+  font-size: 12px;
+  color: #9c9ca5;
+  line-height: 1.55;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+.evidenceList ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.evidenceList li {
+  padding: 2px 0;
+}
+
+.candidateAction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  color: #9eb0d8;
+}
+
+.candidateAction .arrow {
+  color: #ffc46d;
+  font-weight: 600;
+}
+
+.strengthPill_strong {
+  background: rgba(80, 200, 120, 0.14);
+  color: #7ee0a4;
+}
+
+.strengthPill_weak {
+  background: rgba(255, 180, 50, 0.14);
+  color: #ffc46d;
+}
+
+.strengthPill_uncertain {
+  background: rgba(120, 140, 200, 0.12);
+  color: #9eb0d8;
+}
+
+.noCandidates {
+  background: #0e0e11;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #8a8a93;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .metaGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .itemBody {
+    grid-template-columns: 1fr;
+  }
+  .candidateMeta {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

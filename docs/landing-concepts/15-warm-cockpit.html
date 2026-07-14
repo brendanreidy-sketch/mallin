@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin — the operating layer for revenue execution</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Existing Mallin palette — preserved exactly. */
+    --paper:    #f4f1ea;
+    --paper-2:  #ebe6d6;
+    --paper-3:  #e3dccc;
+    --rule:     #e3dccc;
+    --rule-2:   #d6cfbe;
+    --ink:      #1a2230;
+    --ink-2:    #3b4658;
+    --ink-3:    #6b7689;
+    --ink-4:    #9aa3b3;
+    --blue:     #4a7186;     /* muted river blue */
+    --blue-2:   #88b8d0;     /* pale stream */
+    --blue-tint:#e7eff4;
+    --crit:     #c25a4a;
+    --warn:     #c69150;
+    --good:     #5a8f7a;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); }
+  body {
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--ink); color: var(--paper); }
+
+  /* ── Nav ─────────────────────────────────────────────────── */
+  .navWrap {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(244, 241, 234, 0.82);
+    backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav {
+    max-width: 1320px; margin: 0 auto;
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mark {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 18px; font-weight: 700; letter-spacing: -0.015em;
+  }
+  .mark-icon { display: block; }
+  .nav-right { display: flex; align-items: center; gap: 22px; }
+  .nav-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .nav-status .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--blue-2);
+    box-shadow: 0 0 0 0 rgba(136,184,208,0.55);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(136,184,208,0.55); }
+    50% { box-shadow: 0 0 0 6px rgba(136,184,208,0); }
+  }
+  .nav-link { font-size: 14px; color: var(--ink); border-bottom: 1px solid transparent; }
+  .nav-link:hover { border-bottom-color: var(--ink); }
+  .nav-cta {
+    font-size: 14px; font-weight: 600;
+    padding: 8px 14px;
+    background: rgba(26,34,48,0.04);
+    border: 1px solid var(--rule-2);
+    border-radius: 6px;
+    transition: all 120ms ease;
+  }
+  .nav-cta:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* ── Hero ──────────────────────────────────────────────── */
+  .hero {
+    max-width: 1320px; margin: 0 auto;
+    padding: 56px 32px 24px;
+  }
+  .hero-eyebrow {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--blue); margin: 0 0 20px;
+  }
+  .hero-h1 {
+    font-size: clamp(40px, 5.6vw, 72px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+    color: var(--ink);
+    margin: 0 0 24px;
+    max-width: 980px;
+  }
+  .hero-h1 em {
+    font-style: normal;
+    color: var(--blue);
+  }
+  .hero-sub {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 660px;
+    margin: 0 0 32px;
+  }
+  .hero-sub strong { color: var(--ink); font-weight: 600; }
+
+  .cta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .cta-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 20px;
+    background: var(--ink); color: var(--paper);
+    font-size: 14px; font-weight: 600;
+    border-radius: 8px;
+    transition: all 140ms ease;
+  }
+  .cta-primary:hover { background: var(--blue); transform: translateY(-1px); }
+  .cta-primary svg { width: 12px; height: 12px; }
+  .cta-secondary {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 12px 16px;
+    color: var(--ink); font-size: 14px; font-weight: 500;
+    border: 1px solid var(--rule-2);
+    border-radius: 8px;
+    background: rgba(26,34,48,0.02);
+    transition: all 140ms ease;
+  }
+  .cta-secondary:hover { background: var(--blue-tint); border-color: var(--blue); }
+
+  /* ── Cockpit canvas (THE marketing centerpiece) ─────────── */
+  .cockpit-wrap {
+    max-width: 1320px; margin: 32px auto 0;
+    padding: 0 32px;
+  }
+  .cockpit {
+    position: relative;
+    background: #faf7f0;
+    border: 1px solid var(--rule-2);
+    border-radius: 14px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 1px 2px rgba(26,34,48,0.06),
+      0 30px 60px -25px rgba(26,34,48,0.22);
+    overflow: hidden;
+  }
+  .cockpit-titlebar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, var(--paper-2), var(--paper));
+  }
+  .traffic {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--rule-2);
+  }
+  .titlebar-url {
+    flex: 1; text-align: center;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .titlebar-url b { color: var(--ink); font-weight: 500; }
+
+  .cockpit-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .cockpit-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .cockpit-nav { display: flex; gap: 4px; font-size: 13px; }
+  .cockpit-nav button {
+    background: none; border: none; cursor: pointer;
+    color: var(--ink-2); font: inherit;
+    padding: 6px 12px; border-radius: 6px;
+    transition: background 100ms;
+  }
+  .cockpit-nav button:hover { background: rgba(26,34,48,0.05); color: var(--ink); }
+  .cockpit-nav button.active {
+    background: var(--ink); color: var(--paper);
+  }
+  .cockpit-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .cockpit-status .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--good);
+  }
+
+  /* Three columns */
+  .cockpit-body {
+    display: grid;
+    grid-template-columns: 240px 1fr 320px;
+    height: 640px;
+  }
+
+  /* LEFT — Memory */
+  .col-mem {
+    border-right: 1px solid var(--rule);
+    overflow-y: auto;
+  }
+  .col-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--blue);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .col-head .right { color: var(--ink-3); font-weight: 500; }
+  .deal-card {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, var(--blue-tint), transparent);
+  }
+  .deal-card-meta {
+    font-size: 11px; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .deal-card-name {
+    font-size: 16px; font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .deal-card-stage {
+    font-size: 12px; color: var(--ink-2);
+  }
+  .deal-card-stage b { color: var(--ink); font-weight: 600; }
+  .timeline { padding: 8px 16px 18px; }
+  .timeline-label {
+    font-size: 10.5px; color: var(--ink-3);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin: 14px 0 8px; font-weight: 600;
+  }
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--rule);
+    font-size: 12.5px;
+  }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--rule-2);
+    justify-self: center;
+    margin-top: 6px;
+  }
+  .timeline-dot.alert { background: var(--crit); }
+  .timeline-dot.active { background: var(--blue); box-shadow: 0 0 0 3px var(--blue-tint); }
+  .timeline-title { color: var(--ink); line-height: 1.4; }
+  .timeline-sub {
+    color: var(--ink-3); font-size: 11px;
+    margin-top: 2px;
+  }
+
+  /* CENTER — Primary decision focus */
+  .col-op {
+    border-right: 1px solid var(--rule);
+    overflow-y: auto;
+    background: var(--paper);
+  }
+  .pdf {
+    margin: 18px;
+    border: 1px solid var(--rule-2);
+    border-radius: 10px;
+    background: #faf7f0;
+    overflow: hidden;
+    position: relative;
+  }
+  .pdf::before {
+    content: "";
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--crit);
+  }
+  .pdf-head {
+    padding: 14px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--rule);
+  }
+  .pdf-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--blue);
+  }
+  .pdf-sev {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px;
+    background: rgba(194,90,74,0.1);
+    color: var(--crit);
+    border-radius: 4px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+  .pdf-body { padding: 16px 18px 18px; }
+
+  .pdf-section { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--rule); }
+  .pdf-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .pdf-section-label {
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: 6px;
+  }
+  .pdf-risk {
+    font-size: 17px; font-weight: 600;
+    letter-spacing: -0.01em; line-height: 1.3;
+    color: var(--ink); margin: 0;
+  }
+  .pdf-move { font-size: 14px; color: var(--ink); margin: 0; line-height: 1.55; }
+  .pdf-move em { color: var(--blue); font-style: normal; font-weight: 500; }
+
+  .pdf-quote {
+    padding: 10px 12px;
+    background: var(--blue-tint);
+    border-left: 2px solid var(--blue);
+    border-radius: 0 6px 6px 0;
+    font-size: 13.5px; line-height: 1.5;
+    color: var(--ink);
+    font-style: italic;
+    margin: 0;
+  }
+  .pdf-quote-attr {
+    margin-top: 6px;
+    font-size: 11px; color: var(--ink-3);
+    font-style: normal;
+    letter-spacing: 0.02em;
+  }
+  .pdf-quote-attr b { color: var(--ink-2); font-weight: 600; }
+
+  .pdf-temporal { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .pdf-temp-cell {
+    padding: 8px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--paper);
+  }
+  .pdf-temp-cell .num {
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .pdf-temp-cell .lab {
+    font-size: 10.5px; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-top: 4px;
+  }
+
+  .pdf-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .approve {
+    padding: 9px 16px;
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: 999px;
+    font: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: background 140ms;
+  }
+  .approve:hover { background: var(--blue); }
+  .modify, .reject {
+    padding: 9px 14px; background: transparent;
+    color: var(--ink); border: 1px solid var(--rule-2);
+    border-radius: 999px; font: inherit; font-size: 13px;
+    cursor: pointer; transition: background 140ms;
+  }
+  .modify:hover, .reject:hover { background: var(--blue-tint); }
+
+  .secondary {
+    margin: 14px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    background: #faf7f0;
+    padding: 14px 16px;
+  }
+  .secondary-head {
+    display: flex; justify-content: space-between;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .secondary-head b { color: var(--ink); }
+  .secondary p {
+    font-size: 13px; color: var(--ink-2); line-height: 1.55;
+    margin: 0;
+  }
+  .last-stats {
+    display: flex; gap: 14px;
+    margin-top: 10px;
+    font-size: 11px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .last-stats b { color: var(--ink); font-weight: 600; }
+
+  /* RIGHT — Execution */
+  .col-exec { overflow-y: auto; }
+  .exec-group {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .exec-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--blue);
+    margin-bottom: 10px;
+    display: flex; justify-content: space-between;
+  }
+  .exec-label .count {
+    background: var(--blue-tint);
+    color: var(--blue);
+    padding: 1px 7px; border-radius: 999px;
+    font-size: 10.5px;
+  }
+  .compose {
+    border: 1px solid var(--rule-2);
+    border-radius: 8px;
+    padding: 10px;
+    background: var(--paper);
+  }
+  .compose-to {
+    font-size: 11px; color: var(--ink-3);
+    margin-bottom: 4px;
+  }
+  .compose-to b { color: var(--ink); font-weight: 600; }
+  .compose-subj { font-size: 12.5px; color: var(--ink); font-weight: 600; margin-bottom: 6px; }
+  .compose-body {
+    font-size: 12px; color: var(--ink-2);
+    line-height: 1.55;
+    border-top: 1px dashed var(--rule);
+    padding-top: 6px;
+  }
+  .compose-meta {
+    margin-top: 8px;
+    display: flex; justify-content: space-between;
+    font-size: 10.5px; color: var(--ink-3);
+  }
+  .compose-meta a { color: var(--blue); font-weight: 500; }
+
+  .crm-row {
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .crm-row:last-child { border-bottom: none; }
+  .crm-row-head {
+    display: flex; justify-content: space-between;
+    font-size: 10.5px; color: var(--ink-3); margin-bottom: 3px;
+  }
+  .crm-row-head .pill {
+    color: var(--blue); font-weight: 600;
+    background: var(--blue-tint); padding: 1px 6px; border-radius: 3px;
+    font-size: 10px;
+  }
+  .crm-field { font-size: 12px; color: var(--ink); font-weight: 500; margin-bottom: 4px; }
+  .crm-diff {
+    display: flex; gap: 6px; align-items: center;
+    font-size: 12px;
+  }
+  .crm-diff .strike { color: var(--ink-4); text-decoration: line-through; font-family: var(--mono); font-size: 11px; }
+  .crm-diff .arrow { color: var(--ink-4); }
+  .crm-diff .new { color: var(--ink); font-weight: 500; }
+  .crm-row-actions { display: flex; gap: 6px; margin-top: 6px; }
+  .crm-row-actions button {
+    padding: 3px 8px;
+    border: 1px solid var(--rule-2);
+    background: var(--paper);
+    border-radius: 999px;
+    font: inherit; font-size: 10.5px;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .crm-row-actions button.p {
+    background: var(--ink); color: var(--paper); border-color: var(--ink);
+  }
+  .guard {
+    padding: 9px 16px;
+    background: var(--paper-2);
+    border-top: 1px solid var(--rule);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+  .guard b { color: var(--ink-2); font-weight: 600; }
+
+  .queue-item {
+    display: grid;
+    grid-template-columns: 5px 1fr;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .queue-item:last-child { border-bottom: none; }
+  .queue-bar { background: var(--blue); border-radius: 2px; }
+  .queue-bar.crit { background: var(--crit); }
+  .queue-bar.warn { background: var(--warn); }
+  .queue-title { font-size: 12px; color: var(--ink); line-height: 1.45; }
+  .queue-meta { font-size: 10.5px; color: var(--ink-3); margin-top: 3px; }
+
+  /* ── Below the cockpit ─────────────────────────────────── */
+  .below {
+    max-width: 1320px; margin: 80px auto 0;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 64px;
+  }
+  .below-eyebrow {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--blue);
+  }
+  .below-body {
+    max-width: 720px;
+  }
+  .below-body h2 {
+    font-size: 32px; font-weight: 700;
+    letter-spacing: -0.025em; line-height: 1.1;
+    color: var(--ink);
+    margin: 0 0 20px;
+  }
+  .below-body p {
+    font-size: 16px; line-height: 1.65;
+    color: var(--ink-2);
+    margin: 0 0 14px;
+    max-width: 640px;
+  }
+  .below-body p strong { color: var(--ink); font-weight: 600; }
+
+  /* ── Validation strip ─────────────────────────────────── */
+  .validation {
+    max-width: 1320px; margin: 80px auto 96px;
+    padding: 0 32px;
+  }
+  .val-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+  }
+  .val-cell {
+    padding: 28px 24px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .val-num {
+    font-size: 56px; font-weight: 700;
+    letter-spacing: -0.04em; line-height: 0.95;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 10px;
+  }
+  .val-lab {
+    font-size: 13px; color: var(--ink-2); line-height: 1.5;
+  }
+  .val-lab b { color: var(--ink); font-weight: 600; }
+
+  footer {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 24px 32px 56px;
+    border-top: 1px solid var(--rule);
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--ink-3);
+  }
+  footer a { color: var(--ink-2); border-bottom: 1px solid transparent; }
+  footer a:hover { border-bottom-color: var(--ink-2); }
+
+  @media (max-width: 1100px) {
+    .cockpit-body { grid-template-columns: 220px 1fr; }
+    .col-exec { display: none; }
+  }
+  @media (max-width: 760px) {
+    .cockpit-body { grid-template-columns: 1fr; height: auto; }
+    .col-mem, .col-exec { display: none; }
+    .below { grid-template-columns: 1fr; gap: 20px; padding: 0 24px; }
+    .val-grid { grid-template-columns: 1fr 1fr; }
+    .nav-status { display: none; }
+    .hero { padding: 40px 24px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="navWrap">
+  <nav class="nav">
+    <a class="mark" href="#">
+      <svg class="mark-icon" viewBox="0 0 64 64" width="22" height="22" fill="none">
+        <path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#1a2230" stroke-width="3" stroke-linecap="round"/>
+        <line x1="22" y1="22" x2="22" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="32" y1="22" x2="32" y2="14" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <line x1="42" y1="22" x2="42" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+        <path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#4a7186" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      Mallin
+    </a>
+    <div class="nav-right">
+      <span class="nav-status"><span class="dot"></span> System operational · cohort 01</span>
+      <a class="nav-link" href="#">How it works</a>
+      <a class="nav-link" href="#">Doctrine</a>
+      <a class="nav-cta" href="#">Request access →</a>
+    </div>
+  </nav>
+</div>
+
+<section class="hero">
+  <p class="hero-eyebrow">— The operating layer for revenue execution</p>
+  <h1 class="hero-h1">
+    The CRM stores what was typed.<br/>
+    <em>Mallin reads what was heard.</em>
+  </h1>
+  <p class="hero-sub">
+    Every call, every email, every Slack thread on every deal —
+    reconstructed into operational state, surfaced as
+    <strong>verification alerts in the deal Slack thread the manager
+    is already in</strong>, before forecast day. No new logging. No new
+    workflow. Approval gate on every CRM write.
+  </p>
+  <div class="cta-row">
+    <a class="cta-primary" href="mailto:hello@mallin.io">
+      Request a design-partner slot
+      <svg viewBox="0 0 12 12" fill="none"><path d="M1 6h10M7 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a class="cta-secondary" href="#">See it run on the closed-lost retro →</a>
+  </div>
+</section>
+
+<!-- ── The cockpit IS the marketing centerpiece ───────────────────── -->
+<section class="cockpit-wrap">
+  <div class="cockpit">
+
+    <div class="cockpit-titlebar">
+      <span class="traffic"></span>
+      <span class="traffic"></span>
+      <span class="traffic"></span>
+      <span class="titlebar-url">mallin.io / cockpit / <b>treasury-platform-Q2</b></span>
+      <span style="width: 39px;"></span>
+    </div>
+
+    <div class="cockpit-top">
+      <div class="cockpit-brand">
+        <svg viewBox="0 0 64 64" width="16" height="16" fill="none">
+          <path d="M 6 26 Q 18 21, 32 26 T 58 26" stroke="#1a2230" stroke-width="3" stroke-linecap="round"/>
+          <line x1="22" y1="22" x2="22" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+          <line x1="32" y1="22" x2="32" y2="14" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+          <line x1="42" y1="22" x2="42" y2="17" stroke="#1a2230" stroke-width="1.75" stroke-linecap="round"/>
+          <path d="M 3 42 Q 17 36, 32 42 T 61 42" stroke="#4a7186" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        Mallin
+      </div>
+      <div class="cockpit-nav">
+        <button class="active">Cockpit</button>
+        <button>Deals</button>
+        <button>Replay</button>
+        <button>Settings</button>
+      </div>
+      <div class="cockpit-status">
+        <span class="dot"></span> Substrate · 47 artifacts · synced 09:47 PT
+      </div>
+    </div>
+
+    <div class="cockpit-body">
+
+      <!-- LEFT — Memory -->
+      <div class="col-mem">
+        <div class="col-head">
+          <span>Memory</span>
+          <span class="right">deal · 18mo</span>
+        </div>
+        <div class="deal-card">
+          <div class="deal-card-meta">DEAL · MID-MARKET TREASURY</div>
+          <div class="deal-card-name">Cipher Mining Platform</div>
+          <div class="deal-card-stage"><b>$450K</b> · stage 4 · day 31</div>
+        </div>
+        <div class="timeline">
+          <div class="timeline-label">Last 7 days</div>
+
+          <div class="timeline-item">
+            <span class="timeline-dot alert"></span>
+            <div>
+              <div class="timeline-title">Verification alert · champion airtime collapse</div>
+              <div class="timeline-sub">May 17 · 14:22 PT · from call 4</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-dot active"></span>
+            <div>
+              <div class="timeline-title">Call 4 · demo follow-up</div>
+              <div class="timeline-sub">May 17 · 11:00 · 47min · Gong</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-dot"></span>
+            <div>
+              <div class="timeline-title">Email · pricing one-pager sent</div>
+              <div class="timeline-sub">May 16 · to Andrea L.</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-dot"></span>
+            <div>
+              <div class="timeline-title">Slack · #deal-treasury-cipher</div>
+              <div class="timeline-sub">May 15 · 5 msgs · manager looped</div>
+            </div>
+          </div>
+
+          <div class="timeline-label">Earlier · prior 3 weeks</div>
+
+          <div class="timeline-item">
+            <span class="timeline-dot alert"></span>
+            <div>
+              <div class="timeline-title">Alert · competitor introduced</div>
+              <div class="timeline-sub">May 9 · GTreasury · pricing call</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-dot"></span>
+            <div>
+              <div class="timeline-title">Call 3 · technical fit</div>
+              <div class="timeline-sub">May 9 · 52min · CFO present</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-dot"></span>
+            <div>
+              <div class="timeline-title">Call 1 · qualification</div>
+              <div class="timeline-sub">Apr 21 · 31min · inbound</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER — Primary decision focus -->
+      <div class="col-op">
+
+        <div class="pdf">
+          <div class="pdf-head">
+            <span class="pdf-label">— Primary decision focus</span>
+            <span class="pdf-sev">HIGH · MANAGER LOOPED</span>
+          </div>
+          <div class="pdf-body">
+
+            <div class="pdf-section">
+              <div class="pdf-section-label">RISK</div>
+              <h3 class="pdf-risk">The signer is disengaging. Two consecutive calls with zero questions from the CFO. Champion airtime collapsed 40% → 8%.</h3>
+            </div>
+
+            <div class="pdf-section">
+              <div class="pdf-section-label">MOVE</div>
+              <p class="pdf-move">
+                Force a head-on conversation on call 5. Ask the CFO directly: <em>"Before procurement, what would it take for you to commit to a signature date by quarter-end?"</em> If he can't name conditions, the deal is not real — escalate to manager today, not next week.
+              </p>
+            </div>
+
+            <div class="pdf-section">
+              <div class="pdf-section-label">EVIDENCE</div>
+              <blockquote class="pdf-quote">
+                "We'll need to review with the team before next steps."
+                <div class="pdf-quote-attr">— Nathan Reed, CFO &nbsp;·&nbsp; <b>call 4 · 11:38 AM · 24:18 / 47:00</b></div>
+              </blockquote>
+            </div>
+
+            <div class="pdf-section">
+              <div class="pdf-section-label">TEMPORAL</div>
+              <div class="pdf-temporal">
+                <div class="pdf-temp-cell"><div class="num">2</div><div class="lab">calls · signer<br/>question count</div></div>
+                <div class="pdf-temp-cell"><div class="num">8%</div><div class="lab">champion airtime<br/>down from 40%</div></div>
+                <div class="pdf-temp-cell"><div class="num">31d</div><div class="lab">since first call<br/>stage 4 day 9</div></div>
+              </div>
+            </div>
+
+            <div class="pdf-actions">
+              <button class="approve">Approve and queue action</button>
+              <button class="modify">Modify</button>
+              <button class="reject">Dismiss</button>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="secondary">
+          <div class="secondary-head">
+            <span><b>Last call</b> — what was heard</span>
+            <span>CALL 4 · 47:00 · MAY 17</span>
+          </div>
+          <p>CFO present but quiet — entered late, left early. Andrea (champion) carried 92% of buyer-side airtime, mostly fielding technical follow-ups from your SE. No commitment language. Competitor (GTreasury) referenced once without pushback.</p>
+          <div class="last-stats">
+            <span><b>3</b> stakeholders</span>
+            <span><b>0</b> commitment language</span>
+            <span><b>1</b> competitor mention</span>
+            <span><b>2</b> next-step ambiguity</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT — Execution -->
+      <div class="col-exec">
+
+        <div class="exec-group">
+          <div class="exec-label">
+            <span>Compose · email draft</span>
+            <span style="color: var(--ink-4); background: transparent; font-weight: 600;">PENDING</span>
+          </div>
+          <div class="compose">
+            <div class="compose-to">To · <b>Nathan Reed</b> ‹nreed@cipher.example›</div>
+            <div class="compose-subj">A direct question before procurement</div>
+            <div class="compose-body">
+              Nathan — quick one before we send procurement. To make sure we're solving the right problem: what would need to be true for you to commit to a signature date by quarter-end? Happy to address whatever's blocking that on our next call.
+            </div>
+            <div class="compose-meta">
+              <span>VOICE · MATCHED FROM 6 PRIOR EMAILS</span>
+              <a href="#">Open in composer →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="exec-group">
+          <div class="exec-label">
+            <span>CRM updates · proposed</span>
+            <span class="count">3</span>
+          </div>
+          <div class="crm-row">
+            <div class="crm-row-head"><span class="pill">STAGE 1 · SUGGEST</span><span>from call 4</span></div>
+            <div class="crm-field">MEDDPICC › Champion</div>
+            <div class="crm-diff"><span class="strike">(empty)</span><span class="arrow">→</span><span class="new">Andrea Larson · Dir, Treasury Ops</span></div>
+            <div class="crm-row-actions">
+              <button class="p">Looks right</button>
+              <button>Looks wrong</button>
+              <button>Edit</button>
+            </div>
+          </div>
+          <div class="crm-row">
+            <div class="crm-row-head"><span class="pill">STAGE 1 · SUGGEST</span><span>from call 4</span></div>
+            <div class="crm-field">MEDDPICC › Competition</div>
+            <div class="crm-diff"><span class="strike">(empty)</span><span class="arrow">→</span><span class="new">GTreasury · introduced during pricing</span></div>
+            <div class="crm-row-actions">
+              <button class="p">Looks right</button>
+              <button>Looks wrong</button>
+            </div>
+          </div>
+          <div class="crm-row">
+            <div class="crm-row-head"><span class="pill">STAGE 1 · SUGGEST</span><span>from call 4</span></div>
+            <div class="crm-field">Last activity</div>
+            <div class="crm-diff"><span class="strike">May 10</span><span class="arrow">→</span><span class="new">May 17 · call 4 · 47min</span></div>
+          </div>
+        </div>
+
+        <div class="guard">
+          NEVER AUTO-WRITTEN · <b>Stage · Amount · Close Date · Forecast Category</b>
+        </div>
+
+        <div class="exec-group">
+          <div class="exec-label">
+            <span>Action queue · today</span>
+            <span class="count">4</span>
+          </div>
+          <div class="queue-item">
+            <span class="queue-bar crit"></span>
+            <div>
+              <div class="queue-title">Send the direct question to CFO before call 5</div>
+              <div class="queue-meta">PENDING APPROVAL · created 14:22</div>
+            </div>
+          </div>
+          <div class="queue-item">
+            <span class="queue-bar crit"></span>
+            <div>
+              <div class="queue-title">Loop manager into deal thread · GTreasury</div>
+              <div class="queue-meta">SLACK DRAFTED · pending send</div>
+            </div>
+          </div>
+          <div class="queue-item">
+            <span class="queue-bar warn"></span>
+            <div>
+              <div class="queue-title">Approve 3 CRM updates from call 4</div>
+              <div class="queue-meta">STAGE 1 · awaiting Looks right</div>
+            </div>
+          </div>
+          <div class="queue-item">
+            <span class="queue-bar"></span>
+            <div>
+              <div class="queue-title">Verify second-level intro on call 5</div>
+              <div class="queue-meta">PRE-CALL BRIEF · 2:00 PM</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Why this matters ─────────────────────────────────────── -->
+<section class="below">
+  <div>
+    <div class="below-eyebrow">— Why this works</div>
+  </div>
+  <div class="below-body">
+    <h2>One operating environment. Five elements every Mallin surface always renders.</h2>
+    <p>
+      Every recommendation — primary decision focus, manager DM,
+      pre-call brief, recap email — renders the same five-element sequence:
+      <strong>clear risk → prescriptive move → quoted evidence → temporal
+      proof → accountable decision.</strong> No score in isolation. No
+      paraphrased evidence. No filled SaaS button competing with the
+      reasoning that earned it.
+    </p>
+    <p>
+      Memory on the left so the rep doesn't lose context across weeks.
+      Operating decisions in the center so the next move is unambiguous.
+      Execution on the right because <strong>the rep is not delegating
+      thinking — they are delegating synthesis labor.</strong>
+    </p>
+  </div>
+</section>
+
+<section class="validation">
+  <div class="val-grid">
+    <div class="val-cell">
+      <div class="val-num">5</div>
+      <div class="val-lab"><b>Enterprise cycles tested</b> — closed-won, stalled, closed-lost</div>
+    </div>
+    <div class="val-cell">
+      <div class="val-num">12</div>
+      <div class="val-lab"><b>Verification alerts</b> fired on the closed-lost retrospective</div>
+    </div>
+    <div class="val-cell">
+      <div class="val-num">0</div>
+      <div class="val-lab"><b>False-positive escalations</b> across the retrospective set</div>
+    </div>
+    <div class="val-cell">
+      <div class="val-num">4</div>
+      <div class="val-lab"><b>Never-auto fields</b> · Stage · Amount · Close Date · Forecast</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Mallin · Built for revenue teams that don't skirt.</span>
+  <span><a href="mailto:hello@mallin.io">hello@mallin.io</a> · SOC 2 in scope · 2 design-partner slots remain</span>
+</footer>
+
+</body>
+</html>

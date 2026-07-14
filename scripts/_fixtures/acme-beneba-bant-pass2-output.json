@@ -1,0 +1,341 @@
+{
+  "intelligence": [
+    {
+      "id": "int_001",
+      "source_channel": "call",
+      "derivation": "observed",
+      "summary": "Eleanor stated Q3 expansion has stretched her team thin and they are actively evaluating solutions now.",
+      "quote": "We're evaluating solutions now — the Q3 expansion really stretched our team thin.",
+      "strength": "strong",
+      "source_ref": {
+        "system": "gong",
+        "external_id": "gong_act_acme_001"
+      },
+      "source_span": {
+        "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+        "start_ms": 245000,
+        "end_ms": 260000
+      }
+    },
+    {
+      "id": "int_002",
+      "source_channel": "call",
+      "derivation": "observed",
+      "summary": "Eleanor named James (procurement) and Maria (CFO) as required participants in any decision.",
+      "quote": "James in procurement and Maria our CFO would need to be involved in any decision.",
+      "strength": "strong",
+      "source_ref": {
+        "system": "gong",
+        "external_id": "gong_act_acme_001"
+      },
+      "source_span": {
+        "call_id": "8adeeabf-d045-49e1-825f-baa0b6039d1a",
+        "start_ms": 1180000,
+        "end_ms": 1196000
+      }
+    },
+    {
+      "id": "int_003",
+      "source_channel": "crm",
+      "derivation": "observed",
+      "summary": "Discovery call summary confirms Eleanor described expansion-driven ops bandwidth issues and named James and Maria in decision process.",
+      "strength": "moderate",
+      "source_ref": {
+        "system": "gong",
+        "external_id": "gong_act_acme_001"
+      },
+      "source_span": {
+        "activity_id": "885baed1-15f9-4780-9057-cabcb35dd1af"
+      }
+    },
+    {
+      "id": "int_004",
+      "source_channel": "email",
+      "derivation": "observed",
+      "summary": "Pat's cold outreach to Eleanor referenced Beneba's Q3 expansion announcement as the trigger for outreach.",
+      "quote": "Hi Eleanor — saw your Q3 announcement and thought our cycle compression platform...",
+      "strength": "moderate",
+      "source_ref": {
+        "system": "gmail",
+        "external_id": "gmail_act_acme_001"
+      },
+      "source_span": {
+        "email_id": "fa366f1c-852e-4ea9-82ce-2f23b1f8ead3"
+      }
+    },
+    {
+      "id": "int_005",
+      "source_channel": "calendar",
+      "derivation": "observed",
+      "summary": "Follow-up meeting scheduled for Apr 30 with Eleanor and James Okoye (procurement) both accepted — first time procurement is looped in.",
+      "strength": "strong",
+      "source_ref": {
+        "system": "google_calendar",
+        "external_id": "gcal_act_acme_001"
+      },
+      "source_span": {
+        "activity_id": "18a295e6-c003-4bde-9bab-6277927522e5"
+      }
+    },
+    {
+      "id": "int_006",
+      "source_channel": "crm",
+      "derivation": "inferred",
+      "summary": "Maria Chen (CFO, economic buyer) has no logged conversational touch and is absent from all scheduled meetings. Inferred from her absent engagement level and null last_conversational_confirmation, despite Eleanor naming her as a required approver.",
+      "strength": "strong",
+      "source_ref": {
+        "system": "salesforce",
+        "external_id": "6d072dbd-cc3d-444a-a574-520eefb15296"
+      }
+    },
+    {
+      "id": "int_007",
+      "source_channel": "crm",
+      "derivation": "inferred",
+      "summary": "No budget figure, budget range, or budget confirmation has been stated in any call, email, or CRM note. Inferred gap from absence of any financial commitment or range across all logged touches.",
+      "strength": "moderate",
+      "source_ref": {
+        "system": "salesforce",
+        "external_id": "6d072dbd-cc3d-444a-a574-520eefb15296"
+      }
+    },
+    {
+      "id": "int_008",
+      "source_channel": "crm",
+      "derivation": "inferred",
+      "summary": "No close date or evaluation timeline communicated by Beneba. Inferred gap — deal close date of 2026-07-31 is rep-set; no customer-side timeline stated in any touch.",
+      "strength": "moderate",
+      "source_ref": {
+        "system": "salesforce",
+        "external_id": "6d072dbd-cc3d-444a-a574-520eefb15296"
+      }
+    },
+    {
+      "id": "int_009",
+      "source_channel": "crm",
+      "derivation": "inferred",
+      "summary": "Carlos Vega (IT Director, influencer) has no deal engagement logged — he is account_only and has not been introduced to or appeared in any opportunity-anchored activity.",
+      "strength": "weak",
+      "source_ref": {
+        "system": "salesforce",
+        "external_id": "6d072dbd-cc3d-444a-a574-520eefb15296"
+      }
+    },
+    {
+      "id": "int_010",
+      "source_channel": "crm",
+      "derivation": "observed",
+      "summary": "Call summary confirms no commitments were made during discovery call — procurement and CFO review process was discussed only.",
+      "strength": "moderate",
+      "source_ref": {
+        "system": "gong",
+        "external_id": "gong_act_acme_001"
+      },
+      "source_span": {
+        "activity_id": "885baed1-15f9-4780-9057-cabcb35dd1af"
+      }
+    },
+    {
+      "id": "int_011",
+      "source_channel": "calendar",
+      "derivation": "observed",
+      "summary": "James Okoye accepted the Apr 30 follow-up meeting — first direct procurement engagement with the deal.",
+      "strength": "moderate",
+      "source_ref": {
+        "system": "google_calendar",
+        "external_id": "gcal_act_acme_001"
+      },
+      "source_span": {
+        "activity_id": "18a295e6-c003-4bde-9bab-6277927522e5"
+      }
+    },
+    {
+      "id": "int_012",
+      "source_channel": "crm",
+      "derivation": "inferred",
+      "summary": "Eleanor's active engagement (discovery call, accepted meeting) combined with her CRM-assigned champion role suggests she is the internal driver. Inferred from two distinct touches where she initiated or participated substantively.",
+      "strength": "moderate",
+      "source_ref": {
+        "system": "salesforce",
+        "external_id": "6d072dbd-cc3d-444a-a574-520eefb15296"
+      }
+    }
+  ],
+  "methodology_pillar_evidence": [
+    {
+      "pillar_key": "budget",
+      "evidence_ids": [
+        "int_007"
+      ],
+      "confidence": "low",
+      "status_override": "unknown"
+    },
+    {
+      "pillar_key": "authority",
+      "evidence_ids": [
+        "int_002",
+        "int_006"
+      ],
+      "confidence": "medium",
+      "status_override": "partial"
+    },
+    {
+      "pillar_key": "need",
+      "evidence_ids": [
+        "int_001",
+        "int_003",
+        "int_004"
+      ],
+      "confidence": "high",
+      "status_override": "confirmed"
+    },
+    {
+      "pillar_key": "timeline",
+      "evidence_ids": [
+        "int_008"
+      ],
+      "confidence": "low",
+      "status_override": "unknown"
+    }
+  ],
+  "stakeholder_enrichments": [
+    {
+      "stakeholder_id": "eec477e0-d8e5-4795-9459-c0c5ef682c73",
+      "disposition": "champion",
+      "engagement_level": "active",
+      "influence_level": "medium",
+      "notes": "Eleanor initiated substantive pain sharing on the discovery call and accepted the Apr 30 follow-up. She proactively named the decision committee, signaling internal advocacy.",
+      "evidence_ids": [
+        "int_001",
+        "int_002",
+        "int_005",
+        "int_012"
+      ],
+      "confidence": "high"
+    },
+    {
+      "stakeholder_id": "7ebfc445-0e07-4e54-9f3c-b6a6bb76aa1b",
+      "disposition": "neutral",
+      "engagement_level": "passive",
+      "influence_level": "medium",
+      "notes": "James named by Eleanor as required in decision process. He accepted the Apr 30 meeting but has no prior conversational touch. Disposition cannot yet be characterized beyond neutral.",
+      "evidence_ids": [
+        "int_002",
+        "int_011"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "stakeholder_id": "6607872b-fe1f-489b-8597-c41d35b433db",
+      "disposition": "unknown",
+      "engagement_level": "absent",
+      "influence_level": "high",
+      "notes": "Maria (CFO, economic buyer) named by Eleanor as a required approver but has no logged touch and is absent from all scheduled activities. Critical risk given her economic buyer role.",
+      "evidence_ids": [
+        "int_002",
+        "int_006"
+      ],
+      "confidence": "high"
+    },
+    {
+      "stakeholder_id": "97ffaf35-bb09-4df3-b216-5cba063c5c54",
+      "disposition": "supporter",
+      "engagement_level": "active",
+      "influence_level": "low",
+      "notes": "Pat executed cold outreach and booked the discovery call and follow-up. Internal rep role — disposition and influence assessed as internal supporter.",
+      "evidence_ids": [
+        "int_004",
+        "int_005"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "stakeholder_id": "f23028a7-384a-4d16-9423-9fa83bf8b425",
+      "engagement_level": "absent",
+      "notes": "Carlos Vega has no opportunity-anchored activity. Account-only record with no engagement logged against this deal.",
+      "evidence_ids": [
+        "int_009"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "conflicts": [
+    {
+      "entity": "stakeholder",
+      "description": "Eleanor named Maria (CFO) as a required decision approver, but Maria has zero logged engagement and is absent from all deal activities, creating an unmitigated economic buyer blind spot.",
+      "involved_ids": [
+        "eec477e0-d8e5-4795-9459-c0c5ef682c73",
+        "6607872b-fe1f-489b-8597-c41d35b433db"
+      ],
+      "evidence_ids": [
+        "int_002",
+        "int_006"
+      ],
+      "severity": "high",
+      "confidence": "high"
+    },
+    {
+      "entity": "methodology",
+      "description": "CRM deal posture is set to 'advancing' but budget and timeline pillars are both unknown — no customer-side financial or scheduling commitment has been logged.",
+      "involved_ids": [],
+      "evidence_ids": [
+        "int_007",
+        "int_008",
+        "int_010"
+      ],
+      "severity": "medium",
+      "confidence": "high"
+    }
+  ],
+  "opportunity_enrichments": {
+    "last_activity_summary": {
+      "text": "A follow-up meeting is scheduled for Apr 30 with Eleanor (champion) and James Okoye (procurement) both accepted — first time procurement is engaged directly on the deal.",
+      "confidence": "high",
+      "evidence_ids": [
+        "int_005",
+        "int_011"
+      ]
+    },
+    "deal_posture": {
+      "status": "advancing",
+      "rationale": "Champion Eleanor is engaged and advocating; procurement is now looped in via accepted Apr 30 meeting. Key risk: CFO (economic buyer) is entirely absent and budget/timeline remain unconfirmed.",
+      "confidence": "medium",
+      "evidence_ids": [
+        "int_001",
+        "int_005",
+        "int_006",
+        "int_007",
+        "int_008",
+        "int_011"
+      ]
+    }
+  },
+  "diagnostics": {
+    "overall_confidence": "medium",
+    "rationale": "Need pillar is well-evidenced from the discovery call. Authority is partially evidenced — decision committee named but not yet engaged. Budget and timeline have zero customer-side evidence. Economic buyer (Maria Chen) is fully absent. Deal is early-stage (Discovery, stage 2/8) with only one substantive call logged.",
+    "insufficiently_evidenced": [
+      {
+        "field_path": "methodology_pillar_evidence[budget]",
+        "reason": "No budget figure, range, or approval signal has been stated by any Beneba stakeholder in any logged touch."
+      },
+      {
+        "field_path": "methodology_pillar_evidence[timeline]",
+        "reason": "No customer-stated evaluation or decision timeline has been captured. Close date of 2026-07-31 is rep-set only."
+      },
+      {
+        "field_path": "stakeholder_enrichments[maria_chen].disposition",
+        "reason": "Maria Chen has no conversational touch and is absent from all activities — disposition cannot be characterized beyond unknown."
+      },
+      {
+        "field_path": "stakeholder_enrichments[carlos_vega]",
+        "reason": "Carlos Vega is account-only with no opportunity-anchored activity. Engagement, disposition, and influence are entirely unevidenced."
+      },
+      {
+        "field_path": "commercial_enrichments",
+        "reason": "Deal is in Discovery (stage 2/8) with no commercial discussion, pricing, or contract terms logged. Commercial enrichments omitted."
+      }
+    ],
+    "generated_at": "2026-04-28T15:22:20.259Z",
+    "model": "claude-sonnet-4-6 (prompt v1.1.0)"
+  }
+}

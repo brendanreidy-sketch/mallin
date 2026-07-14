@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin</title>
+<link href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f7f5f1;
+    --paper-2: #efece4;
+    --ink:   #111;
+    --ink-2: #444;
+    --ink-3: #888;
+    --rule:  #d5d1c7;
+    --didot: "GFS Didot", "Bodoni 72", "Didot", serif;
+    --garam: "Cormorant Garamond", "Garamond", serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--garam);
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--ink); color: var(--paper); }
+
+  /* ── Nav: barely there ─────────────────────────────────── */
+  nav.top {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 32px 56px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 10;
+    pointer-events: none;
+  }
+  nav.top > * { pointer-events: auto; }
+  .mark {
+    font-family: var(--didot);
+    font-size: 22px;
+    letter-spacing: 0.04em;
+  }
+  .menu {
+    font-family: var(--garam);
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .menu span { margin-left: 28px; cursor: pointer; }
+  .menu span:hover { color: var(--ink); }
+
+  /* ── Hero: extreme asymmetry, vast whitespace ─────────── */
+  .hero {
+    height: 100vh;
+    min-height: 760px;
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    align-items: stretch;
+  }
+  .hero-left {
+    position: relative;
+    padding: 0 56px 56px;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+  }
+  .hero-meta {
+    font-family: var(--garam);
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 56px;
+  }
+  .hero-meta b {
+    color: var(--ink);
+    font-weight: 400;
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .hero-headline {
+    font-family: var(--didot);
+    font-weight: 400;
+    font-size: clamp(48px, 6.4vw, 88px);
+    line-height: 0.96;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin: 0 0 32px;
+  }
+  .hero-headline em {
+    font-family: var(--garam);
+    font-style: italic;
+    font-weight: 300;
+  }
+  .hero-byline {
+    font-family: var(--garam);
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink-2);
+    max-width: 340px;
+    line-height: 1.5;
+  }
+
+  .hero-right {
+    position: relative;
+    background: var(--paper-2);
+    overflow: hidden;
+  }
+  .hero-image {
+    position: absolute; inset: 56px 56px 120px 0;
+    background-image: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=2000&q=85");
+    background-size: cover;
+    background-position: center;
+    filter: grayscale(0.4) contrast(0.96);
+  }
+  .hero-image-label {
+    position: absolute;
+    bottom: 56px;
+    right: 56px;
+    text-align: right;
+    font-family: var(--garam);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .hero-image-label b {
+    display: block;
+    color: var(--ink);
+    font-family: var(--didot);
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-bottom: 4px;
+  }
+
+  /* ── Plate sections (each section feels like a gallery plate) ── */
+  .plate {
+    padding: 160px 56px;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 96px;
+    align-items: start;
+  }
+  .plate-num {
+    font-family: var(--didot);
+    font-size: 13px;
+    letter-spacing: 0.32em;
+    color: var(--ink-3);
+    margin-bottom: 18px;
+  }
+  .plate-title {
+    font-family: var(--didot);
+    font-weight: 400;
+    font-size: clamp(32px, 3.4vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 32px;
+    max-width: 500px;
+  }
+  .plate-title em {
+    font-family: var(--garam);
+    font-style: italic;
+  }
+  .plate-body p {
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    margin: 0 0 18px;
+    max-width: 520px;
+  }
+  .plate-body p strong { color: var(--ink); font-weight: 500; }
+
+  .plate.flip {
+    grid-template-columns: 1fr 1fr;
+  }
+  .plate.flip > div:first-child { order: 2; }
+
+  /* Triptych plate */
+  .triptych {
+    padding: 96px 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .triptych-cell {
+    padding: 56px 40px;
+    border-left: 1px solid var(--rule);
+  }
+  .triptych-cell:first-child { border-left: none; }
+  .triptych-num {
+    font-family: var(--didot);
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 32px;
+    letter-spacing: -0.02em;
+  }
+  .triptych-cell h3 {
+    font-family: var(--garam);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.3;
+    margin: 0 0 12px;
+  }
+  .triptych-cell p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin: 0;
+  }
+
+  /* ── Closing plate — single line, vast emptiness ─────── */
+  .closing {
+    padding: 180px 56px;
+    text-align: center;
+    border-top: 1px solid var(--rule);
+  }
+  .closing-quote {
+    font-family: var(--didot);
+    font-weight: 400;
+    font-size: clamp(28px, 4vw, 56px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 auto 48px;
+    max-width: 880px;
+  }
+  .closing-quote em {
+    font-family: var(--garam);
+    font-style: italic;
+  }
+  .closing-attr {
+    font-family: var(--garam);
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 64px;
+  }
+  .closing-cta {
+    display: inline-block;
+    padding: 16px 32px;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    font-family: var(--garam);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transition: all 200ms;
+  }
+  .closing-cta:hover { background: var(--ink); color: var(--paper); }
+
+  footer {
+    padding: 32px 56px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--garam);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 900px) {
+    nav.top { padding: 20px 24px; }
+    .menu span { margin-left: 16px; font-size: 11px; letter-spacing: 0.14em; }
+    .hero { grid-template-columns: 1fr; height: auto; min-height: 0; }
+    .hero-left { padding: 120px 24px 56px; }
+    .hero-right { height: 380px; }
+    .hero-image { inset: 24px; }
+    .hero-image-label { bottom: 32px; right: 32px; }
+    .plate { padding: 80px 24px; grid-template-columns: 1fr; gap: 32px; }
+    .plate.flip > div:first-child { order: 0; }
+    .triptych { grid-template-columns: 1fr; }
+    .triptych-cell { border-left: none; border-top: 1px solid var(--rule); padding: 40px 0; }
+    .triptych-cell:first-child { border-top: none; padding-top: 0; }
+    .closing { padding: 96px 24px; }
+    footer { flex-direction: column; gap: 12px; padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="mark">Mallin</div>
+  <div class="menu">
+    <span>I — Doctrine</span>
+    <span>II — System</span>
+    <span>III — Inquiry</span>
+  </div>
+</nav>
+
+<!-- ── Hero ──────────────────────────────────────────────── -->
+<section class="hero">
+
+  <div class="hero-left">
+    <div class="hero-meta">
+      <b>Issued · MMXXVI</b>
+      Volume I &nbsp; · &nbsp; № 01
+    </div>
+    <h1 class="hero-headline">
+      An operating layer<br/>
+      <em>for revenue.</em>
+    </h1>
+    <p class="hero-byline">
+      We are not building software for sales managers. We are building
+      the operational memory layer the CRM does not, on its own,
+      become.
+    </p>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-image"></div>
+    <div class="hero-image-label">
+      <b>Mallín</b>
+      Patagonia · I
+    </div>
+  </div>
+
+</section>
+
+<!-- ── Plate I ──────────────────────────────────────────── -->
+<section class="plate">
+  <div>
+    <div class="plate-num">— PLATE I</div>
+    <h2 class="plate-title">
+      What the CRM stores is what was typed.<br/>
+      <em>What the deal does is what was heard.</em>
+    </h2>
+  </div>
+  <div class="plate-body">
+    <p>
+      Every quarter, leadership asks the same question about a handful
+      of deals: <em>is this real?</em> The CRM says 75 percent, commit,
+      advancing. The forecast category says yes.
+    </p>
+    <p>
+      Meanwhile the actual signals — signer disengagement, champion
+      airtime decay, procurement entered late, competitor introduced
+      during pricing — sit fragmented across calls, email, and Slack.
+      <strong>The data exists. It does not reach the forecast call.</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ── Plate II ─────────────────────────────────────────── -->
+<section class="plate flip">
+  <div>
+    <div class="plate-num">— PLATE II</div>
+    <h2 class="plate-title">
+      Three primitives.<br/>
+      <em>No chatbot.</em>
+    </h2>
+  </div>
+  <div class="plate-body">
+    <p>
+      Mallin reads every artifact on the deal — calls, email, Slack,
+      calendar, CRM activity — and reconstructs the operational state
+      from what is already there. <strong>No new logging. No new workflow.</strong>
+    </p>
+    <p>
+      Verification alerts post into the deal Slack thread the manager
+      is already in, with the gap named in plain language and the
+      verbatim next question to ask. The agent decides what is a gap.
+      The team decides the response.
+    </p>
+  </div>
+</section>
+
+<!-- ── Triptych ────────────────────────────────────────── -->
+<section class="plate" style="padding-bottom: 0;">
+  <div>
+    <div class="plate-num">— PLATE III</div>
+    <h2 class="plate-title">By the numbers, <em>only.</em></h2>
+  </div>
+  <div class="plate-body">
+    <p>
+      Five enterprise cycles tested in retrospect. Closed-won. Stalled.
+      Closed-lost. The system reproduces the moments experienced
+      operators identify in hindsight — but on the call they happened,
+      not in retrospect.
+    </p>
+  </div>
+</section>
+
+<div style="padding: 0 56px;">
+  <div class="triptych">
+    <div class="triptych-cell">
+      <div class="triptych-num">V</div>
+      <h3>Cycles tested</h3>
+      <p>Real enterprise deals replayed through the system — across the won, the stalled, and the lost.</p>
+    </div>
+    <div class="triptych-cell">
+      <div class="triptych-num">XII</div>
+      <h3>Alerts on the closed-lost</h3>
+      <p>Twelve verification alerts fired across calls 2–6 of the most recent loss. Three at once on the inflection call.</p>
+    </div>
+    <div class="triptych-cell">
+      <div class="triptych-num">0</div>
+      <h3>False-positive escalations</h3>
+      <p>Across the retrospective set, zero alerts surfaced behavior the operators reviewing the cycle did not, on reflection, agree mattered.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Closing ─────────────────────────────────────────── -->
+<section class="closing">
+  <p class="closing-quote">
+    "It would have provided a way for us to address it head-on<br/>
+    <em>versus skirting around it."</em>
+  </p>
+  <p class="closing-attr">— From the team that ran the original cycle</p>
+  <a class="closing-cta" href="mailto:hello@mallin.io">Inquire · hello@mallin.io</a>
+</section>
+
+<footer>
+  <span>© MMXXVI Mallin</span>
+  <span>Five design partners · two slots remain</span>
+  <span>San Francisco</span>
+</footer>
+
+</body>
+</html>

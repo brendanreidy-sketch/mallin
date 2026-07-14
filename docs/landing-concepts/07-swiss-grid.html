@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mallin · Verification / Evidence / Discipline</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Narrow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Swiss/Vignelli: white, black, one red, one yellow. That's the whole system. */
+    --white: #ffffff;
+    --off:   #f4f3ef;
+    --black: #000000;
+    --rule:  #000000;
+    --red:   #d8261e;
+    --yel:   #f5c518;
+    --gray:  #6b6b6b;
+    --sans:  "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --narrow:"Archivo Narrow", "Helvetica Neue Condensed", Helvetica, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.4;
+    font-feature-settings: "ss01" on;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Grid container — 12-column with explicit visible gutters ──── */
+  .sheet {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ── Top bar — like a Vignelli timetable ───────────────────── */
+  .bar {
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
+    align-items: center;
+    border-bottom: 4px solid var(--black);
+    padding: 20px 0;
+  }
+  .bar-mark {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 18px; letter-spacing: -0.02em;
+  }
+  .mark-square {
+    display: inline-block;
+    width: 22px; height: 22px;
+    background: var(--red);
+  }
+  .bar-spec {
+    text-align: center;
+    font-family: var(--narrow);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+  .bar-right {
+    text-align: right;
+    font-family: var(--narrow);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .bar-right a {
+    padding: 6px 12px;
+    background: var(--black);
+    color: var(--white);
+    display: inline-block;
+  }
+
+  /* ── Hero block ────────────────────────────────────────────── */
+  .hero {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+    padding: 56px 0 0;
+  }
+  .hero-spec {
+    grid-column: 1 / span 2;
+    font-family: var(--narrow);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+  .hero-spec b { color: var(--black); display: block; font-weight: 700; }
+  .hero-spec hr {
+    border: none; border-top: 2px solid var(--black);
+    margin: 10px 0;
+  }
+  .hero-title {
+    grid-column: 3 / span 10;
+    font-weight: 900;
+    font-size: clamp(72px, 12vw, 184px);
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+    margin: 0;
+  }
+  .hero-title em {
+    font-style: normal;
+    color: var(--red);
+  }
+  .hero-title .strike {
+    text-decoration: line-through;
+    text-decoration-thickness: 8px;
+    color: var(--gray);
+  }
+  .hero-deck-wrap {
+    grid-column: 3 / span 10;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 2px solid var(--black);
+  }
+  .hero-deck {
+    font-size: 17px;
+    line-height: 1.45;
+    font-weight: 400;
+  }
+  .hero-deck b { font-weight: 700; }
+
+  /* ── Three-bar system block ────────────────────────────────── */
+  .system {
+    margin-top: 96px;
+    padding: 24px 0 0;
+    border-top: 4px solid var(--black);
+  }
+  .system-head {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    align-items: end;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--black);
+  }
+  .system-num {
+    font-family: var(--narrow);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .system-num .red-square {
+    display: inline-block;
+    width: 12px; height: 12px;
+    background: var(--red);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .system-title {
+    font-weight: 800;
+    font-size: clamp(36px, 4.4vw, 64px);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+  .system-title .slash {
+    color: var(--red);
+  }
+
+  .triad {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--black);
+  }
+  .tri {
+    padding: 32px 24px 32px 0;
+    border-right: 1px solid var(--black);
+    position: relative;
+  }
+  .tri:last-child { border-right: none; padding-right: 0; padding-left: 24px; }
+  .tri:nth-child(2) { padding-left: 24px; }
+  .tri-num {
+    font-family: var(--narrow);
+    font-size: 80px;
+    font-weight: 800;
+    line-height: 0.9;
+    margin: 0 0 16px;
+    letter-spacing: -0.04em;
+  }
+  .tri-num.r { color: var(--red); }
+  .tri-num.y { color: var(--yel); -webkit-text-stroke: 2px var(--black); }
+  .tri-label {
+    font-family: var(--narrow);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 10px;
+  }
+  .tri h3 {
+    font-weight: 800;
+    font-size: 22px;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    margin: 0 0 12px;
+  }
+  .tri p {
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* ── Numbered manifest ─────────────────────────────────────── */
+  .manifest {
+    margin-top: 80px;
+    padding: 32px 0;
+    background: var(--yel);
+    border-top: 4px solid var(--black);
+    border-bottom: 4px solid var(--black);
+  }
+  .manifest-inner {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .manifest-eyebrow {
+    font-family: var(--narrow);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .manifest-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .manifest-cell {
+    border-left: 2px solid var(--black);
+    padding: 0 16px;
+  }
+  .manifest-cell:first-child { border-left: none; padding-left: 0; }
+  .manifest-num {
+    font-weight: 900;
+    font-size: 64px;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+  .manifest-label {
+    font-family: var(--narrow);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-top: 8px;
+  }
+  .manifest-quote {
+    grid-column: 1 / span 2;
+    margin-top: 32px;
+    font-weight: 800;
+    font-size: clamp(24px, 3.4vw, 40px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  /* ── Footer ────────────────────────────────────────────────── */
+  .footer {
+    padding: 32px 0 48px;
+    border-top: 4px solid var(--black);
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
+    gap: 16px;
+    align-items: center;
+    margin-top: 64px;
+  }
+  .footer-mark {
+    font-weight: 800; font-size: 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .footer-center {
+    text-align: center;
+    font-family: var(--narrow);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .footer-right {
+    text-align: right;
+    font-family: var(--narrow);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  @media (max-width: 900px) {
+    .bar { grid-template-columns: 1fr; gap: 12px; text-align: left; }
+    .bar-spec, .bar-right { text-align: left; }
+    .hero { grid-template-columns: 1fr; }
+    .hero-spec, .hero-title, .hero-deck-wrap { grid-column: 1; }
+    .hero-deck-wrap { grid-template-columns: 1fr; }
+    .system-head, .footer { grid-template-columns: 1fr; }
+    .triad, .manifest-inner { grid-template-columns: 1fr; }
+    .tri { border-right: none; border-bottom: 1px solid var(--black); padding: 24px 0; }
+    .tri:nth-child(2), .tri:last-child { padding-left: 0; }
+    .manifest-grid { grid-template-columns: 1fr 1fr; }
+    .manifest-cell { border-left: none; border-top: 2px solid var(--black); padding: 16px 0 0; }
+    .manifest-cell:first-child { border-top: 2px solid var(--black); }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <header class="bar">
+    <div class="bar-mark">
+      <span class="mark-square"></span>
+      Mallin
+    </div>
+    <div class="bar-spec">
+      System · Operating Layer for Revenue
+    </div>
+    <div class="bar-right">
+      <a href="#access">Request access →</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-spec">
+      <hr/>
+      <b>System</b>
+      Mallin v0.4.0
+      <hr/>
+      <b>Date</b>
+      18.05.2026
+      <hr/>
+      <b>Section</b>
+      A / 1
+      <hr/>
+      <b>Cohort</b>
+      Design-partner 01
+    </div>
+
+    <h1 class="hero-title">
+      <span class="strike">Activity.</span><br/>
+      Judgment.
+    </h1>
+
+    <div class="hero-deck-wrap">
+      <p class="hero-deck">
+        <b>01.</b> Most sales software measures activity. Mallin measures
+        judgment quality.
+      </p>
+      <p class="hero-deck">
+        <b>02.</b> Every call, email, and Slack thread becomes substrate.
+        The substrate is interpreted into verification alerts before
+        forecast day.
+      </p>
+      <p class="hero-deck">
+        <b>03.</b> The agent decides what's a gap. The team decides the
+        response. The manager is in the deal thread.
+      </p>
+    </div>
+  </section>
+
+  <section class="system">
+    <div class="system-head">
+      <div class="system-num"><span class="red-square"></span>§ 01 / The system</div>
+      <h2 class="system-title">Verification <span class="slash">/</span> Evidence <span class="slash">/</span> Discipline.</h2>
+    </div>
+
+    <div class="triad">
+      <div class="tri">
+        <div class="tri-num r">01</div>
+        <div class="tri-label">Verification</div>
+        <h3>Behavior is the signal. Activity is the noise.</h3>
+        <p>Signer disengagement. Champion airtime collapse. Procurement entered late. Competitor introduced during pricing. Mallin measures what the deal is actually doing — not what the CRM says it is.</p>
+      </div>
+      <div class="tri">
+        <div class="tri-num">02</div>
+        <div class="tri-label">Evidence</div>
+        <h3>Every claim has a source. Every source has a timestamp.</h3>
+        <p>Quoted sentence, exact timestamp, named speaker. Paraphrased evidence is a trust failure. Every surface — pre-call brief, Slack alert, manager DM, CRM update — renders the same five-element sequence: risk, move, evidence, temporal proof, accountable decision.</p>
+      </div>
+      <div class="tri">
+        <div class="tri-num y">03</div>
+        <div class="tri-label">Discipline</div>
+        <h3>Trust is earned in stages. Never auto-written: four fields.</h3>
+        <p>Suggest → Apply → Auto+Confirm. The agent never writes Stage, Amount, Close Date, or Forecast Category. Not after trust is earned. Not when statistically safe. The constraint is structural, not configurable.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="manifest">
+    <div class="manifest-inner">
+      <div class="manifest-eyebrow"><span class="mark-square" style="background: var(--black);"></span>&nbsp; § 02 / Manifest</div>
+      <div>
+        <div class="manifest-grid">
+          <div class="manifest-cell">
+            <div class="manifest-num">05</div>
+            <div class="manifest-label">Cycles tested</div>
+          </div>
+          <div class="manifest-cell">
+            <div class="manifest-num">12</div>
+            <div class="manifest-label">Alerts · closed-lost</div>
+          </div>
+          <div class="manifest-cell">
+            <div class="manifest-num">00</div>
+            <div class="manifest-label">False-positive escalations</div>
+          </div>
+          <div class="manifest-cell">
+            <div class="manifest-num">04</div>
+            <div class="manifest-label">Never-auto fields</div>
+          </div>
+        </div>
+
+        <p class="manifest-quote">
+          "It would have provided a way for us to address it head-on versus skirting around it." <span style="color: var(--red);">→</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-mark">
+      <span class="mark-square"></span>
+      Mallin
+    </div>
+    <div class="footer-center">
+      © 2026 Mallin · Operating Layer for Revenue Execution
+    </div>
+    <div class="footer-right">
+      hello@mallin.io
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>

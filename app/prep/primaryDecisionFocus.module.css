@@ -1,0 +1,367 @@
+/* PrimaryDecisionFocus — the center-of-gravity block.
+   Compact, monochrome ink, one severity accent. Sized to fit above
+   the fold on desktop (~520px tall in the resting state). */
+
+.focus {
+  margin: 16px 36px 8px;
+  padding: 22px 26px 18px;
+  background: var(--ck-surface);
+  border: 0.5px solid var(--ck-rule);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+/* Subtle severity-tinted left edge — the ONE accent. */
+.focus::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  background: var(--ck-warn);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ── Header row ────────────────────────────────────────────────────── */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.severity {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ck-ink);
+}
+
+.severityDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ck-warn);
+  box-shadow: 0 0 0 0 rgba(244, 162, 97, 0.4);
+  animation: pulseSeverity 2.6s ease-in-out infinite;
+}
+@keyframes pulseSeverity {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 162, 97, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(244, 162, 97, 0); }
+}
+
+.severityHigh .severityDot { background: var(--ck-crit); }
+.severityHigh .severityDot { animation-name: pulseHigh; }
+@keyframes pulseHigh {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.55); }
+  50% { box-shadow: 0 0 0 7px rgba(229, 72, 77, 0); }
+}
+
+.severityMed .severityDot { background: var(--ck-warn); }
+.severityLow .severityDot { background: var(--ck-ink-3); }
+
+.confidence {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: var(--ck-ink-4);
+}
+
+/* ── Primary risk ──────────────────────────────────────────────────── */
+.primary {
+  margin: 0;
+  font-size: clamp(20px, 2.1vw, 26px);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.018em;
+  color: var(--ck-ink);
+  max-width: 760px;
+}
+
+/* ── Next move — prescriptive ──────────────────────────────────────── */
+.move {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 0 12px;
+  border-top: 0.5px solid var(--ck-rule);
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.moveLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ck-warn);
+}
+.moveText {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--ck-ink);
+  font-weight: 500;
+  max-width: 740px;
+}
+
+/* ── Evidence — load-bearing trust section ─────────────────────────── */
+.evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.evidenceLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ck-ink-4);
+}
+
+.evidenceList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.evidenceItem {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 12px;
+  border-left: 1px solid var(--ck-rule-2);
+}
+
+.quote {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ck-ink);
+  font-style: italic;
+  font-weight: 400;
+  max-width: 700px;
+}
+
+.quoteAttr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--ck-ink-4);
+}
+
+.quoteSpeaker {
+  font-weight: 600;
+  color: var(--ck-ink-3);
+}
+
+.quoteRole {
+  color: var(--ck-ink-4);
+}
+.quoteRole::before {
+  content: "·";
+  margin-right: 8px;
+  opacity: 0.6;
+}
+
+.quoteCall {
+  color: var(--ck-ink-4);
+}
+.quoteCall::before {
+  content: "·";
+  margin-right: 8px;
+  opacity: 0.6;
+}
+
+.quoteWhen {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ck-ink-4);
+}
+.quoteWhen::before {
+  content: "·";
+  margin-right: 8px;
+  opacity: 0.6;
+}
+
+/* Fresh evidence ("just now") gets a subtle pulse — makes the system
+   feel observant, not archival. */
+.quoteWhenFresh {
+  color: var(--ck-warn);
+  font-weight: 600;
+}
+
+/* Stakeholder stat — the temporal/observational bottom line. */
+.stakeholderStat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 0.5px dashed var(--ck-rule);
+  font-size: 12.5px;
+}
+.stakeholderName {
+  color: var(--ck-ink);
+  font-weight: 500;
+}
+.stakeholderTitle {
+  color: var(--ck-ink-4);
+  font-weight: 400;
+}
+.stakeholderStats {
+  margin-left: auto;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ck-ink-3);
+  letter-spacing: 0.02em;
+}
+
+/* Pattern observation — collapsed, only opens for users who want it. */
+.patternDetails {
+  margin-top: 4px;
+}
+.patternSummary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  color: var(--ck-ink-4);
+  padding: 6px 0;
+  transition: color 0.15s ease;
+}
+.patternSummary::-webkit-details-marker { display: none; }
+.patternSummary:hover { color: var(--ck-ink); }
+.patternNote {
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  background: var(--ck-surface-2);
+  border-left: 1px solid var(--ck-rule);
+  border-radius: 0 4px 4px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ck-ink-3);
+}
+
+/* ── Review controls — PR-review pattern ───────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 0.5px solid var(--ck-rule);
+}
+
+.actionBtn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ck-ink-2);
+  background: transparent;
+  border: 0.5px solid var(--ck-rule-2);
+  border-radius: 5px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  letter-spacing: -0.005em;
+}
+.actionBtn:hover:not(:disabled) {
+  border-color: var(--ck-rule-2);
+  color: var(--ck-ink);
+}
+.actionBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* The "Approve" action is the consequential one — subtle border accent.
+   Visually weighted but NOT a SaaS-style filled button. */
+.actionApprove {
+  color: var(--ck-warn);
+  border-color: var(--ck-warn-tint);
+  font-weight: 600;
+}
+.actionApprove:hover:not(:disabled) {
+  color: #ffba80;
+  border-color: var(--ck-warn-tint);
+  background: var(--ck-warn-tint);
+}
+
+/* Resolved states — locked, with undo. */
+.actionsResolved {
+  justify-content: space-between;
+}
+.resolvedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ck-ink-2);
+}
+.resolvedDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ck-good);
+}
+.actionsRejected .resolvedDot {
+  background: var(--ck-ink-3);
+}
+
+.undo {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--ck-ink-4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.undo:hover {
+  color: var(--ck-ink);
+}
+
+@media (max-width: 720px) {
+  .focus {
+    margin: 12px 18px 8px;
+    padding: 18px 18px 14px;
+  }
+  .primary {
+    font-size: 19px;
+  }
+  .moveText {
+    font-size: 14px;
+  }
+  .quoteAttr {
+    flex-wrap: wrap;
+  }
+  .stakeholderStats {
+    margin-left: 0;
+  }
+  .actions {
+    flex-wrap: wrap;
+  }
+}

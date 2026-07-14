@@ -1,0 +1,290 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Mallín brief — one system, every stage</title>
+<style>
+  :root{
+    --paper:#f4f1ea; --surface-2:#ffffff; --surface-1:#f7f4ec; --fill-control:#efeadd;
+    --border:#e3dccc; --border-strong:#d6cfbe;
+    --text-primary:#1a2230; --text-secondary:#3b4658; --text-muted:#6b7689; --faint:#9aa3b3;
+    --text-accent:#4a7186; --bg-accent:#e7eff4;
+    --text-success:#5a8f7a; --bg-success:#e2efe9; --text-warning:#9a6a1a; --bg-warning:#f5ecd6;
+    --radius:8px; --font-sans:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif; --font-voice:Georgia,'Times New Roman',serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);font-family:var(--font-sans);color:var(--text-primary);-webkit-font-smoothing:antialiased;font-size:13px;}
+  .frame{max-width:940px;margin:0 auto;padding:20px 24px 60px;}
+  svg{display:inline-block;vertical-align:middle}
+
+  /* stage switcher */
+  .stages{display:flex;gap:0;border:1px solid var(--border-strong);border-radius:999px;overflow:hidden;width:fit-content;margin-bottom:20px;}
+  .stages button{font:inherit;font-size:12.5px;padding:7px 16px;border:0;background:transparent;color:var(--text-secondary);cursor:pointer;white-space:nowrap;}
+  .stages button.on{background:var(--text-primary);color:#fff;}
+  .stagehint{font-size:11.5px;color:var(--text-muted);margin:-12px 0 18px;}
+
+  /* ── ONE set of area styles, used at every stage ─────────────────── */
+  .card{background:var(--surface-2);border:.5px solid var(--border);border-radius:12px;padding:14px 15px;}
+  .inset{background:var(--surface-1);border-radius:var(--radius);padding:12px 13px;}
+  .lbl{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;}
+  .lbl.good{color:var(--text-success);}
+  .voice{font-family:var(--font-voice);line-height:1.55;}
+  .move{font-size:14.5px;font-weight:600;line-height:1.45;}
+  .grid{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start;}
+  @media(max-width:720px){ .grid{grid-template-columns:1fr;} }
+  .col{display:flex;flex-direction:column;gap:14px;min-width:0;}
+  .colr{display:flex;flex-direction:column;gap:11px;min-width:0;}
+  .row-between{display:flex;justify-content:space-between;align-items:baseline;gap:6px;}
+  .pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .email{cursor:pointer;font-size:11px;color:var(--text-accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+</style></head><body>
+<div class="frame">
+  <div class="stages" role="group" aria-label="Deal stage">
+    <button data-s="0" class="on" type="button">First call</button>
+    <button data-s="1" type="button">Next call</button>
+    <button data-s="2" type="button">Deal in motion</button>
+  </div>
+  <div class="stagehint" id="hint"></div>
+
+  <!-- fixed chrome -->
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:.5px solid var(--border);margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:7px;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="1.6" stroke-linecap="round"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M2 17c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>
+      <span style="font-size:15px;font-weight:600;letter-spacing:-.01em;">Mallín</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;">
+      <div style="text-align:right;"><div style="font-size:12px;font-weight:500;">Alex Chen</div><div style="font-size:11px;color:var(--text-muted);">Northwind · account executive</div></div>
+      <span style="width:29px;height:29px;border-radius:50%;background:var(--bg-accent);color:var(--text-accent);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;">AC</span>
+    </div>
+  </div>
+
+  <!-- deal header (data per stage) -->
+  <div id="dealhead" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;"></div>
+
+  <!-- body (areas per stage) -->
+  <div id="body"></div>
+</div>
+
+<script>
+var ICON={
+  target:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-success)" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1" fill="var(--text-success)"/></svg>',
+  list:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5l1.6 1.6 2.6-3"/><path d="M3.5 13.5l1.6 1.6 2.6-3"/><path d="M11 6h9"/><path d="M11 13h9"/><path d="M11 20h9"/><path d="M3.5 20.5l1.6 1.6 2.6-3"/></svg>',
+  check:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-success)" stroke-width="1.4"><circle cx="8" cy="8" r="7"/><path d="M5 8.2l2 2 4-4.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  warn:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-warning)" stroke-width="1.4"><circle cx="8" cy="8" r="7"/><path d="M8 4.5v4" stroke-linecap="round"/><circle cx="8" cy="11.2" r=".9" fill="var(--text-warning)"/></svg>',
+  watch:'<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--faint)" stroke-width="1.3"><circle cx="6.3" cy="6" r="2.6"/><path d="M2.2 13c0-2.3 1.8-3.7 4.1-3.7 1 0 1.9.3 2.6.8" stroke-linecap="round"/><path d="M12 9.2v4M10 11.2h4" stroke-linecap="round"/></svg>',
+  mail:'<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--text-accent)" stroke-width="1.3" style="vertical-align:-1px"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M2 4.5l6 4 6-4"/></svg>'
+};
+
+/* ── AREA COMPONENTS — each styled ONCE, reused at every stage ─────── */
+function aRecap(d){ if(!d.recap) return '';
+  return '<div class="card"><div class="lbl" style="margin-bottom:8px;">What was said last time</div>'
+    +'<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.5;">'+d.recap+'</div></div>'; }
+
+function aDoFirst(d){ if(!d.move) return '';
+  return '<div class="card"><div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;">'+ICON.target+'<span class="lbl good">Do this first</span></div>'
+    +'<div class="move" style="margin-bottom:8px;">'+d.move.text+'</div>'
+    +(d.move.why?'<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.5;margin-bottom:'+(d.move.quote?'12px':'0')+';">'+d.move.why+'</div>':'')
+    +(d.move.quote?'<div class="voice" style="border-left:2px solid var(--border-strong);padding-left:11px;font-size:13px;color:var(--text-secondary);">"'+d.move.quote.text+'"<div style="font-family:var(--font-sans);font-size:11px;color:var(--text-muted);margin-top:4px;">'+d.move.quote.by+'</div></div>':'')
+    +'</div>'; }
+
+function aWalkin(d){ if(!d.walkin) return '';
+  return '<div><div class="lbl" style="margin-bottom:8px;">Walk in with this</div>'
+    +'<div class="inset voice" style="font-size:13.5px;">"'+d.walkin+'"</div></div>'; }
+
+function aWaiting(d){ if(!d.waiting||!d.waiting.length) return '';
+  var sent=d.waitingSent||0;
+  return '<div class="card"><div class="row-between" style="margin-bottom:11px;"><div style="display:flex;align-items:center;gap:7px;">'+ICON.list+'<span style="font-size:12.5px;font-weight:600;">'+d.waitingLabel+'</span></div>'
+    +'<span style="font-size:11px;color:var(--text-muted);">'+sent+' of '+d.waiting.length+' sent</span></div>'
+    +'<div style="display:flex;flex-direction:column;gap:9px;">'+d.waiting.map(function(w,i){var done=i<sent;
+      return '<div style="display:flex;align-items:center;gap:10px;font-size:13px;'+(done?'text-decoration:line-through;opacity:.5;':'')+'"><span style="width:15px;height:15px;border:1.5px solid '+(done?'var(--text-success)':'var(--border-strong)')+';border-radius:4px;flex-shrink:0;"></span><span>'+w.t+' <span style="color:var(--text-muted);">'+w.m+'</span></span></div>';}).join('')+'</div></div>'; }
+
+function aRoom(d){ if(!d.room||!d.room.length) return '';
+  var eng=d.room.filter(function(p){return p.tier==='engaged';}).length, trk=d.room.filter(function(p){return p.tier!=='watch';}).length;
+  return '<div class="card"><div class="row-between" style="margin-bottom:11px;"><span class="lbl">Who’s in the room</span>'
+    +'<span style="font-size:11px;color:var(--text-muted);">'+eng+'/'+trk+' engaged · auto from calls</span></div>'
+    +'<div style="display:flex;flex-direction:column;gap:12px;">'+d.room.map(function(p){
+      var ic=p.tier==='engaged'?ICON.check:p.tier==='watch'?ICON.watch:ICON.warn;
+      var bc=p.tier==='engaged'?'var(--text-success)':p.tier==='watch'?'var(--text-muted)':'var(--text-warning)';
+      var warn=p.tier==='needs';
+      return '<div class="stkrow" style="display:flex;gap:8px;'+(warn?'background:var(--bg-warning);margin:0 -6px;padding:8px 6px;border-radius:var(--radius);':'')+'">'
+        +'<span style="flex:0 0 auto;margin-top:1px;line-height:0;">'+ic+'</span>'
+        +'<div style="min-width:0;flex:1 1 auto;"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap;">'
+        +'<span style="font-size:12.5px;font-weight:600;min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+(p.tier==='watch'?'color:var(--text-secondary);':'')+'">'+p.n+'</span>'
+        +'<span style="flex:0 0 auto;font-size:11px;white-space:nowrap;color:'+bc+';'+(warn?'font-weight:600;':'')+'">'+p.badge+'</span></div>'
+        +'<div style="font-size:11px;color:'+(warn?'var(--text-secondary)':'var(--text-muted)')+';margin:1px 0 2px;line-height:1.4;">'+p.r+'</div>'
+        +(p.angle?'<div style="font-size:11px;color:var(--text-secondary);line-height:1.45;margin-bottom:3px;"><span style="color:var(--text-accent);font-weight:600;">Angle:</span> '+p.angle+'</div>':'')
+        +(p.e?'<div class="email">'+ICON.mail+' '+p.e+'</div>':'')
+        +'<div class="flagwrap" style="margin-top:4px;"><button class="flagctl" type="button" style="font:inherit;font-size:10px;color:var(--text-muted);background:transparent;border:0;padding:0;cursor:pointer;text-decoration:underline;">⚑ not the right person?</button></div>'
+        +'</div></div>';}).join('')+'</div></div>'; }
+
+/* The strategic read — why now, what's driving them. Leads the first call. */
+function aRead(d){ if(!d.read) return '';
+  return '<div class="card"><div class="lbl" style="margin-bottom:8px;">The read · why this deal, why now</div>'
+    +'<div style="font-size:13px;line-height:1.55;color:var(--text-primary);">'+d.read+'</div></div>'; }
+
+/* Qualifying questions — each tied to what the answer tells you. */
+function aQuestions(d){ if(!d.questions||!d.questions.length) return '';
+  return '<div class="card"><div class="lbl" style="margin-bottom:10px;">Questions to ask</div>'
+    +d.questions.map(function(q){return '<div style="margin-bottom:12px;">'+(q.for?'<div style="font-size:10px;color:var(--text-accent);text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin-bottom:3px;">'+q.for+'</div>':'')+'<div style="font-size:13px;color:var(--text-primary);line-height:1.45;">“'+q.q+'”</div><div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">→ '+q.tells+'</div></div>';}).join('')+'</div>'; }
+
+/* Competitive read — the real fight, not a feature bake-off. */
+function aCompete(d){ if(!d.compete) return '';
+  return '<div class="inset"><div class="lbl" style="margin-bottom:7px;">What you’re up against</div>'
+    +'<div style="font-size:12px;line-height:1.5;color:var(--text-secondary);">'+d.compete+'</div></div>'; }
+
+function aMoved(d){ if(!d.moved||!d.moved.length) return '';
+  return '<div class="card"><div class="lbl" style="margin-bottom:10px;">News · how it relates to you</div>'
+    +d.moved.map(function(m){return '<div style="margin-bottom:13px;">'
+      +(m.meta?'<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">'+m.meta+'</div>':'')
+      +'<div style="font-size:12.5px;font-weight:600;line-height:1.4;">'+m.h+'</div>'
+      +'<div style="font-size:12px;color:var(--text-accent);line-height:1.45;margin-top:3px;"><span style="color:var(--text-muted);">→ </span>'+m.w+'</div></div>';}).join('')+'</div>'; }
+
+function aDecks(d){ if(!d.decks||!d.decks.length) return '';
+  return '<div class="inset"><div class="lbl" style="margin-bottom:10px;">Deck versions</div><div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;">'
+    +d.decks.map(function(v,i){return '<div class="row-between" style="align-items:center;"><span'+(i>0?' style="color:var(--text-secondary);"':'')+'>'+v.n+' <span style="color:var(--text-muted);">· '+v.d+'</span></span>'+(v.cur?'<span class="pill" style="color:var(--text-success);background:var(--bg-success);">current</span>':'')+'</div>';}).join('')+'</div></div>'; }
+
+/* Ask bar — the SAME area on every brief. Deal-scoped chat / coach. */
+function aAsk(d){
+  var ex=(d.ask||['What’s the one risk here?','Who do I still need to win?']);
+  return '<div class="card" style="margin-top:14px;">'
+    +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;">'
+    +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.4 8.7 8.7 0 0 1-3.9-.9L3 20l1.1-5.1a8.4 8.4 0 1 1 16.9-3.4z"/></svg>'
+    +'<span class="lbl" style="color:var(--text-accent);">Ask Mallín about this deal</span></div>'
+    +'<div style="display:flex;gap:8px;align-items:center;">'
+    +'<input placeholder="e.g. '+ex[0]+'" style="flex:1;min-width:0;font:inherit;font-size:13px;padding:9px 12px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface-1);color:var(--text-primary);" aria-label="Ask about this deal">'
+    +'<button type="button" style="font:inherit;font-size:13px;font-weight:600;padding:9px 16px;border:0;border-radius:8px;background:var(--text-primary);color:#fff;cursor:pointer;white-space:nowrap;">Ask →</button></div>'
+    +'<label style="display:inline-flex;align-items:center;gap:6px;margin-top:9px;font-size:11px;color:var(--text-muted);cursor:pointer;"><input type="checkbox" style="width:13px;height:13px;accent-color:var(--text-warning);"> <span>⚑ Flag this for my manager — they’ll see the question and how it played out</span></label>'
+    +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;">'
+    +ex.map(function(q){return '<span style="font-size:11.5px;color:var(--text-secondary);background:var(--surface-1);border:1px solid var(--border);padding:3px 9px;border-radius:20px;cursor:pointer;">'+q+'</span>';}).join('')+'</div>'
+    +(d.askNote?'<div style="font-size:11px;color:var(--text-muted);margin-top:9px;">'+d.askNote+'</div>':'')
+    +'</div>'; }
+
+/* How you win this — the plan, in plain words. */
+function aPlay(d){ if(!d.play) return '';
+  return '<div class="card" style="border-left:3px solid var(--text-success);">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;"><span class="lbl good">How you win this</span>'
+    +'<span class="ackwrap" data-ack="✓ Confirmed with the prospect" style="display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:var(--text-warning);background:var(--bg-warning);padding:3px 4px 3px 10px;border-radius:20px;">'
+    +'<span>Clear once you\'ve walked the prospect through this</span>'
+    +'<button class="ackx" title="I discussed this with the prospect" aria-label="Confirm discussed with prospect" style="border:0;background:transparent;color:inherit;font-size:15px;line-height:1;cursor:pointer;padding:0 4px;font-weight:700;">&times;</button>'
+    +'</span></div>'
+    +'<div style="font-size:13px;line-height:1.55;color:var(--text-primary);">'+d.play+'</div></div>'; }
+
+/* What could go wrong — the risks, stated plainly. */
+function aWatch(d){ if(!d.watch||!d.watch.length) return '';
+  return '<div class="inset" style="background:var(--bg-warning);"><div class="lbl" style="color:var(--text-warning);margin-bottom:8px;">What could go wrong</div>'
+    +d.watch.map(function(w,i){return '<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:'+(i===0?'8':'7')+'px;">• '+w
+      +(i===0?'<div class="ackwrap" data-ack="✓ Acknowledged — you have a plan" style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;font-weight:700;color:var(--text-warning);border:1px solid var(--text-warning);padding:2px 4px 2px 9px;border-radius:20px;"><span>Your manager sees this until you acknowledge a plan</span><button class="ackx" title="I have a plan for this" aria-label="Acknowledge risk" style="border:0;background:transparent;color:inherit;font-size:14px;line-height:1;cursor:pointer;padding:0 4px;font-weight:700;">&times;</button></div>':'')
+      +'</div>';}).join('')
+    +'<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Only load-bearing risks surface to your manager. Your questions stay private unless you flag them.</div></div>'; }
+
+/* ── STAGE DATA — same areas, different fullness ──────────────────── */
+var STAGES=[
+  { hint:'First call · nothing has happened yet, so it’s all research — but that should mean real strategy in plain words, not filler. This is the /try brief done right.',
+    ask:['What could kill this deal?','Who actually makes the call here?','What should I open with?'],
+    askNote:'On the free /try brief this works without an account — the question still gets saved so the briefs can learn from what people ask.',
+    deal:{name:'Meridian Freight Systems',status:'Researched',statusTone:'accent',sub:'scheduling platform evaluation · pre-call brief',m1:'—',m1l:'touches',m2:'$62K',m2l:'phase 1'},
+    left:[aRead,aPlay,aDoFirst,aWalkin,aQuestions], right:[aRoom,aMoved,aCompete,aWatch],
+    read:'Meridian got bought 17 months ago, and there’s a new CFO whose job is to get all their finance systems onto one platform by the end of the year. The parent company runs its own system across everything it owns — so the real question isn’t which scheduling tool they pick. It’s whether Meridian keeps running its own systems, or gets folded into the parent’s. You want to be in the room before they make that call.',
+    play:'Win it the way these post-buyout deals get won: get to Dana early so she owns the decision, make Raj your guy on the inside by taking the switch-over headache off his plate, and quietly make “just use the parent’s system” look like the risky move — a rushed change a brand-new CFO can’t afford. If Meridian decides on its own, you’re in good shape. If the parent decides, you need Dana carrying this for you upstairs.',
+    move:{text:'First thing: find out whether Meridian makes this call themselves, or the parent company has already decided for them.',why:'That one answer tells you if this is a real shot or they’re just collecting quotes to hand upstairs. Price, security, timing — all of it comes after that.'},
+    walkin:'"Before we get into the product — how does this decision actually work on your end? Is it your team’s call, or does the parent company have the final say?"',
+    questions:[
+      {for:'The real decision',q:'When Cascade bought you, how much did they leave up to you on systems — or is the expectation that you move onto theirs eventually?',tells:'Tells you if this is already half-decided upstairs. If they dodge it, the parent’s system is what you’re really fighting.'},
+      {for:'Does the deadline have teeth?',q:'If year-end comes and you haven’t switched, what actually happens? Does someone above you step in?',tells:'A real deadline has a consequence. And whoever “steps in” is where the real power sits.'},
+      {for:'The approver you can’t see',q:'Last time you put in a system this big, whose sign-off did you end up needing that you didn’t see coming?',tells:'Shows you the real approval chain — without asking “who decides” straight out.'},
+      {for:'What could sink it',q:'Has the team been through a switch that went badly? What made it rough?',tells:'Uncovers Raj’s real fear. Fix that one thing and he’s your guy.'},
+      {for:'Can she win it upstairs?',q:'If you go with us, how hard is it to get Cascade comfortable — and who makes that case for you internally?',tells:'Tells you if Dana can actually carry this upstairs, and who has to sell it for you.'}
+    ],
+    room:[
+      {n:'Dana Whitfield',tier:'needs',badge:'probably the decision-maker',r:'CFO · started 4 months ago',angle:'New in the job and under pressure to show progress. She needs a win she can stand behind — something that went live fast and didn’t blow up.',e:'dana.whitfield@meridianfreight.com'},
+      {n:'Raj Patel',tier:'needs',badge:'haven’t spoken yet',r:'Controller · will run the evaluation',angle:'He’s the one who has to actually do the switch and live with the headaches. Show him it won’t be a mess and he’ll go to bat for you.',e:'raj.patel@meridianfreight.com'}
+    ],
+    moved:[
+      {meta:'Aug 2024 · acquisition announcement',h:'Bought by Cascade Industries for $240M; the founder stayed on as CEO',w:'Companies usually decide which systems to keep about a year and a half to two years after they’re bought. For Meridian, that’s right now — use it to push the timeline.'},
+      {meta:'Jul 2024 · LinkedIn',h:'Dana Whitfield joined as CFO from a company where she merged three finance systems into one',w:'She’s done exactly this before, and it’s her call. Sell her on getting it done cleanly, not on a feature list.'},
+      {meta:'Ongoing · investor filings',h:'Every company Cascade owns runs the same finance system',w:'That’s who you’re really competing with — the parent’s default. Your pitch: Meridian keeps control instead of getting swallowed.'}
+    ],
+    compete:'This isn’t won on features. It’s you versus “just use what the parent already has.” You win by making the safe choice the one where Meridian keeps its own system and gets live fast, with no messy switch — which is exactly what a brand-new CFO wants.',
+    watch:['If the parent has already decided and this is just box-checking, you’ll burn months — find that out on the first call.','Raj can quietly sink this if he thinks the switch lands on his team. Win him over before it gets there.'] },
+
+  { hint:'After call 1. The recap + open-loop appear, the attendee flips to engaged, deliverables start filling. Same areas, more of them.',
+    ask:['How do I get Dana on the next call?','Is this deal real, or a fact-find?','What am I missing here?'],
+    deal:{name:'Meridian Freight Systems',status:'Discovery',statusTone:'accent',sub:'scheduling platform evaluation · updated 2 days ago',m1:'2',m1l:'touches',m2:'$62K',m2l:'phase 1'},
+    left:[aRecap,aDoFirst,aWalkin], right:[aRoom,aWaiting,aDecks],
+    recap:'Raj confirmed the evaluation is ops-led for now, but "the parent CFO will want to see whatever we land on." Timeline: decide by end of quarter. Dana wasn’t on the call.',
+    move:{text:'Get Dana on the next call. Raj runs it day-to-day, but the CFO makes the call — and she hasn’t heard your story yet.',why:'You’re one relationship short of the actual decision-maker.'},
+    walkin:'"Raj — helpful last time. Before we go deeper, can we get Dana in the room next? I want the numbers to land with the person who owns the call."',
+    room:[{n:'Raj Patel',tier:'engaged',badge:'engaged · 1 call',r:'Controller · runs the evaluation',e:'raj.patel@meridianfreight.com'},{n:'Dana Whitfield',tier:'needs',badge:'needs engaging',r:'CFO · makes the call · not spoken yet',e:'dana.whitfield@meridianfreight.com'}],
+    waitingLabel:'What you owe them', waitingSent:0, waiting:[{t:'Security overview',m:'for their interim security lead'},{t:'Rough pricing band',m:'so Raj can socialize internally'}],
+    decks:[{n:'Discovery',d:'Sep 9',cur:true}] },
+
+  { hint:'Deal in motion. Every area is full — this is the Meridian Freight Systems screen you saw. Identical components, just complete.',
+    ask:['How do I handle Priya?','How do I defend the price vs ShiftGrid?','What’s my biggest risk right now?'],
+    deal:{name:'Meridian Freight Systems',status:'Advancing',statusTone:'success',sub:'scheduling platform evaluation · updated just now',m1:'6',m1l:'touches',m2:'$62K',m2l:'phase 1'},
+    left:[aDoFirst,aWalkin], right:[aWaiting,aRoom,aDecks],
+    move:{text:'Send the revised price with a one-paragraph rationale on why the scope isn’t comparable to ShiftGrid’s $52K.',why:'Dana asked for a defensible reason not to take the lower bid — give her the exact language for her procurement file.',quote:{text:'Give me something on price so it doesn’t look like I ignored a cheaper bid.',by:'Dana Whitfield, CFO · Nov 5 call'}},
+    walkin:'"Raj — before anything else: the data-residency answer, the revised price, and the phased scope. Did all three land, and land clearly?"',
+    waitingLabel:'What Dana’s waiting on before she decides', waitingSent:0, waiting:[{t:'data-residency answer',m:'→ Priya, security'},{t:'Revised price + one-paragraph rationale',m:'vs ShiftGrid $52K'},{t:'Phased scope in writing',m:'scheduling now, dispatch later'}],
+    room:[{n:'Dana Whitfield',tier:'engaged',badge:'engaged · 2 calls',r:'CFO · makes the call',e:'dana.whitfield@meridianfreight.com'},{n:'Raj Patel',tier:'engaged',badge:'engaged · 3 calls',r:'Controller · runs the evaluation',e:'raj.patel@meridianfreight.com'},{n:'Marcus Cole',tier:'engaged',badge:'engaged · 3 calls',r:'Finance ops · will run it day-to-day',e:'marcus.cole@meridianfreight.com'},{n:'Priya',tier:'needs',badge:'needs engaging',r:'Security (interim) · the review runs through him, and you’ve never spoken',e:'priya@meridianfreight.com'},{n:'Incoming Ops Director',tier:'watch',badge:'watch',r:'final-round candidate · may take over the evaluation'}],
+    decks:[{n:'Gate check-in',d:'Nov 5',cur:true},{n:'Pricing & ROI',d:'Oct 8'},{n:'Discovery',d:'Sep 9'}] }
+];
+
+function tone(t){return t==='success'?['var(--text-success)','var(--bg-success)']:['var(--text-accent)','var(--bg-accent)'];}
+function render(i){
+  var d=STAGES[i];
+  document.getElementById('hint').textContent=d.hint;
+  var tc=tone(d.deal.statusTone);
+  document.getElementById('dealhead').innerHTML=
+    '<div style="display:flex;gap:11px;align-items:center;min-width:0;">'
+    +'<span style="width:38px;height:38px;border-radius:9px;background:var(--fill-control);color:var(--text-secondary);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;">MF</span>'
+    +'<div style="min-width:0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap;">'
+    +'<span style="font-size:18px;font-weight:600;letter-spacing:-.01em;">'+d.deal.name+'</span>'
+    +'<span class="pill" style="color:'+tc[0]+';background:'+tc[1]+';">'+d.deal.status+'</span></div>'
+    +'<div style="font-size:12px;color:var(--text-secondary);">'+d.deal.sub+'</div></div></div>'
+    +'<div style="display:flex;gap:15px;flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums;">'
+    +'<div><div style="font-size:15px;font-weight:600;">'+d.deal.m1+'</div><div style="font-size:11px;color:var(--text-muted);">'+d.deal.m1l+'</div></div>'
+    +'<div><div style="font-size:15px;font-weight:600;">'+d.deal.m2+'</div><div style="font-size:11px;color:var(--text-muted);">'+d.deal.m2l+'</div></div></div>';
+  var L=d.left.map(function(f){return f(d);}).filter(Boolean).join('');
+  var R=d.right.map(function(f){return f(d);}).filter(Boolean).join('');
+  document.getElementById('body').innerHTML='<div class="grid"><div class="col">'+L+'</div><div class="colr">'+R+'</div></div>'+aAsk(d);
+}
+var btns=[].slice.call(document.querySelectorAll('.stages button'));
+btns.forEach(function(b){b.addEventListener('click',function(){btns.forEach(function(x){x.classList.remove('on');});b.classList.add('on');render(+b.dataset.s);});});
+
+// Hitting the × on a strategic alert = the rep confirming they walked the
+// prospect through it. That acknowledgment is the record — this is where the
+// action→outcome loop closes (and what a manager sees: done, or not).
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if (t && t.classList && t.classList.contains('ackx')) {
+    var w = t.closest('.ackwrap');
+    if (w) {
+      w.style.background = 'var(--bg-success)';
+      w.style.color = 'var(--text-success)';
+      w.style.borderColor = 'var(--text-success)';
+      w.style.padding = '3px 10px';
+      w.textContent = w.getAttribute('data-ack') || '✓ Done';
+    }
+  }
+
+  // Stakeholder correction loop: "not the right person?" → pick a reason →
+  // the row is corrected AND Mallín captures the reason to learn from.
+  if (t && t.classList && t.classList.contains('flagctl')) {
+    var fw = t.closest('.flagwrap');
+    if (fw) {
+      fw.innerHTML = '<span style="font-size:10px;color:var(--text-muted);">Why? </span>'
+        + ['Wrong person','Wrong role','No longer here','Not involved'].map(function(r){
+            return '<button class="flagreason" data-r="'+r+'" type="button" style="font:inherit;font-size:10px;color:var(--text-warning);background:var(--bg-warning);border:0;border-radius:20px;padding:2px 8px;margin:0 3px 3px 0;cursor:pointer;">'+r+'</button>';
+          }).join('');
+    }
+  }
+  if (t && t.classList && t.classList.contains('flagreason')) {
+    var row = t.closest('.stkrow');
+    var fw2 = t.closest('.flagwrap');
+    var reason = t.getAttribute('data-r');
+    if (row) { row.style.opacity = '.45'; }
+    if (fw2) {
+      fw2.innerHTML = '<span style="font-size:10px;color:var(--text-success);">✓ Flagged: '+reason+' — Mallín will learn from this on this account and across the system.</span>';
+    }
+  }
+});
+
+render(0);
+</script>
+</body></html>

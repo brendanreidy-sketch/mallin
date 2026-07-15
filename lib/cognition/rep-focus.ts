@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/db/client";
+import { getCompanyTenantIds } from "@/lib/cognition/company-graph";
 
 /**
  * Rep-focus feed-forward.
@@ -90,20 +91,27 @@ export async function getCrossDealFocus(args: {
 }
 
 /**
- * Proactive cross-deal OUTCOME lessons (won / lost / stalled), tenant-scoped.
+ * Proactive cross-deal OUTCOME lessons (won / lost / stalled), COMPANY-scoped.
  *
  * Unlike getCrossDealFocus (which echoes a rep's own past coach questions —
- * reactive), this GATHERS the data itself: it reads how OTHER deals in the
- * workspace ended (deal_outcomes: won/lost/no_decision, plus risk_materialized
- * and move_taken) and which live deals are stalling/at-risk (their current
- * execution artifact's posture), together with the driver behind each (top
- * critical-risk failure_mode / deal-thesis frame). It returns concise, labeled
- * lessons so a new deal's brief can proactively lead with "replicate this win",
- * "avoid what lost X", or "you're showing the stall signature that killed Y" —
- * with no rep interaction. The manager-governance review sits on top of this.
+ * reactive), this GATHERS the data itself: it reads how OTHER deals ended
+ * (deal_outcomes: won/lost/no_decision, plus risk_materialized and move_taken)
+ * and which live deals are stalling/at-risk (their current execution artifact's
+ * posture), together with the driver behind each (top critical-risk
+ * failure_mode / deal-thesis frame). It returns concise, labeled lessons so a
+ * new deal's brief can proactively lead with "replicate this win", "avoid what
+ * lost X", or "you're showing the stall signature that killed Y" — with no rep
+ * interaction. The manager-governance review sits on top of this.
  *
- * NOTE: not yet wired into brief generation. The posture field path is dug out
- * defensively and must be verified against a real artifact before wiring.
+ * Scope: the caller's own workspace PLUS every sibling workspace at the same
+ * company (getCompanyTenantIds — domain match, or same base mailbox for gmail
+ * plus-aliases). Reps keep separate workspaces; only the lessons cross. A
+ * teammate's deal is ANONYMIZED ("a teammate's deal at your company") — the
+ * behavioral lesson travels, the deal/rep identity does not. Your own deals
+ * stay named.
+ *
+ * NOTE: the posture field path is dug out defensively and must be verified
+ * against a real artifact before trusting STALLED/ADVANCED lines.
  * Never throws — returns [] on any gap so it can never break a brief.
  */
 export async function getCrossDealOutcomeLessons(args: {
@@ -113,16 +121,19 @@ export async function getCrossDealOutcomeLessons(args: {
 }): Promise<string[]> {
   const { tenantId, excludeOpportunityId, limit = 6 } = args;
   try {
+    // Company-scope: this workspace PLUS every sibling workspace at the same
+    // company. Falls back to [tenantId] alone on any gap.
+    const companyTenantIds = await getCompanyTenantIds(tenantId);
     const [outcomeRes, artRes] = await Promise.all([
       supabaseAdmin
         .from("deal_outcomes")
-        .select("opportunity_id, outcome, risk_materialized, move_taken, notes")
-        .eq("tenant_id", tenantId)
+        .select("opportunity_id, tenant_id, outcome, risk_materialized, move_taken, notes")
+        .in("tenant_id", companyTenantIds)
         .neq("opportunity_id", excludeOpportunityId),
       supabaseAdmin
         .from("execution_artifacts")
-        .select("opportunity_id, artifact")
-        .eq("tenant_id", tenantId)
+        .select("opportunity_id, tenant_id, artifact")
+        .in("tenant_id", companyTenantIds)
         .eq("is_current", true)
         .neq("opportunity_id", excludeOpportunityId),
     ]);
@@ -162,7 +173,12 @@ export async function getCrossDealOutcomeLessons(args: {
     const closed = new Set(outcomes.map((o) => o.opportunity_id));
 
     for (const o of outcomes) {
-      const name = nameOf.get(o.opportunity_id) ?? "A prior deal";
+      // Own deals are named; a teammate's is anonymized — the lesson travels,
+      // the identity doesn't.
+      const own = o.tenant_id === tenantId;
+      const name = own
+        ? (nameOf.get(o.opportunity_id) ?? "A prior deal")
+        : "a teammate's deal at your company";
       const info = infoOf.get(o.opportunity_id);
       const tail = info?.driver ? `: ${info.driver}` : "";
       if (o.outcome === "won") {
@@ -180,7 +196,10 @@ export async function getCrossDealOutcomeLessons(args: {
       if (closed.has(a.opportunity_id)) continue;
       const info = infoOf.get(a.opportunity_id);
       const p = (info?.posture ?? "").toLowerCase();
-      const name = nameOf.get(a.opportunity_id) ?? "An active deal";
+      const own = a.tenant_id === tenantId;
+      const name = own
+        ? (nameOf.get(a.opportunity_id) ?? "An active deal")
+        : "a teammate's active deal at your company";
       if (p === "stalled" || p === "at_risk") {
         lessons.push(`${p === "stalled" ? "STALLED" : "AT RISK"} — ${name}${info?.driver ? `: ${info.driver}` : ""}`);
       } else if (p === "advancing" && info?.advancedBy) {

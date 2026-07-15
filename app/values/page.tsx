@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 const PRINCIPLES = [
   "Institutional knowledge compounds.",
-  "AI should augment judgment, never replace it.",
+  "AI does the work; a human stays accountable.",
   "Truth over opinion.",
   "Execution over activity.",
   "Earn trust every day.",
@@ -74,7 +74,7 @@ export default function Values() {
                   ✕
                 </span>
                 <span className={styles.valsNeverText}>
-                  We will never <strong>replace human judgment.</strong>
+                  We will never act on your behalf <strong>without your permission.</strong>
                 </span>
               </li>
               <li className={styles.valsNeverRow}>

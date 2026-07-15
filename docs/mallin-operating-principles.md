@@ -16,7 +16,7 @@ Become the operating system for institutional knowledge — where an organizatio
 
 ## Principles
 1. Institutional knowledge compounds.
-2. AI should augment judgment, never replace it.
+2. AI does the work; a human stays accountable.
 3. Truth over opinion.
 4. Execution over activity.
 5. Earn trust every day.
@@ -24,7 +24,7 @@ Become the operating system for institutional knowledge — where an organizatio
 
 ## What we will never become
 - We will never become another CRM.
-- We will never replace human judgment.
+- We will never act on your behalf without your permission.
 - We will never build AI that lacks transparency.
 - We will never prioritize more features over better execution.
 - We will never sacrifice trust for speed.

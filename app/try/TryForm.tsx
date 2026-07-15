@@ -32,6 +32,9 @@ export default function TryForm() {
   const [stakeholders, setStakeholders] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Gate/upsell message (429/503 "sign up to continue") — kept distinct from a
+  // real error so it renders as a friendly CTA, not red rejection text.
+  const [gated, setGated] = useState<string | null>(null);
   const [result, setResult] = useState<TryResult | null>(null);
 
   const canSubmit = company.trim() && productContext.trim() && !busy;
@@ -39,6 +42,7 @@ export default function TryForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setGated(null);
     setBusy(true);
     try {
       const res = await fetch("/api/try-brief", {
@@ -53,7 +57,11 @@ export default function TryForm() {
         message?: string;
       };
       if (!res.ok || !data.artifact) {
-        setError(data.message ?? "Something went wrong. Try again, or sign up for the full product.");
+        const msg = data.message ?? "Something went wrong. Try again, or sign up for the full product.";
+        // 429 (free-preview cap / busy) and 503 (warming up) are "sign up to
+        // continue" gates — friendly CTAs, not errors. Real errors stay red.
+        if (res.status === 429 || res.status === 503) setGated(msg);
+        else setError(msg);
         setBusy(false);
         return;
       }
@@ -109,6 +117,18 @@ export default function TryForm() {
       <input style={inputStyle} value={stakeholders} onChange={(e) => setStakeholders(e.target.value)} placeholder="e.g. the CFO, the VP of Sales" />
 
       {error && <p style={{ color: "#c25a4a", fontSize: 14, margin: "16px 0 0" }}>{error}</p>}
+
+      {gated && (
+        <div style={{ marginTop: 16, padding: "14px 16px", background: "#f0f4ef", border: "1px solid #d3e0d0", borderRadius: 10 }}>
+          <p style={{ color: INK, fontSize: 14, margin: 0, lineHeight: 1.5 }}>{gated}</p>
+          <a
+            href="/start"
+            style={{ display: "inline-block", marginTop: 10, padding: "10px 16px", background: INK, color: "#f4f1ea", borderRadius: 8, fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+          >
+            Sign up free →
+          </a>
+        </div>
+      )}
 
       <button
         type="submit"

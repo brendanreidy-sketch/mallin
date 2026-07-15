@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackLink } from "@/components/BackLink";
+import { AppSignOut } from "@/components/auth/sign-out-button";
 
 // Draft of in-progress intake work, stashed when a submit hits an expired
 // session so the re-auth round-trip (sign-in → back to /new) doesn't lose the
@@ -294,7 +295,10 @@ export default function IntakeForm({
   return (
     <main style={S.page}>
       <div style={S.card}>
-        <BackLink href="/cockpit" label="All deals" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <BackLink href="/cockpit" label="All deals" />
+          <AppSignOut />
+        </div>
         <p style={S.eyebrow}>
           {upcoming ? "— Call coming up" : followUp ? "— Follow-up call" : "— New deal"}
         </p>

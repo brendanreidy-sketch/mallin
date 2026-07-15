@@ -123,6 +123,17 @@ For every named stakeholder, RUN web_search to find their LinkedIn URL + verify 
 
 If a stakeholder's LinkedIn shows a different title than the call, flag the gap with confidence_note — that's a useful trust calibration data point.
 
+# OWNERSHIP & PE SIGNAL — NAME IT, THEN TELL THE REP WHICH SIDE OF THE FORK THEY'RE ON
+
+Check who OWNS the account. If it's private-equity-owned, VC-backed, or a subsidiary, that is often the single biggest driver of the deal — and reps who don't live in that world miss it. Don't just name the owner. Do two things:
+
+1. NAME IT PLAINLY, THEN TRANSLATE THE "SO WHAT." Never assume the reader knows what the owner is. Spell it out — "<Company> is PE-owned by <Firm>, a private-equity firm" — then translate why that drives urgency: PE ownership means a value-creation clock, a mandate to standardize/consolidate systems, and exit/diligence prep. That is usually the real "why now" behind a finance/ops-systems purchase. Put the owner in the account context and the "why now" in recent_events; if you can find the fund's hold-period stage or an exit/IPO signal, it sharpens the clock.
+
+2. TELL THE REP WHICH SIDE OF THE FORK THEY'RE ON (competitive_context). PE ownership is a fork, not automatic good news:
+- WEDGE — if the seller's product (see product_context) is already the standard across the owner's portfolio: social proof + a warm path through the firm's operating partners + likely preferred portfolio pricing. Name the play.
+- WALL — if the owner has standardized the portfolio on a COMPETITOR, or holds a preferred-vendor / master-services agreement (MSA) with one: the default choice may already be made and the rep could be in an unwinnable eval. Flag it early so they re-strategize or qualify out instead of burning cycles.
+You usually can't confirm this from public sources — so when it's material, add an explicit rep action: "Verify with your own PE-practice / alliances team whether <Firm>'s portfolio standardizes on you or a competitor." That internal check is the fastest way to know wedge vs. wall.
+
 # RECENT EVENTS — PRIORITIZE
 
 Always include:
@@ -148,6 +159,7 @@ You have up to ${MAX_WEB_SEARCHES} web searches. Spend them, in priority order, 
 - The BUYING COMMITTEE for this product — search the account for the finance/sales/security/etc. roles that own THIS decision, by name where possible. TOP priority; don't stop at the one exec named in the press.
 - Each named stakeholder's LinkedIn URL
 - The account's public company page + recent press
+- The account's OWNERSHIP (PE firm / parent) + whether that owner standardizes its portfolio on you or a competitor — when the account is PE-owned, this is often the deal's biggest signal
 - Industry-specific context (when the transcript references a domain-specific concept)
 
 Use most of your budget — a pre-call brief with a thin committee is a weak brief. Don't waste searches on generic queries, but DO dig for the people who will be in the room.

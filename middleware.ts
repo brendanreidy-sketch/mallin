@@ -84,6 +84,9 @@ const isPublicRoute = createRouteMatcher([
   '/about(.*)',
   // Public team page.
   '/team(.*)',
+  // Public mission + values marketing pages.
+  '/mission(.*)',
+  '/values(.*)',
   '/pilot(.*)',
   '/api/pilot-signup',
   '/contact(.*)',

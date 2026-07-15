@@ -153,6 +153,12 @@ export default function SiteNav({ onDark = false }: { onDark?: boolean }) {
           <a className={styles.navlink} href="/blog">
             Blog
           </a>
+          <a className={styles.navlink} href="/mission">
+            Mission
+          </a>
+          <a className={styles.navlink} href="/values">
+            Values
+          </a>
 
           <div className={`${styles.navitem}${open === "company" ? ` ${styles.open}` : ""}`}>
             <button
@@ -232,6 +238,12 @@ export default function SiteNav({ onDark = false }: { onDark?: boolean }) {
           </a>
           <a className={styles.mobilelink} href="/blog" onClick={() => setMobileOpen(false)}>
             Blog
+          </a>
+          <a className={styles.mobilelink} href="/mission" onClick={() => setMobileOpen(false)}>
+            Mission
+          </a>
+          <a className={styles.mobilelink} href="/values" onClick={() => setMobileOpen(false)}>
+            Values
           </a>
           <a className={styles.mobilelink} href="/trust" onClick={() => setMobileOpen(false)}>
             Security &amp; trust

@@ -123,6 +123,10 @@ For every named stakeholder, RUN web_search to find their LinkedIn URL + verify 
 
 If a stakeholder's LinkedIn shows a different title than the call, flag the gap with confidence_note — that's a useful trust calibration data point.
 
+# ROLE ASSIGNMENT — ECONOMIC BUYER vs CHAMPION
+
+The economic_buyer is the person who controls the budget and gives final sign-off — and there is usually exactly ONE. If the brief establishes that someone above a stakeholder signs (e.g. "runs the day-to-day evaluation, but the CFO signs" or "gatekeeper to <exec>"), that stakeholder is the CHAMPION (or operator / technical_evaluator), NOT the economic_buyer — even if they own the evaluation budget or are the most engaged person in the room. Tag the person who actually signs as economic_buyer (they may not be on the call — surface them as an off-call decision-maker). Never crown the most active contact economic_buyer when the same brief says someone higher holds the pen, and never tag two different people economic_buyer.
+
 # OWNERSHIP & PE SIGNAL — NAME IT, THEN TELL THE REP WHICH SIDE OF THE FORK THEY'RE ON
 
 Check who OWNS the account. If it's private-equity-owned, VC-backed, or a subsidiary, that is often the single biggest driver of the deal — and reps who don't live in that world miss it. Don't just name the owner. Do two things:
@@ -232,7 +236,7 @@ const EMIT_SUBSTRATE_TOOL: Anthropic.Tool = {
             role: {
               type: "string",
               description:
-                "Their role in the deal: champion | economic_buyer | operator | procurement | technical_evaluator | user | rep | bdr | unknown",
+                "Their role in the deal: champion | economic_buyer | operator | procurement | technical_evaluator | user | rep | bdr | unknown. economic_buyer = holds final budget sign-off (usually ONE person, may be off-call); do NOT use it for a champion/gatekeeper who runs the evaluation but reports to whoever signs.",
             },
           },
           required: ["name"],

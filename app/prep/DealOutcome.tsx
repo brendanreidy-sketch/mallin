@@ -20,18 +20,19 @@ export default function DealOutcome({ opportunityId }: { opportunityId: string }
   const [amount, setAmount] = useState("");
   const [riskMaterialized, setRiskMaterialized] = useState<Flag>(null);
   const [moveTaken, setMoveTaken] = useState<Flag>(null);
+  const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function save() {
-    if (!outcome) return;
+    if (!outcome || !notes.trim()) return;
     setBusy(true);
     setErr(null);
     try {
       const res = await fetch("/api/deal-outcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ opportunityId, outcome, closedAt, amount, riskMaterialized, moveTaken }),
+        body: JSON.stringify({ opportunityId, outcome, closedAt, amount, riskMaterialized, moveTaken, notes: notes.trim() }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
       if (!res.ok) throw new Error(data.message || data.error || "Couldn't save the outcome.");
@@ -146,6 +147,16 @@ export default function DealOutcome({ opportunityId }: { opportunityId: string }
               />
             </Field>
 
+            <Field label="Why did it end this way? — required. This becomes coaching on every future deal.">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                placeholder="Name the behavior, not the label. e.g. 'Rep caved on term without approval, bashed the competitor to the CFO, and guaranteed an unbuilt feature — the economic buyer's trust broke and she reopened the competitor.'"
+                style={{ ...input, minHeight: 76, resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 }}
+              />
+            </Field>
+
             {err && <p style={{ color: ck("--ck-crit"), fontSize: 13, margin: "4px 0 0" }}>{err}</p>}
 
             <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
@@ -155,8 +166,8 @@ export default function DealOutcome({ opportunityId }: { opportunityId: string }
               <button
                 type="button"
                 onClick={save}
-                disabled={busy || !outcome}
-                style={{ ...btnSolid, opacity: busy || !outcome ? 0.5 : 1 }}
+                disabled={busy || !outcome || !notes.trim()}
+                style={{ ...btnSolid, opacity: busy || !outcome || !notes.trim() ? 0.5 : 1 }}
               >
                 {busy ? "Saving…" : "Save outcome"}
               </button>

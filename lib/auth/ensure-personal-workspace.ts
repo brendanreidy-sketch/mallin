@@ -5,6 +5,67 @@ import { FREE_DEAL_LIMIT } from "@/lib/billing/stripe";
 import { sendSignupNotification } from "@/lib/email/resend";
 
 /**
+ * Public / consumer email domains — everyone shares them, so they must NEVER
+ * form a company team. For these we group ONLY aliases of the SAME mailbox
+ * (builtalone+rep3@gmail.com ↔ builtalone@gmail.com) — same inbox, same person.
+ * That's both safe and exactly the founder's +alias test path.
+ */
+const PUBLIC_EMAIL_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com",
+  "yahoo.com", "yahoo.co.uk", "icloud.com", "me.com", "mac.com", "aol.com",
+  "proton.me", "protonmail.com", "gmx.com", "gmx.net", "msn.com", "yandex.com",
+  "zoho.com", "fastmail.com", "hey.com",
+]);
+
+/** Normalize a mailbox: strip the +tag; drop dots for Gmail (Google ignores them). */
+function mailboxBase(localPart: string, domain: string): string {
+  let base = localPart.toLowerCase().split("+")[0];
+  if (domain === "gmail.com" || domain === "googlemail.com") base = base.replace(/\./g, "");
+  return base;
+}
+
+/**
+ * Team formation. Given a new user's email, find an existing tenant they should
+ * JOIN instead of getting an isolated personal workspace:
+ *   - Company domain (@netsuite.com): every verified user on the domain is a
+ *     teammate → join the founding (oldest) tenant on that domain.
+ *   - Public domain (gmail etc.): join ONLY a same-mailbox alias's tenant.
+ * Returns the Clerk org id (tenants.slug) to join, or null to create fresh.
+ *
+ * Guardrail: Clerk verifies the email before this runs, so a company-domain
+ * join always means the joiner controls an address at that domain. A stronger
+ * claimed/approved-domain gate is a follow-up; verified-email is the v1 floor.
+ */
+async function findTeamOrgToJoin(email: string | null): Promise<string | null> {
+  if (!email || !email.includes("@")) return null;
+  const [localRaw, domainRaw] = email.split("@");
+  const domain = (domainRaw ?? "").toLowerCase();
+  if (!domain) return null;
+
+  const { data } = await supabaseAdmin
+    .from("tenants")
+    .select("slug, owner_email, created_at")
+    .eq("email_domain", domain)
+    .eq("is_demo", false)
+    .order("created_at", { ascending: true });
+  const rows = (data ?? []).filter((r) => r.slug);
+  if (rows.length === 0) return null;
+
+  if (!PUBLIC_EMAIL_DOMAINS.has(domain)) {
+    return rows[0].slug as string; // company domain → join the founding tenant
+  }
+  // Public domain → same-mailbox aliases only.
+  const base = mailboxBase(localRaw ?? "", domain);
+  const match = rows.find((r) => {
+    const oe = (r.owner_email ?? "").toLowerCase();
+    if (!oe.includes("@")) return false;
+    const [ol, od] = oe.split("@");
+    return od === domain && mailboxBase(ol ?? "", domain) === base;
+  });
+  return (match?.slug as string) ?? null;
+}
+
+/**
  * Idempotently ensures the current user has a personal workspace:
  *   1. a Clerk organization (the user is its admin), and
  *   2. a Supabase `tenants` row with slug = the Clerk org id.
@@ -54,6 +115,28 @@ export async function ensurePersonalWorkspace(): Promise<EnsureWorkspaceResult> 
 
   let createdOrg = false;
   const user = await client.users.getUser(userId);
+
+  // Team formation: before spinning up an isolated workspace, see if this user
+  // belongs to an existing team (same company domain, or a same-mailbox alias
+  // on a consumer domain) and JOIN it — so a real @company.com team, and the
+  // founder's +alias test accounts, land in ONE shared tenant. Fail-safe: any
+  // error falls through to a fresh personal workspace so signup never breaks.
+  if (!orgId) {
+    try {
+      const teamOrgId = await findTeamOrgToJoin(user.primaryEmailAddress?.emailAddress ?? null);
+      if (teamOrgId) {
+        await client.organizations.createOrganizationMembership({
+          organizationId: teamOrgId,
+          userId,
+          role: "org:member",
+        });
+        orgId = teamOrgId; // joined the team; its tenant already exists.
+      }
+    } catch (e) {
+      console.warn(`[ensureWorkspace] team-join skipped: ${(e as Error).message}`);
+    }
+  }
+
   if (!orgId) {
     const first = user.firstName?.trim();
     const orgName = first ? `${first}'s workspace` : "Personal workspace";

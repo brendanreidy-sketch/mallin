@@ -16,6 +16,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { MeetingBlock } from "@/lib/intelligence/types";
+import type { SellerProof } from "./seller-proof-agent";
 
 const MODEL = "claude-opus-4-7";
 
@@ -30,6 +31,11 @@ export interface DeckCopyRequest {
    *  stakeholders) the latest call builds on but may not restate. The latest
    *  transcript always wins; nothing here is invented or resurrected. */
   priorMeeting?: MeetingBlock | null;
+  /** Real, web-sourced seller proof (positioning + named references + need→module
+   *  fit). When present, the deck actually SELLS the seller with same-industry
+   *  references — the one exception to the transcript-only rule. Null → the deck
+   *  stays transcript-only. */
+  sellerProof?: SellerProof | null;
 }
 
 const emitTool: Anthropic.Tool = {
@@ -64,7 +70,7 @@ const emitTool: Anthropic.Tool = {
       sections: {
         type: "array",
         description:
-          "The deal-story narrative as deck sections, in order. Use these headings when the call supports them: 'Where <buyer> is today' (current state + pain), 'What <buyer> is solving for' (goals/outcomes), 'Why <seller>' (fit + proof), 'How we connect' (ERP + bank connectivity if discussed), 'Next steps'. 3-6 sections, each 3-5 bullets. Each bullet is ONE concrete point, <= 14 words, customer-facing, drawn from what was actually said on the call.",
+          "The deal-story narrative as deck sections, in order. Use these headings when supported: 'Where <buyer> is today' (current state + pain), 'What <buyer> is solving for' (goals/outcomes), 'Why <seller>' (fit + how modules map to their needs), 'Who <seller> works with' (real named same-industry references — ONLY when seller proof is provided), 'How we connect' (ERP + bank connectivity if discussed), 'Next steps'. 3-7 sections, each 3-5 bullets. Each bullet is ONE concrete point, <= 14 words, customer-facing. Bullets are drawn from what was actually said on the call — EXCEPT 'Why <seller>' and 'Who <seller> works with', which use the provided seller proof (real references + need→module fit).",
         items: {
           type: "object",
           properties: {
@@ -143,6 +149,10 @@ You're given the PRIOR call's deck content (in the user message). The transcript
 Rules: (1) the latest call ALWAYS wins where they differ — never resurrect something this call resolved, priced, or moved past; (2) never invent — carry forward only what the prior content actually contains; (3) quotes are VERBATIM from THIS call's transcript, never the prior one; (4) prefer this call's numbers. Continuity, not a merge: the deck IS this call, enriched by what's still true from before.`
     : "";
 
+  const sellerProofBlock = req.sellerProof
+    ? `\n\nSELLER PROOF — real, web-sourced material you MUST use (the ONE exception to "only from the call"; researched from ${req.sellerName}'s public sources):\n${JSON.stringify(req.sellerProof)}\nUse it to make the deck actually SELL ${req.sellerName}:\n- Build a strong "Why ${req.sellerName}" section from module_fit — each bullet ties one of ${req.buyerName}'s STATED needs to the specific ${req.sellerName} module that solves it.\n- Add a section titled "Who ${req.sellerName} works with" — one bullet per real reference: the named customer + the one-line proof, same-industry first. Use ONLY the named references provided; never invent a logo or a stat.\n- You may open "Why ${req.sellerName}" with the positioning line.\nEvery OTHER section (today, solving-for, quotes, impact, next steps) still comes only from the call.`
+    : "";
+
   const system = `You write the customer-facing slide deck a rep presents AFTER a discovery call.
 The deck is presented BY ${req.sellerName} TO ${req.buyerName}. It is selling: ${req.productContext}.
 
@@ -164,7 +174,7 @@ This deck is for an EXECUTIVE (CFO) audience. Two things make it land:
    who sees their exact words feels understood. Quote exactly; never paraphrase.
 2. impact — make the cost of the status quo and the payoff QUANTIFIED and concrete,
    using the real numbers said on the call (hours/week, dollars, # entities, close
-   timing). A CFO buys on impact, not features.${carryForward}`;
+   timing). A CFO buys on impact, not features.${carryForward}${sellerProofBlock}`;
 
   const priorBlock = priorSummary
     ? `Prior call's deck content — for CARRY-FORWARD ONLY, not the source of this deck:\n\`\`\`json\n${priorSummary}\n\`\`\`\n\n`

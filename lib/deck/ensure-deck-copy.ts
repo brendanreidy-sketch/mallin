@@ -24,6 +24,7 @@ import { supabaseAdmin } from "@/lib/db/client";
 import { getTenantBrand } from "@/lib/auth/tenant-context";
 import type { AccountIntelligenceArtifact, MeetingBlock } from "@/lib/intelligence/types";
 import { generateDeckCopy } from "./deck-copy-agent";
+import { researchSellerProof } from "./seller-proof-agent";
 import { getLatestDealTranscriptMeta } from "./deck-transcripts";
 
 export type EnsureResult =
@@ -89,12 +90,23 @@ export async function ensureDeckCopy(opportunityId: string): Promise<EnsureResul
     // Pass the PRIOR meeting so a follow-on deck carries forward still-live
     // threads (pain, goals, stakeholders) instead of resetting to only this
     // call. The latest transcript stays authoritative; see generateDeckCopy.
+    // Research the seller's real proof (same-industry references + need→module
+    // fit) so the deck actually SELLS the seller, not just mirrors the call.
+    // Never throws — degrades to null (transcript-only copy).
+    const sellerProof = await researchSellerProof({
+      sellerName,
+      buyerName,
+      productContext,
+      transcript: latest.text,
+    });
+
     const copy = await generateDeckCopy({
       transcript: latest.text,
       productContext,
       sellerName,
       buyerName,
       priorMeeting: artifact.meeting ?? null,
+      sellerProof,
     });
     copy.deck_copy_source_at = latest.createdAt;
     const newArtifact: AccountIntelligenceArtifact = {

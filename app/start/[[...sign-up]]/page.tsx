@@ -155,6 +155,19 @@ export default function StartPage() {
               </p>
             </SignUp.Strategy>
           </SignUp.Step>
+
+          {/* Clerk routes through a "continue" step when the signup transitions to
+              complete (or if any field is still outstanding). Without this step it
+              renders BLANK — leaving only the footer, so the page looks like a dead
+              "sign in" wall. Render a friendly finishing state so the hand-off to
+              /welcome reads as progress, never a wall. */}
+          <SignUp.Step name="continue" className={s.step}>
+            <div className={s.head}>
+              <h1 className={s.title}>Finishing sign-up…</h1>
+              <p className={s.subtitle}>One moment — taking you into Mallín.</p>
+            </div>
+            <Clerk.GlobalError className={s.error} />
+          </SignUp.Step>
         </SignUp.Root>
 
         <div className={s.foot}>

@@ -189,7 +189,6 @@ function Teaser({
   const landmineCount = Array.isArray(brief?.landmines) ? brief!.landmines.length : 0;
 
   const [email, setEmail] = useState("");
-  const [salesExperience, setSalesExperience] = useState("");
   const [unlocking, setUnlocking] = useState(false);
 
   async function unlock(e: React.FormEvent) {
@@ -197,8 +196,9 @@ function Teaser({
     const clean = email.trim();
     if (!clean || unlocking) return;
     setUnlocking(true);
-    // Save the brief + the rep's sales tenure under this email (best-effort) so
-    // both are waiting after signup — the tenure lets Mallín tune coaching depth.
+    // Save the brief under this email (best-effort) so it's waiting after signup.
+    // Sales tenure is asked ONCE, post-signup on /welcome — not here — so the
+    // teaser gate stays a single field and we never double-ask.
     try {
       await fetch("/api/try-brief/save", {
         method: "POST",
@@ -210,7 +210,6 @@ function Teaser({
           stakeholders,
           artifact: a,
           account_name: result.account_name,
-          salesExperience: salesExperience || undefined,
         }),
       });
     } catch {
@@ -269,21 +268,6 @@ function Teaser({
             placeholder="you@company.com"
             style={{ width: "100%", padding: "13px 14px", fontSize: 15, color: INK, background: "#f4f1ea", border: "none", borderRadius: 10, outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
           />
-          {/* Rep tenure — a soft signal so Mallín can tune coaching depth to
-              experience (juniors get the "why"; veterans get it terse). Optional. */}
-          <select
-            value={salesExperience}
-            onChange={(e) => setSalesExperience(e.target.value)}
-            aria-label="How long have you been in sales?"
-            style={{ marginTop: 10, width: "100%", padding: "13px 14px", fontSize: 15, color: salesExperience ? INK : "#8792a3", background: "#f4f1ea", border: "none", borderRadius: 10, outline: "none", boxSizing: "border-box", fontFamily: "inherit", appearance: "none", cursor: "pointer" }}
-          >
-            <option value="">How long have you been in sales? (optional)</option>
-            <option value="new">New to sales — under 1 year</option>
-            <option value="1-3">1–3 years</option>
-            <option value="3-7">3–7 years</option>
-            <option value="7-15">7–15 years</option>
-            <option value="15+">15+ years</option>
-          </select>
           <button
             type="submit"
             disabled={unlocking || !email.trim()}

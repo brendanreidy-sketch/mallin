@@ -11,6 +11,11 @@ import "./globals.css";
 // the original demo@mallin.io tenant AND multi-tenant design-partner
 // accounts provisioned via scripts/clerk/provision-demo-partner.mjs.
 const POST_SIGNIN_PATH = "/cockpit";
+// New signups must land on /welcome FIRST — it provisions the personal workspace
+// and activates the Clerk org (setActive), then forwards to /cockpit. Sending a
+// fresh signup straight to /cockpit skips provisioning, so the protected page has
+// no active org and bounces the brand-new user back to /sign-in.
+const POST_SIGNUP_PATH = "/welcome";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -84,7 +89,7 @@ export default function RootLayout({
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
           signInFallbackRedirectUrl={POST_SIGNIN_PATH}
-          signUpFallbackRedirectUrl={POST_SIGNIN_PATH}
+          signUpFallbackRedirectUrl={POST_SIGNUP_PATH}
         >
           {body}
         </ClerkProvider>

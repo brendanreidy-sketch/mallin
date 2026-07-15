@@ -32,6 +32,7 @@
 
 import { supabaseAdmin } from "@/lib/db/client";
 import { runIntakeSubstrate } from "@/lib/agents/intake-substrate-agent";
+import { reconcileEconomicBuyer } from "@/lib/intelligence/reconcile-economic-buyer";
 import { getRepFocus, getCrossDealFocus } from "@/lib/cognition/rep-focus";
 import { assembleCoreIntelligenceInput } from "@/orchestration/pass-1.5/input-assembler";
 import { ProductionCoreIntelligenceAgent } from "@/lib/agents/core-intelligence-agent";
@@ -342,6 +343,9 @@ export async function runResearchOnly(args: {
     if (sErr) console.warn(`[research] stakeholder insert (${p.name}) failed: ${sErr.message}`);
   }
 
+  // Collapse any duplicate economic buyers down to one (see reconcile-economic-buyer).
+  await reconcileEconomicBuyer(accountId);
+
   await supabaseAdmin
     .from("account_intelligence_artifacts")
     .update({ is_current: false })
@@ -418,6 +422,9 @@ export async function runIntakePipeline(args: {
     );
     if (sErr) console.warn(`[intake] stakeholder insert (${p.name}) failed: ${sErr.message}`);
   }
+
+  // Collapse any duplicate economic buyers down to one (see reconcile-economic-buyer).
+  await reconcileEconomicBuyer(accountId);
 
   // Account-intelligence artifact (Pass 0). Demote any prior current, insert new.
   await supabaseAdmin
@@ -600,6 +607,10 @@ export async function appendCallAndRebuild(args: {
   // call slot — mirroring the new-deal path's rollback. Ordering is safe:
   // rebuildBrief reads the call substrate, not this archive.
   await rebuildBrief({ tenantId, opportunityId });
+
+  // A follow-up can surface a truer signer (e.g. the CFO) while an earlier call's
+  // sponsor still carries economic_buyer — collapse to one after the rebuild.
+  await reconcileEconomicBuyer(opp.account_id);
 
   // Archive the follow-up transcript to the deck-copy source, same store and
   // helper as the new-deal path. Without this, a follow-up call never gets a

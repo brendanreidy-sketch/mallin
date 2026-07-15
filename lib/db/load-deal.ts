@@ -11,6 +11,7 @@
  */
 
 import { supabaseAdmin } from "./client";
+import { enforceSingleEconomicBuyer } from "@/lib/intelligence/reconcile-economic-buyer";
 import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
 
 export interface LoadedSubstrate {
@@ -335,14 +336,16 @@ export async function loadDealFromDB(
           })),
         }
       : undefined,
-    stakeholders: (stakeholders ?? []).map((s) => ({
-      id: s.id,
-      name: s.name,
-      title: s.title ?? undefined,
-      company: s.company ?? undefined,
-      committee_role: s.committee_role ?? undefined,
-      email: s.email ?? undefined,
-    })),
+    stakeholders: enforceSingleEconomicBuyer(
+      (stakeholders ?? []).map((s) => ({
+        id: s.id,
+        name: s.name,
+        title: s.title ?? undefined,
+        company: s.company ?? undefined,
+        committee_role: s.committee_role ?? undefined,
+        email: s.email ?? undefined,
+      })),
+    ),
     internal_participants: (internal ?? []).map((p) => ({
       id: p.id,
       name: p.name,

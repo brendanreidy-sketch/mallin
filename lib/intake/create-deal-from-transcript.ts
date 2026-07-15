@@ -33,7 +33,7 @@
 import { supabaseAdmin } from "@/lib/db/client";
 import { runIntakeSubstrate } from "@/lib/agents/intake-substrate-agent";
 import { reconcileEconomicBuyer } from "@/lib/intelligence/reconcile-economic-buyer";
-import { getRepFocus, getCrossDealFocus } from "@/lib/cognition/rep-focus";
+import { getRepFocus, getCrossDealFocus, getCrossDealOutcomeLessons } from "@/lib/cognition/rep-focus";
 import { assembleCoreIntelligenceInput } from "@/orchestration/pass-1.5/input-assembler";
 import { ProductionCoreIntelligenceAgent } from "@/lib/agents/core-intelligence-agent";
 import { applyCoreIntelligence } from "@/orchestration/pass-3/apply";
@@ -485,9 +485,10 @@ export async function rebuildBrief(args: {
   // Feed-forward: fold the rep's recent cockpit questions into the brief input
   // so the regenerated brief leads with what they've been probing, plus their
   // cross-deal lens (how they reason across deals).
-  const [repFocus, crossDealFocus] = await Promise.all([
+  const [repFocus, crossDealFocus, outcomeLessons] = await Promise.all([
     getRepFocus({ tenantId, opportunityId }),
     getCrossDealFocus({ tenantId, excludeOpportunityId: opportunityId }),
+    getCrossDealOutcomeLessons({ tenantId, excludeOpportunityId: opportunityId }),
   ]);
   if (repFocus.length > 0) {
     (merged as { rep_focus?: string[] }).rep_focus = repFocus;
@@ -495,6 +496,12 @@ export async function rebuildBrief(args: {
   if (crossDealFocus.length > 0) {
     (merged as { rep_cross_deal_focus?: string[] }).rep_cross_deal_focus =
       crossDealFocus;
+  }
+  if (outcomeLessons.length > 0) {
+    // Proactive win/loss/stall/advanced coaching mined from the workspace's
+    // other deals — the system gathers it; the rep never asks.
+    (merged as { cross_deal_outcome_lessons?: string[] }).cross_deal_outcome_lessons =
+      outcomeLessons;
   }
 
   // ── Pass 4: Execution agent → PrepArtifact ──

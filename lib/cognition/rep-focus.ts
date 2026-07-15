@@ -141,7 +141,7 @@ export async function getCrossDealOutcomeLessons(args: {
     const nameOf = new Map((opps ?? []).map((o) => [o.id, o.name ?? "a deal"] as const));
 
     // Driver + posture per deal, dug from the current artifact (defensive paths).
-    const infoOf = new Map<string, { driver?: string; posture?: string }>();
+    const infoOf = new Map<string, { driver?: string; posture?: string; advancedBy?: string }>();
     for (const a of arts) {
       const art = (a.artifact ?? {}) as Record<string, unknown>;
       const risks = (art.critical_risks as { failure_mode?: string; title?: string }[] | undefined) ?? [];
@@ -153,7 +153,9 @@ export async function getCrossDealOutcomeLessons(args: {
         (art.status as string | undefined) ||
         topLine?.posture ||
         undefined;
-      infoOf.set(a.opportunity_id, { driver, posture });
+      // What moved it forward — the progression play (from what_changed).
+      const advancedBy = (art.what_changed as { summary?: string } | undefined)?.summary || undefined;
+      infoOf.set(a.opportunity_id, { driver, posture, advancedBy });
     }
 
     const lessons: string[] = [];
@@ -178,9 +180,12 @@ export async function getCrossDealOutcomeLessons(args: {
       if (closed.has(a.opportunity_id)) continue;
       const info = infoOf.get(a.opportunity_id);
       const p = (info?.posture ?? "").toLowerCase();
+      const name = nameOf.get(a.opportunity_id) ?? "An active deal";
       if (p === "stalled" || p === "at_risk") {
-        const name = nameOf.get(a.opportunity_id) ?? "An active deal";
         lessons.push(`${p === "stalled" ? "STALLED" : "AT RISK"} — ${name}${info?.driver ? `: ${info.driver}` : ""}`);
+      } else if (p === "advancing" && info?.advancedBy) {
+        // The forward-motion play: what the rep did that moved this deal.
+        lessons.push(`ADVANCED — ${name}: ${info.advancedBy}`);
       }
     }
 

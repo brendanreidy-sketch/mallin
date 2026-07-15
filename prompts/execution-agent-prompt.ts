@@ -716,11 +716,27 @@ verbatim or treat them as facts about THIS account; they are style, not substrat
 ${input.rep_cross_deal_focus.map((q) => `- ${q}`).join("\n")}`
       : "";
 
+  const outcomeLessonsBlock =
+    input.cross_deal_outcome_lessons && input.cross_deal_outcome_lessons.length > 0
+      ? `
+
+# WHAT WON, LOST, STALLED, AND ADVANCED OTHER DEALS HERE — COACH OFF IT PROACTIVELY
+The system mined these outcome + action lessons from the workspace's OTHER deals
+(labeled WON / LOST / STALLED / AT RISK / ADVANCED). The rep did NOT ask for these
+— YOU surface them. Use them to make the brief proactive about the outcome:
+- If this deal resembles a WON or ADVANCED pattern, name the move that worked — "replicate X; it advanced/won a similar deal."
+- If it resembles a LOST or STALLED pattern, warn early and specifically — "this is the signature that lost/stalled <deal>; the outcome is in question unless you do X."
+Fold this into top_line, deal_thesis, critical_risks, and the recommended actions
+where it genuinely applies. Stay grounded: invoke a pattern ONLY when THIS deal's
+substrate actually resembles it — never fabricate a resemblance.
+${input.cross_deal_outcome_lessons.map((l) => `- ${l}`).join("\n")}`
+      : "";
+
   return `Here is the fully-enriched deal snapshot. Generate the PrepArtifact for the rep's upcoming call.
 
 Surface mode: ${config.surface_mode}
 Caps: max_critical_risks=${config.max_critical_risks}, max_stakeholder_strategies=${config.max_stakeholder_strategies}, max_talk_track_questions=${config.max_talk_track_questions}, max_open_questions=${config.max_open_questions}
-${altitudeBlock}${repFocusBlock}${crossDealBlock}
+${altitudeBlock}${repFocusBlock}${crossDealBlock}${outcomeLessonsBlock}
 
 ${JSON.stringify(input, null, 2)}
 

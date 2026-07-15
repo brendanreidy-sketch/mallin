@@ -88,6 +88,12 @@ export interface ExecutionAgentInput {
    *  deals — reveals how they reason, so the brief reflects their analytical
    *  lens. Optional. */
   rep_cross_deal_focus?: string[];
+
+  /** Proactive win/loss/stall/advanced lessons mined from OTHER deals in the
+   *  workspace (getCrossDealOutcomeLessons). The brief leads with these — the
+   *  system gathers them; the rep never asks. Manager governance reviews the
+   *  coaching that results. */
+  cross_deal_outcome_lessons?: string[];
 }
 
 // ────────────────────────────────────────────────────────────────────────────

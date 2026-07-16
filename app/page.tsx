@@ -18,7 +18,7 @@ import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Mallín — governed native AI for sales teams",
+  title: "Mallín — the governed judgment layer for revenue teams",
   description:
     "Give Mallín whatever you have, a call, an email thread, or just the company you're about to meet, and it hands back a strategy for the deal: what to do next, the angles you missed, the risks you're not seeing. It preps you before the first call and remembers every deal after, so every rep gets the support they need, on every deal.",
 };

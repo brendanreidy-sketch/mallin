@@ -71,3 +71,10 @@ CREATE INDEX IF NOT EXISTS idx_slack_outbound_tenant
 
 CREATE INDEX IF NOT EXISTS idx_slack_outbound_posted_at
   ON slack_outbound_posts(posted_at DESC);
+
+-- RLS: the app reads/writes this table exclusively via the service-role client
+-- (which bypasses RLS), so enabling it with no policy keeps the public anon /
+-- authenticated keys from reading alert payloads. Prod had this enabled manually
+-- via the Supabase "Run and enable RLS" prompt (2026-07-16); this line keeps a
+-- fresh environment consistent.
+ALTER TABLE slack_outbound_posts ENABLE ROW LEVEL SECURITY;

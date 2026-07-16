@@ -20,3 +20,8 @@ CREATE TABLE IF NOT EXISTS outbound_prospects (
 
 CREATE INDEX IF NOT EXISTS idx_outbound_prospects_tenant_created
   ON outbound_prospects (tenant_id, created_at DESC);
+
+-- RLS: accessed only via the service-role client (see 006). Prospect data must
+-- not be readable through the public anon key. Enabled manually in prod on
+-- 2026-07-16; kept here so a fresh-env apply is consistent.
+ALTER TABLE outbound_prospects ENABLE ROW LEVEL SECURITY;

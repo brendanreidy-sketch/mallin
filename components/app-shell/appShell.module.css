@@ -1,0 +1,101 @@
+/* App shell — the sidebar layout that wraps the operating-layer surfaces
+ * (Home / Deals / Ask / Team / Knowledge). Cream by default via the shared
+ * --ck-* tokens; the existing ThemeModeToggle flips the whole app to dark.
+ * The deal cockpit (/prep) keeps its own focused chrome and is not wrapped. */
+
+.shell {
+  display: grid;
+  grid-template-columns: 214px 1fr;
+  min-height: 100vh;
+  background: var(--ck-paper);
+  color: var(--ck-ink-2);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.side {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--ck-surface-2);
+  border-right: 0.5px solid var(--ck-rule);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 8px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ck-ink);
+  letter-spacing: -0.01em;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  color: var(--ck-ink-3);
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.nav:hover { color: var(--ck-ink-2); }
+.nav svg { width: 17px; height: 17px; flex: none; }
+.navOn { background: var(--ck-blue-tint); color: var(--ck-ink); }
+.navOn:hover { color: var(--ck-ink); }
+
+.spacer { margin-top: auto; }
+.tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px 8px;
+}
+.me {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  color: var(--ck-ink-4);
+  font-size: 13px;
+}
+.avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ck-blue-tint);
+  color: var(--ck-blue);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex: none;
+}
+
+.main { min-width: 0; }
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 34px;
+  border-bottom: 0.5px solid var(--ck-rule);
+  font-size: 12.5px;
+  color: var(--ck-ink-4);
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  letter-spacing: 0.03em;
+}
+.vtitle { font-size: 13px; color: var(--ck-ink-2); font-weight: 500; letter-spacing: 0.02em; }
+.body { padding: 34px 40px 44px; max-width: 900px; }
+
+@media (max-width: 720px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .body { padding: 26px 20px 36px; }
+  .topbar { padding: 12px 20px; }
+}

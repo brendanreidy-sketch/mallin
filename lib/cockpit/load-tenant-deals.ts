@@ -26,6 +26,14 @@ export interface Deal {
   tone: "critical" | "caution" | "neutral";
 }
 
+/** A deal that has a live (post-call) brief — the artifact holds the plays,
+ *  risks, and synthesis that Team and Knowledge read from. */
+export interface DealBrief {
+  id: string;
+  name: string;
+  artifact: PrepArtifact;
+}
+
 export type TenantDeals =
   | { kind: "no-tenant" }
   | { kind: "no-deals" }
@@ -36,6 +44,8 @@ export type TenantDeals =
       deals: Deal[];
       needsYou: Deal[];
       onTrack: Deal[];
+      /** Deals with a live PrepArtifact — the source for Team + Knowledge. */
+      briefs: DealBrief[];
     };
 
 export async function loadTenantDeals(orgId: string): Promise<TenantDeals> {
@@ -101,5 +111,19 @@ export async function loadTenantDeals(orgId: string): Promise<TenantDeals> {
 
   const needsYou = deals.filter((d) => d.needsYou).sort((a, b) => b.score - a.score);
   const onTrack = deals.filter((d) => !d.needsYou);
-  return { kind: "ok", tenantId: tenant.id, tenantName: tenant.name, deals, needsYou, onTrack };
+  const briefs: DealBrief[] = deals
+    .map((d) => {
+      const artifact = liveById.get(d.id);
+      return artifact ? { id: d.id, name: d.name, artifact } : null;
+    })
+    .filter((b): b is DealBrief => b !== null);
+  return {
+    kind: "ok",
+    tenantId: tenant.id,
+    tenantName: tenant.name,
+    deals,
+    needsYou,
+    onTrack,
+    briefs,
+  };
 }

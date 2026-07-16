@@ -18,7 +18,8 @@
     "slack:test": "tsx --env-file=.env.local scripts/test-slack.ts",
     "pilots": "tsx --env-file=.env.local scripts/metrics/pilots.ts",
     "sdr:sim": "tsx --env-file=.env.local scripts/sdr-sim.ts",
-    "eval:brief": "tsx --env-file=.env.local scripts/eval/run-brief-evals.ts"
+    "eval:brief": "tsx --env-file=.env.local scripts/eval/run-brief-evals.ts",
+    "proactive:scan": "tsx --env-file=.env.local scripts/proactive/scan.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",

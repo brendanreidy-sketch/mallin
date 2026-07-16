@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
   let found = 0;
   let slackSent = 0;
   let emailsSent = 0;
+  let gmailDrafts = 0;
   for (const t of tenants ?? []) {
     const tenantId = t.id as string;
     try {
@@ -62,6 +63,7 @@ export async function GET(req: NextRequest) {
       slackSent += slack.sent;
       const email = await emailNudgesForTenant(tenantId, now);
       if (email.sent) emailsSent += 1;
+      gmailDrafts += email.gmailDrafts;
     } catch {
       /* per-tenant isolation — one failure never aborts the run */
     }
@@ -75,5 +77,6 @@ export async function GET(req: NextRequest) {
     nudges_found: found,
     slack_sent: slackSent,
     emails_sent: emailsSent,
+    gmail_drafts: gmailDrafts,
   });
 }

@@ -2,28 +2,29 @@ import { supabaseAdmin } from "@/lib/db/client";
 import { scanTenantForNudges, type Nudge } from "./detect-nudges";
 import { sendRepNudgeDigest } from "@/lib/email/resend";
 import { generateFollowupDraft } from "@/lib/agents/draft-followup";
+import { getGmailConnectionStatus } from "@/lib/auth/gmail-oauth";
+import { createDraft } from "@/lib/adapters/gmail";
 import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
 
 /**
- * The EMAIL delivery of the proactive engine — as deals progress, email the rep
- * a digest of the deals that need a move.
+ * The EMAIL delivery of the proactive engine — as deals progress, get the rep
+ * ready to send.
  *
- * The top-ranked deals get a FULLY-WRITTEN draft embedded in the digest (read-
- * and-send beats click-then-write — removing the writing friction is the whole
- * point). The rest get the directive move + a link. Capped for cost AND
- * readability — a digest of ten four-paragraph drafts is unusable. Every item
- * links to the deal, where the ✉ surface handles the actual send (recipient
- * resolution, "nothing sends without your click").
+ * For the top-ranked deals it writes the full follow-up email and, when the rep
+ * has Gmail connected and we can resolve the prospect, drops it STRAIGHT INTO
+ * their Gmail drafts — addressed and ready, so they send from their own inbox
+ * with one click (nothing sends until they do). A digest email is the heads-up:
+ * "these are drafted in your Gmail" for those, and the move + a review link for
+ * the rest (Gmail not connected, or no recipient yet).
  *
- * GATED: PROACTIVE_EMAIL_NUDGES_ENABLED must equal "1" (OFF by default). Rep =
- * the tenant's owner_email. Never throws.
+ * Capped at the top 3 (cost + readability), ranked by urgency (stall > silence
+ * > win-back). GATED: PROACTIVE_EMAIL_NUDGES_ENABLED must equal "1". Rep = the
+ * deal's owner (for their Gmail) / the tenant owner_email (for the digest).
+ * Never throws.
  */
 
-// How many deals get a fully-written draft (the rest are move + link).
 const MAX_DRAFTS = 3;
 
-// Urgency order — a live deal slipping outranks a re-engagement opportunity, so
-// the capped drafts land on the deals that most need action.
 const KIND_PRIORITY: Record<Nudge["kind"], number> = {
   stall: 0,
   silence: 1,
@@ -33,13 +34,13 @@ const KIND_PRIORITY: Record<Nudge["kind"], number> = {
 export async function emailNudgesForTenant(
   tenantId: string,
   nowMs: number,
-): Promise<{ found: number; sent: boolean }> {
+): Promise<{ found: number; sent: boolean; gmailDrafts: number }> {
   try {
     const nudges = await scanTenantForNudges(tenantId, nowMs);
-    if (nudges.length === 0) return { found: 0, sent: false };
+    if (nudges.length === 0) return { found: 0, sent: false, gmailDrafts: 0 };
 
     if (process.env.PROACTIVE_EMAIL_NUDGES_ENABLED !== "1") {
-      return { found: nudges.length, sent: false };
+      return { found: nudges.length, sent: false, gmailDrafts: 0 };
     }
 
     const { data: tenant } = await supabaseAdmin
@@ -48,12 +49,13 @@ export async function emailNudgesForTenant(
       .eq("id", tenantId)
       .maybeSingle();
     const repEmail = tenant?.owner_email ?? null;
-    if (!repEmail) return { found: nudges.length, sent: false };
+    if (!repEmail) return { found: nudges.length, sent: false, gmailDrafts: 0 };
 
-    // Rank by urgency; the top MAX_DRAFTS get a full pre-written draft.
     const ranked = [...nudges].sort(
       (a, b) => KIND_PRIORITY[a.kind] - KIND_PRIORITY[b.kind],
     );
+
+    let gmailDrafts = 0;
 
     const items = await Promise.all(
       ranked.map(async (n, i) => {
@@ -65,21 +67,59 @@ export async function emailNudgesForTenant(
           move: n.move,
         };
         if (i >= MAX_DRAFTS) return base;
-        // Full draft for the top-ranked deals: load the current brief + write
-        // the email. Falls back to move + link if drafting fails.
         try {
-          const { data: art } = await supabaseAdmin
-            .from("execution_artifacts")
-            .select("artifact")
-            .eq("opportunity_id", n.opportunityId)
-            .eq("is_current", true)
+          const { data: opp } = await supabaseAdmin
+            .from("opportunities")
+            .select("owner_id, account_id")
+            .eq("id", n.opportunityId)
             .maybeSingle();
+          const [{ data: sts }, { data: art }] = await Promise.all([
+            supabaseAdmin
+              .from("stakeholders")
+              .select("name, email, committee_role")
+              .eq("tenant_id", tenantId)
+              .eq("account_id", opp?.account_id ?? ""),
+            supabaseAdmin
+              .from("execution_artifacts")
+              .select("artifact")
+              .eq("opportunity_id", n.opportunityId)
+              .eq("is_current", true)
+              .maybeSingle(),
+          ]);
+
           const draft = await generateFollowupDraft(
-            { opportunity: { id: n.opportunityId, name: n.dealName } },
+            {
+              opportunity: { id: n.opportunityId, name: n.dealName },
+              stakeholders: sts ?? [],
+            },
             (art?.artifact as PrepArtifact) ?? null,
             {},
           );
-          return { ...base, emailSubject: draft.subject, emailBody: draft.bodyText };
+          const item = { ...base, emailSubject: draft.subject, emailBody: draft.bodyText };
+
+          // Drop it straight into the rep's Gmail drafts when they've connected
+          // Gmail and we resolved a recipient — so they send from their own
+          // inbox. Best-effort: any gap falls back to the review link.
+          const ownerId = opp?.owner_id as string | undefined;
+          if (ownerId && draft.to) {
+            try {
+              const status = await getGmailConnectionStatus(ownerId);
+              if (status.connected) {
+                await createDraft(ownerId, {
+                  to: draft.to,
+                  subject: draft.subject,
+                  bodyText: draft.bodyText,
+                  bodyHtml: draft.bodyHtml,
+                  attribution: draft.attribution,
+                });
+                gmailDrafts += 1;
+                return { ...item, gmailDrafted: true };
+              }
+            } catch {
+              /* Gmail draft is best-effort */
+            }
+          }
+          return item;
         } catch {
           return base;
         }
@@ -91,8 +131,8 @@ export async function emailNudgesForTenant(
       name: tenant?.first_name ?? null,
       items,
     });
-    return { found: nudges.length, sent: res.ok };
+    return { found: nudges.length, sent: res.ok, gmailDrafts };
   } catch {
-    return { found: 0, sent: false };
+    return { found: 0, sent: false, gmailDrafts: 0 };
   }
 }

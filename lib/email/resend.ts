@@ -64,6 +64,9 @@ export interface RepNudgeItem {
    *  place of the move so the rep can read-and-send instead of writing. */
   emailSubject?: string;
   emailBody?: string;
+  /** True when the draft was placed in the rep's Gmail drafts, addressed and
+   *  ready — the digest then points to Gmail instead of the review link. */
+  gmailDrafted?: boolean;
 }
 
 /**
@@ -104,7 +107,12 @@ export async function sendRepNudgeDigest(args: {
       } else {
         lines.push(`  Move: ${it.move}`);
       }
-      lines.push(`  Review + send: ${dealUrl(it.opportunityId)}`, "");
+      if (it.gmailDrafted) {
+        lines.push("  ✓ Ready in your Gmail drafts — open Gmail and hit send.");
+      } else {
+        lines.push(`  Review + send: ${dealUrl(it.opportunityId)}`);
+      }
+      lines.push("");
       return lines;
     }),
     "Open the deal to review and send — nothing goes out without your click.",
@@ -120,11 +128,16 @@ export async function sendRepNudgeDigest(args: {
           ? `<p style="margin:0 0 4px;font-size:12.5px;color:#6b7689;">Suggested email · <em>${esc(it.emailSubject ?? `Re: ${it.dealName}`)}</em></p>
         <div style="white-space:pre-wrap;font-size:14px;color:#1a2230;background:#faf8f2;border-left:3px solid #c9b98f;padding:10px 12px;border-radius:6px;margin:0 0 12px;">${esc(it.emailBody)}</div>`
           : `<p style="margin:0 0 12px;font-size:14px;"><strong>Move:</strong> ${esc(it.move)}</p>`;
+        const btn = `display:inline-block;padding:9px 16px;background:#1a2230;color:#f4f1ea;border-radius:8px;text-decoration:none;font-weight:600;font-size:13.5px;`;
+        const cta = it.gmailDrafted
+          ? `<p style="margin:0 0 8px;font-size:13px;color:#3f7d4f;">✓ Drafted in your Gmail — addressed and ready.</p>
+        <a href="https://mail.google.com/mail/u/0/#drafts" style="${btn}">Open Gmail →</a>`
+          : `<a href="${dealUrl(it.opportunityId)}" style="${btn}">Review &amp; send →</a>`;
         return `<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #e3dccc;border-radius:10px;">
         <p style="margin:0 0 4px;font-weight:600;">${esc(it.dealName)}</p>
         <p style="margin:0 0 8px;color:#6b7689;font-size:13.5px;">${esc(it.headline)} — ${esc(it.reason)}</p>
         ${inner}
-        <a href="${dealUrl(it.opportunityId)}" style="display:inline-block;padding:9px 16px;background:#1a2230;color:#f4f1ea;border-radius:8px;text-decoration:none;font-weight:600;font-size:13.5px;">Review &amp; send →</a>
+        ${cta}
       </div>`;
       })
       .join("")}

@@ -172,6 +172,33 @@
 .seg > i{position:absolute;inset:0;width:0;background:var(--blue);border-radius:2px;transition:width .5s ease}
 .seg.full > i{width:100%}
 
+/* ── Hero walkthrough: dark "operating environment" treatment ──────────────
+   The card is the product shot on the cream marketing page. We flip ONLY the
+   walkthrough to the dark cockpit palette by re-scoping the color tokens on
+   .card; every var-driven descendant inherits it. A handful of walkthrough
+   classes hardcode cream hexes (chrome, chips, slide, rows) — those are
+   overridden explicitly below. Nothing outside .card is affected. */
+.card{
+  --surface:#0b0f18; --ink:#f3f3f6; --ink2:#c8c8d0; --ink3:#9898a3; --ink4:#6a6a76;
+  --rule:rgba(255,255,255,.08); --rule2:rgba(255,255,255,.13);
+  --blue:#88b8d0; --blue-tint:rgba(136,184,208,.16);
+  --crit:#e5747a; --crit-tint:rgba(229,72,77,.15);
+  --good:#4cc38a; --good-tint:rgba(76,195,138,.15);
+  --warn:#e8b04a; --warn-tint:rgba(232,176,74,.14);
+  border-color:rgba(255,255,255,.09);
+  box-shadow:0 2px 6px rgba(26,34,48,.12), 0 44px 84px -34px rgba(26,34,48,.5);
+}
+.card .chrome{background:#0d121b}
+.card .chip{background:rgba(255,255,255,.06)}
+.card .chip:hover{background:rgba(255,255,255,.11)}
+.card .slide{background:#05070c;border:1px solid rgba(255,255,255,.08)}
+.card .row{background:rgba(255,255,255,.02)}
+.card .rav{background:rgba(255,255,255,.07)}
+.card .row.hot .rav{background:rgba(136,184,208,.22)}
+.card .exportbtn{background:#f3f3f6;color:#0b0f18}
+.card .filetag .pill{background:rgba(255,255,255,.06)}
+.card .rchip.pend{background:rgba(255,255,255,.06)}
+
 /* sections */
 .section{padding:76px 0;border-top:0.5px solid var(--rule)}
 .white{background:var(--surface)}

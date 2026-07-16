@@ -331,6 +331,12 @@ ALWAYS spell out:
   - RFP         → "request for proposal"
   - SSO         → "single sign-on" (first use; ok thereafter)
   - InfoSec     → "security review"
+  - SA          → "solutions architect"
+  - SE          → "sales engineer"
+  - AE          → "account executive" (or just "you" — the rep reading this)
+  - FSM         → "field-service management" (and spell out ANY industry acronym carried in from the buyer's world — POS, WMS, EHR, P2P, O2C, R2R…)
+  - POC         → "proof of concept"
+  - MSA         → "master service agreement"
 
 OK to use (universally understood by business readers):
   - CEO, CFO, CTO, CIO, COO  (C-suite roles)
@@ -341,9 +347,11 @@ OK to use (universally understood by business readers):
   - ERP                      (when relevant; spell out first use is even better)
   - ARR, MRR                 (revenue terms)
 
+DEFAULT TO SPELLING OUT. If an acronym is NOT in the "OK to use" list above, spell it out on first use — no exceptions. This covers role acronyms (solutions architect, sales engineer), industry/domain acronyms carried in from the buyer's world (field-service management, procure-to-pay), and product-module abbreviations. A spelled-out phrase never confuses anyone; an acronym can. When in doubt, spell it out.
+
 Account-name shorthands (e.g. "AC" for Acme Corp, "SG" for Summit Group) — NEVER use the shortened form. Always use the full account name on first reference and a natural English noun thereafter ("the customer", "Acme's team").
 
-This rule applies to: top_line.text, deal_thesis.thesis, deal_thesis.decision_frame, deal_thesis.why_this_matters, deal_thesis.indeterminate_reason, critical_risks[].title, critical_risks[].description, critical_risks[].failure_mode, critical_risks[].trigger, critical_risks[].in_call_signal, critical_risks[].recommended_posture, stakeholder_strategy[].call_strategy, stakeholder_strategy[].do_list[], stakeholder_strategy[].dont_list[], talk_track.opening_angle, talk_track.key_questions[].question, talk_track.key_questions[].rationale, talk_track.objection_angles[].likely_objection, talk_track.objection_angles[].handling_angle, open_questions[].question, open_questions[].why_it_matters, open_questions[].how_to_ask, success_criteria.summary, success_criteria.outcomes[], coaching_notes[].note, what_changed.summary, what_changed.changes[].description, commercial_reality.situation_summary, commercial_reality.asks[], commercial_reality.walk_in_posture.
+This rule applies to: top_line.text, deal_thesis.thesis, deal_thesis.decision_frame, deal_thesis.why_this_matters, deal_thesis.indeterminate_reason, critical_risks[].title, critical_risks[].description, critical_risks[].failure_mode, critical_risks[].trigger, critical_risks[].in_call_signal, critical_risks[].recommended_posture, stakeholder_strategy[].call_strategy, stakeholder_strategy[].do_list[], stakeholder_strategy[].dont_list[], talk_track.opening_angle, talk_track.key_questions[].question, talk_track.key_questions[].rationale, talk_track.objection_angles[].likely_objection, talk_track.objection_angles[].handling_angle, open_questions[].question, open_questions[].why_it_matters, open_questions[].how_to_ask, success_criteria.summary, success_criteria.outcomes[], coaching_notes[].note, what_changed.summary, what_changed.changes[].description, commercial_reality.situation_summary, commercial_reality.asks[], commercial_reality.walk_in_posture, post_call_synthesis.what_surfaced[], post_call_synthesis.to_think_through[], how_you_win, what_could_go_wrong[], deliverables[].item.
 
 Internal field values that are enums (posture, severity, urgency, disposition, status, kind, category, firmness) are NOT user-facing prose — those follow the schema and don't get spelled out.
 
@@ -737,4 +745,4 @@ ${JSON.stringify(input, null, 2)}
 Produce the PrepArtifact by invoking the emit_prep_artifact tool. Follow the reasoning workflow internally. Apply the rules. Mirror Pass 2's deal_posture. Surface evidence-linked claims only.`;
 }
 
-export const EXECUTION_AGENT_PROMPT_VERSION = "v1.10.0";
+export const EXECUTION_AGENT_PROMPT_VERSION = "v1.11.0";

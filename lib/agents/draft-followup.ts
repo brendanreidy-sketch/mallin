@@ -163,6 +163,9 @@ Voice contract:
 - Concise. 3-5 short paragraphs max. No bullet lists, no headers, no markdown.
 - Reference one or two specific things from the call (a stated priority, a competitor mentioned, a constraint). Specific over vague.
 - Propose one concrete next step (a meeting, a piece of follow-up material, an introduction).
+- Spell out acronyms — write so any reader understands it, not just an insider.
+- HOLD THE LINE. If the intent names something to hold (a number, date, or scope the rep isn't ready to stand behind), do NOT concede it in the email — protect the rep's credibility. When the buyer is pushing for a commitment the rep can't yet make, acknowledge the pressure, name what has to happen first (in plain terms — never "the critical risk"), and offer a *conditional* path ("once we've confirmed X, I can put a real range in front of you"). A draft that caves to a premature number is a worse outcome than one that holds.
+- STEER toward the move. If the intent names a winning move (a meeting to lock, a person to bring in), the email's concrete next step should drive toward that move — not a generic "let's catch up."
 - Sign off with the rep's first name.
 
 FORBIDDEN — these are internal-cognition markers that must NEVER appear in the email body:
@@ -190,6 +193,12 @@ interface TransformInput {
     ask_intent: string | null;
     /** A concrete moment from the call worth referencing (in rep-coaching voice) */
     call_anchor: string | null;
+    /** The line to HOLD — what the rep must not over-commit or concede in this
+     *  email (from the top critical risk's posture). Keeps the draft from
+     *  caving to a premature number/date the way a lost deal did. */
+    guard_intent: string | null;
+    /** The winning move to steer the next step toward (from how_you_win). */
+    win_intent: string | null;
   };
 }
 
@@ -217,6 +226,12 @@ async function transformIntentToCustomerVoice(
       : "",
     input.intent.ask_intent
       ? `- Ask intent: ${input.intent.ask_intent}`
+      : "",
+    input.intent.win_intent
+      ? `- The move to steer the next step toward: ${input.intent.win_intent}`
+      : "",
+    input.intent.guard_intent
+      ? `- HOLD THIS LINE (do not over-commit or concede it in the email): ${input.intent.guard_intent}`
       : "",
     "",
     "Write the follow-up email body. Customer-voice. No internal-cognition markers. Body only.",
@@ -268,6 +283,12 @@ export async function generateFollowupDraft(
     ask_intent:
       artifact?.talk_track?.key_questions?.[0]?.question?.trim() ?? null,
     call_anchor: artifact?.post_call_synthesis?.what_surfaced?.[0]?.trim() ?? null,
+    // The line to hold + the winning move — so the email executes the brief's
+    // strategy (protect credibility, steer toward the unlock), not just a
+    // generic "let's catch up." Without these the draft plays defense-only and
+    // drifts off the plan the brief just laid out.
+    guard_intent: artifact?.critical_risks?.[0]?.recommended_posture?.trim() ?? null,
+    win_intent: artifact?.how_you_win?.trim() ?? null,
   };
 
   // Attempt the LLM customer-voice transform up to MAX_ATTEMPTS times.

@@ -1,14 +1,18 @@
 /**
  * Dev-only: send the founder ONE example proactive-nudge digest, from prod
- * (where RESEND_API_KEY lives). So you can see exactly what a rep receives.
+ * (where RESEND_API_KEY lives — it's a Sensitive var, so local can't send).
  *
- * Gated by CRON_SECRET, and the recipient is HARDCODED to the founder's own
- * address — so even with the secret this can never email a third party.
+ * Gated by the logged-in Clerk session AND an email allowlist, so just open this
+ * URL in a browser where you're signed in as the founder:
+ *   https://mallin.io/api/dev/example-nudge
+ * It sends to that same address and returns { ok }. Recipient is hardcoded, so
+ * it can never email anyone else. Safe to delete this file after you've seen it.
  *
- * Fire: curl -H "Authorization: Bearer <CRON_SECRET>" https://mallin.io/api/dev/example-nudge
- * Safe to delete this file after you've seen the example.
+ * NOT in middleware's public allowlist on purpose — Clerk protects it, so an
+ * unauthenticated request is refused and only a signed-in founder gets through.
  */
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { sendRepNudgeDigest } from "@/lib/email/resend";
 
 export const runtime = "nodejs";
@@ -16,10 +20,18 @@ export const dynamic = "force-dynamic";
 
 const RECIPIENT = "builtalone@gmail.com";
 
-export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || (req.headers.get("authorization") ?? "") !== `Bearer ${secret}`) {
-    return new NextResponse("Unauthorized", { status: 401 });
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) {
+    return new NextResponse("Sign in to mallin.io first, then reload.", { status: 401 });
+  }
+  const user = await currentUser().catch(() => null);
+  const email =
+    user?.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ??
+    user?.emailAddresses[0]?.emailAddress ??
+    null;
+  if ((email ?? "").toLowerCase() !== RECIPIENT) {
+    return new NextResponse("Only the founder account can trigger this.", { status: 403 });
   }
 
   const res = await sendRepNudgeDigest({

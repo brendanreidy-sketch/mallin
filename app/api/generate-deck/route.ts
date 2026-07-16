@@ -87,7 +87,11 @@ export async function POST(req: NextRequest) {
   // Lazily generate the deck narrative (meeting.sections) from the stored
   // transcript and cache it into the artifact — the rep's click is the signal.
   // No-op if already cached or no transcript; never fatal (deck still renders).
-  const deckCopy = await ensureDeckCopy(dealId);
+  // refresh — force-regenerate the deck copy (e.g. to pick up the new
+  // "What's included" section) even if cached and no newer transcript landed.
+  const forceRefresh =
+    body.refresh === true || body.refresh === 1 || body.refresh === "1";
+  const deckCopy = await ensureDeckCopy(dealId, { force: forceRefresh });
 
   // Reuse the existing share_token (so /share and /deck stay one link);
   // mint one only if absent.

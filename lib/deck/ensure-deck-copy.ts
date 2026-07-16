@@ -57,7 +57,10 @@ export function mergeMeeting(existing: MeetingBlock | null | undefined, copy: Me
   };
 }
 
-export async function ensureDeckCopy(opportunityId: string): Promise<EnsureResult> {
+export async function ensureDeckCopy(
+  opportunityId: string,
+  opts?: { force?: boolean },
+): Promise<EnsureResult> {
   try {
     const { data: row, error } = await supabaseAdmin
       .from("account_intelligence_artifacts")
@@ -78,7 +81,10 @@ export async function ensureDeckCopy(opportunityId: string): Promise<EnsureResul
     // when we have a copy AND know its source transcript AND nothing newer exists.
     const cachedAt = artifact.meeting?.deck_copy_source_at ?? null;
     const hasCopy = Boolean(artifact.meeting?.sections?.length);
-    if (hasCopy && cachedAt && latest.createdAt <= cachedAt) {
+    // force bypasses the cache — used to re-render a deck after a copy/prompt
+    // change (e.g. the new "What's included" section) without waiting for a
+    // newer transcript to land.
+    if (!opts?.force && hasCopy && cachedAt && latest.createdAt <= cachedAt) {
       return { generated: false, reason: "cached" };
     }
 

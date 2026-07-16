@@ -66,6 +66,14 @@ export default function AppSidebar({
         );
       })}
       <div className={s.spacer} />
+      <Link
+        href="/settings/integrations"
+        className={`${s.nav} ${pathname.startsWith("/settings") ? s.navOn : ""}`}
+        aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+      >
+        <Icon d="M11 4h2l.4 2.3a6 6 0 0 1 1.7.7l2-.9 1.4 1.4-.9 2a6 6 0 0 1 .7 1.7l2.3.4v2l-2.3.4a6 6 0 0 1-.7 1.7l.9 2-1.4 1.4-2-.9a6 6 0 0 1-1.7.7L13 20h-2l-.4-2.3a6 6 0 0 1-1.7-.7l-2 .9-1.4-1.4.9-2a6 6 0 0 1-.7-1.7L3.4 12v-2l2.3-.4a6 6 0 0 1 .7-1.7l-.9-2 1.4-1.4 2 .9a6 6 0 0 1 1.7-.7z M12 9.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4z" />
+        Settings
+      </Link>
       <div className={s.tools}>
         <ThemeModeToggle />
         <AppSignOut />

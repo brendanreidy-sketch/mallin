@@ -37,6 +37,12 @@ export interface SellerProofModuleFit {
   module: string;
   /** One concrete line on how that module solves the need. */
   how_it_helps: string;
+  /** Plain-English definition of what the module actually DOES — so a prospect
+   *  who's never heard of it understands what's included. Real, from the
+   *  seller's product docs. */
+  definition?: string;
+  /** 2-3 concrete benefits — what the buyer gets from the module. Real, sourced. */
+  benefits?: string[];
 }
 
 export interface SellerProof {
@@ -97,6 +103,8 @@ const emitTool: Anthropic.Tool = {
             need: { type: "string", description: "The buyer's stated need/pain, from the call." },
             module: { type: "string", description: "The specific seller module/capability that addresses it." },
             how_it_helps: { type: "string", description: "One concrete line on how that module solves the need." },
+            definition: { type: "string", description: "Plain-English: what this module actually DOES, so a prospect who's never heard of it understands what's included. Real, from the seller's product docs — not marketing fluff." },
+            benefits: { type: "array", items: { type: "string" }, description: "2-3 concrete benefits — what the buyer gets from this module. Real and specific, sourced from the seller's product pages." },
           },
           required: ["need", "module", "how_it_helps"],
         },
@@ -126,7 +134,7 @@ Do THREE things, then emit them with emit_seller_proof:
 
 2. references — 2-4 REAL named customer references. web_search ${req.sellerName}'s OWN customer / case-study page (try their "/customers" page) plus the web. Prefer customers in the BUYER'S OWN INDUSTRY first — infer the buyer's industry from the transcript. If you can't find same-industry names, fall back to the buyer's SIZE TIER (SMB / mid-market / enterprise). Each reference = a real named company + one concrete line of proof (what they achieved or why they chose ${req.sellerName}) + the source URL. A recognizable peer beats a big unrelated logo.
 
-3. module_fit — map the buyer's STATED needs/pains from the transcript to the specific ${req.sellerName} modules/capabilities that address them, one concrete line each on how it helps.
+3. module_fit — map the buyer's STATED needs/pains from the transcript to the specific ${req.sellerName} modules/capabilities that address them. For EACH module include: one concrete line on how it helps, a plain-English DEFINITION of what the module actually does (prospects want to know what's included — write it so someone who's never heard of the module understands it), and 2-3 concrete BENEFITS. web_search ${req.sellerName}'s product pages for the real definition + benefits; never invent a capability.
 
 Rules:
 - Only real, sourced facts. NEVER invent a customer, a logo, or a number — if you can't verify a reference, drop it rather than fabricate.

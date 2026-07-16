@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/db/client";
 import { hasCockpitAccess } from "@/lib/cockpit/access";
 import { AppSignOut } from "@/components/auth/sign-out-button";
@@ -163,9 +163,39 @@ export default async function CockpitRedirectPage() {
   const needsYou = deals.filter((d) => d.needsYou).sort((a, b) => b.score - a.score);
   const onTrack = deals.filter((d) => !d.needsYou);
 
+  // Daily-brief framing — the "Mallín is driving" greeting on the deals home.
+  // Everything here is derived from real data: the rep's Clerk first name, the
+  // live needs-you / on-track counts, and the top-priority deal. No placeholders.
+  const greetUser = await currentUser().catch(() => null);
+  const firstName =
+    greetUser?.firstName ??
+    (greetUser?.username ? greetUser.username.split(/[._-]/)[0] : null);
+  const hour = new Date().getHours();
+  const greetWord =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greetingLine = firstName ? `${greetWord}, ${firstName}` : greetWord;
+  const dateLabel = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+  const brief =
+    needsYou.length > 0
+      ? `${needsYou.length} ${needsYou.length === 1 ? "deal needs" : "deals need"} you today${
+          onTrack.length ? `, ${onTrack.length} on track` : ""
+        }. I'd start with ${needsYou[0].name}.`
+      : onTrack.length > 0
+        ? `Nothing urgent right now — ${onTrack.length} ${
+            onTrack.length === 1 ? "deal" : "deals"
+          } on track.`
+        : "No active deals yet.";
+
   return (
     <DealsHome
       tenantName={tenant.name}
+      greetingLine={greetingLine}
+      dateLabel={dateLabel}
+      brief={brief}
       needsYou={needsYou}
       onTrack={onTrack}
       overLimit={usage.over}
@@ -199,11 +229,17 @@ const TONE_DOT: Record<Deal["tone"], string> = {
 
 function DealsHome({
   tenantName,
+  greetingLine,
+  dateLabel,
+  brief,
   needsYou,
   onTrack,
   overLimit,
 }: {
   tenantName: string | null;
+  greetingLine: string;
+  dateLabel: string;
+  brief: string;
   needsYou: Deal[];
   onTrack: Deal[];
   overLimit: boolean;
@@ -259,6 +295,44 @@ function DealsHome({
           <AppSignOut />
         </header>
 
+        <div style={{ marginBottom: 30 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: "0.06em",
+              color: "var(--ck-ink-3)",
+              margin: 0,
+            }}
+          >
+            {dateLabel}
+          </p>
+          <h1
+            style={{
+              fontSize: 27,
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+              color: "var(--ck-ink)",
+              margin: "8px 0 10px",
+              lineHeight: 1.12,
+            }}
+          >
+            {greetingLine}
+          </h1>
+          <p
+            style={{
+              fontSize: 15.5,
+              lineHeight: 1.55,
+              color: "var(--ck-ink-2)",
+              margin: 0,
+              maxWidth: "48ch",
+            }}
+          >
+            {brief}
+          </p>
+        </div>
+
         <div
           style={{
             display: "flex",
@@ -267,17 +341,17 @@ function DealsHome({
             marginBottom: 14,
           }}
         >
-          <h1
+          <h2
             style={{
               margin: 0,
-              fontSize: 22,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
+              fontSize: 15,
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
               color: "var(--ck-ink)",
             }}
           >
             Your deals
-          </h1>
+          </h2>
           <UpgradeButton
             href="/new?mode=upcoming"
             label="+ New deal"

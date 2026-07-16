@@ -33,6 +33,9 @@ export async function GET(req: NextRequest) {
         reason:
           "Silence past a week usually means the deal is drifting. Re-open it before it stalls.",
         move: "Send Greg a two-line check-in: confirm the 20-minute session with John is on the calendar and that the working notes reached Denise. Don't put a number on the table yet.",
+        emailSubject: "Re: WorkWave — before Kevin's board deck",
+        emailBody:
+          "Greg,\n\nQuick one before the board deck goes out. I want to make sure whatever you put in front of Kevin holds up the moment he starts asking — so before I put a timeline or a number to it, I'd like to grab 20 minutes with John to confirm the consolidation won't touch the product data model. Once that's clear I can give you a real range you can stand behind, not a placeholder.\n\nCould you intro me to John this week? I'll keep it strictly to the integration boundary.\n\nThanks,\nRyan",
       },
       {
         opportunityId: "b1f9b0c2-0000-4000-8000-000000000002",

@@ -58,8 +58,12 @@ export interface RepNudgeItem {
   headline: string;
   /** Why it matters. */
   reason: string;
-  /** What to do / send — the directive move. */
+  /** What to do / send — the directive move (shown when there's no full draft). */
   move: string;
+  /** Pre-written email for the top-ranked deals. When present it's shown in
+   *  place of the move so the rep can read-and-send instead of writing. */
+  emailSubject?: string;
+  emailBody?: string;
 }
 
 /**
@@ -90,16 +94,20 @@ export async function sendRepNudgeDigest(args: {
   const text = [
     greeting,
     "",
-    `${n} deal${n === 1 ? "" : "s"} could use a move today. Here's what I'd do on each:`,
+    `${n} deal${n === 1 ? "" : "s"} could use a move today. Here's what I'd send on each:`,
     "",
-    ...args.items.flatMap((it) => [
-      `— ${it.dealName}: ${it.headline}`,
-      `  Why: ${it.reason}`,
-      `  Move: ${it.move}`,
-      `  Review + send: ${dealUrl(it.opportunityId)}`,
-      "",
-    ]),
-    "Open the deal to review and send the draft — nothing goes out without your click.",
+    ...args.items.flatMap((it) => {
+      const lines = [`— ${it.dealName}: ${it.headline}`, `  Why: ${it.reason}`];
+      if (it.emailBody) {
+        lines.push(`  Draft — subject: ${it.emailSubject ?? `Re: ${it.dealName}`}`);
+        lines.push(...it.emailBody.split("\n").map((l) => `  ${l}`));
+      } else {
+        lines.push(`  Move: ${it.move}`);
+      }
+      lines.push(`  Review + send: ${dealUrl(it.opportunityId)}`, "");
+      return lines;
+    }),
+    "Open the deal to review and send — nothing goes out without your click.",
     "— Mallín",
   ].join("\n");
 
@@ -107,14 +115,18 @@ export async function sendRepNudgeDigest(args: {
     <p style="margin:0 0 16px;">${greeting}</p>
     <p style="margin:0 0 18px;"><strong>${n} deal${n === 1 ? "" : "s"} could use a move today.</strong> Here's what I'd do on each — review and send from Mallín:</p>
     ${args.items
-      .map(
-        (it) => `<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #e3dccc;border-radius:10px;">
+      .map((it) => {
+        const inner = it.emailBody
+          ? `<p style="margin:0 0 4px;font-size:12.5px;color:#6b7689;">Suggested email · <em>${esc(it.emailSubject ?? `Re: ${it.dealName}`)}</em></p>
+        <div style="white-space:pre-wrap;font-size:14px;color:#1a2230;background:#faf8f2;border-left:3px solid #c9b98f;padding:10px 12px;border-radius:6px;margin:0 0 12px;">${esc(it.emailBody)}</div>`
+          : `<p style="margin:0 0 12px;font-size:14px;"><strong>Move:</strong> ${esc(it.move)}</p>`;
+        return `<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #e3dccc;border-radius:10px;">
         <p style="margin:0 0 4px;font-weight:600;">${esc(it.dealName)}</p>
         <p style="margin:0 0 8px;color:#6b7689;font-size:13.5px;">${esc(it.headline)} — ${esc(it.reason)}</p>
-        <p style="margin:0 0 12px;font-size:14px;"><strong>Move:</strong> ${esc(it.move)}</p>
+        ${inner}
         <a href="${dealUrl(it.opportunityId)}" style="display:inline-block;padding:9px 16px;background:#1a2230;color:#f4f1ea;border-radius:8px;text-decoration:none;font-weight:600;font-size:13.5px;">Review &amp; send →</a>
-      </div>`,
-      )
+      </div>`;
+      })
       .join("")}
     <p style="margin:0;color:#6b7689;font-size:13px;">Nothing goes out without your click. — Mallín</p>
   </div>`;

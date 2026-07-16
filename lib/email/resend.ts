@@ -51,6 +51,101 @@ interface ResendResult {
   error?: string;
 }
 
+export interface RepNudgeItem {
+  opportunityId: string;
+  dealName: string;
+  /** The situation (from the nudge). */
+  headline: string;
+  /** Why it matters. */
+  reason: string;
+  /** What to do / send — the directive move. */
+  move: string;
+}
+
+/**
+ * Proactive email nudge to the REP: "these deals need a move today, here's what
+ * to send on each." Each item links to the deal, where the ✉ surface generates
+ * the full personalized draft to review and send — nothing sends automatically.
+ * Best-effort; never throws.
+ */
+export async function sendRepNudgeDigest(args: {
+  email: string;
+  name?: string | null;
+  items: RepNudgeItem[];
+}): Promise<ResendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || args.items.length === 0) {
+    return { ok: false, error: apiKey ? "no_items" : "no_api_key" };
+  }
+  const from = process.env.RESEND_FROM_EMAIL || "Mallín <onboarding@resend.dev>";
+  const rawBase = process.env.NEXT_PUBLIC_APP_BASE_URL ?? "https://mallin.io";
+  const baseUrl = rawBase.startsWith("http") ? rawBase : `https://${rawBase}`;
+  const first = (args.name ?? "").trim().split(/\s+/)[0];
+  const greeting = first ? `${first},` : "Hi,";
+  const n = args.items.length;
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const dealUrl = (id: string) => `${baseUrl}/prep?dealId=${encodeURIComponent(id)}`;
+
+  const text = [
+    greeting,
+    "",
+    `${n} deal${n === 1 ? "" : "s"} could use a move today. Here's what I'd do on each:`,
+    "",
+    ...args.items.flatMap((it) => [
+      `— ${it.dealName}: ${it.headline}`,
+      `  Why: ${it.reason}`,
+      `  Move: ${it.move}`,
+      `  Review + send: ${dealUrl(it.opportunityId)}`,
+      "",
+    ]),
+    "Open the deal to review and send the draft — nothing goes out without your click.",
+    "— Mallín",
+  ].join("\n");
+
+  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;color:#1a2230;max-width:560px;line-height:1.55;">
+    <p style="margin:0 0 16px;">${greeting}</p>
+    <p style="margin:0 0 18px;"><strong>${n} deal${n === 1 ? "" : "s"} could use a move today.</strong> Here's what I'd do on each — review and send from Mallín:</p>
+    ${args.items
+      .map(
+        (it) => `<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #e3dccc;border-radius:10px;">
+        <p style="margin:0 0 4px;font-weight:600;">${esc(it.dealName)}</p>
+        <p style="margin:0 0 8px;color:#6b7689;font-size:13.5px;">${esc(it.headline)} — ${esc(it.reason)}</p>
+        <p style="margin:0 0 12px;font-size:14px;"><strong>Move:</strong> ${esc(it.move)}</p>
+        <a href="${dealUrl(it.opportunityId)}" style="display:inline-block;padding:9px 16px;background:#1a2230;color:#f4f1ea;border-radius:8px;text-decoration:none;font-weight:600;font-size:13.5px;">Review &amp; send →</a>
+      </div>`,
+      )
+      .join("")}
+    <p style="margin:0;color:#6b7689;font-size:13px;">Nothing goes out without your click. — Mallín</p>
+  </div>`;
+
+  try {
+    const res = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: args.email,
+        subject: `${n} deal${n === 1 ? "" : "s"} need a move today`,
+        text,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      const e = await res.text().catch(() => "");
+      console.error(`[rep-nudge-digest] Resend failed: ${res.status} ${e}`);
+      return { ok: false, error: `resend_${res.status}` };
+    }
+    const data = (await res.json().catch(() => ({}))) as { id?: string };
+    return { ok: true, id: data.id };
+  } catch (err) {
+    console.error(
+      `[rep-nudge-digest] send error: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return { ok: false, error: "send_exception" };
+  }
+}
+
 /**
  * Welcome-to-Pro email, sent to the CUSTOMER on the free→pro upgrade (fired
  * from the Stripe webhook). Until now the upgrade granted access silently — no

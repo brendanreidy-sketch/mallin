@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { pushNudgesForTenant } from "@/lib/proactive/push-nudges";
+import { emailNudgesForTenant } from "@/lib/proactive/email-nudges";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,7 +42,8 @@ function db() {
 export async function GET(req: NextRequest) {
   if (!authed(req)) return new NextResponse("Unauthorized", { status: 401 });
 
-  const enabled = process.env.PROACTIVE_NUDGES_ENABLED === "1";
+  const slackEnabled = process.env.PROACTIVE_NUDGES_ENABLED === "1";
+  const emailEnabled = process.env.PROACTIVE_EMAIL_NUDGES_ENABLED === "1";
   const now = Date.now();
 
   const { data: tenants } = await db()
@@ -50,12 +52,16 @@ export async function GET(req: NextRequest) {
     .limit(MAX_TENANTS_PER_RUN);
 
   let found = 0;
-  let sent = 0;
+  let slackSent = 0;
+  let emailsSent = 0;
   for (const t of tenants ?? []) {
+    const tenantId = t.id as string;
     try {
-      const r = await pushNudgesForTenant(t.id as string, now);
-      found += r.found;
-      sent += r.sent;
+      const slack = await pushNudgesForTenant(tenantId, now);
+      found += slack.found;
+      slackSent += slack.sent;
+      const email = await emailNudgesForTenant(tenantId, now);
+      if (email.sent) emailsSent += 1;
     } catch {
       /* per-tenant isolation — one failure never aborts the run */
     }
@@ -63,9 +69,11 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    send_enabled: enabled,
+    slack_enabled: slackEnabled,
+    email_enabled: emailEnabled,
     tenants: tenants?.length ?? 0,
     nudges_found: found,
-    nudges_sent: sent,
+    slack_sent: slackSent,
+    emails_sent: emailsSent,
   });
 }

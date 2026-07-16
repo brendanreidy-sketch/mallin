@@ -2161,7 +2161,7 @@ function PriorCallBlock({
         </div>
         <div>
           <div className={`${s.colHead} ${s.thinkThrough}`}>
-            To think through internally
+            Handle before your next call
           </div>
           <div className={s.colList}>
             {syn.to_think_through.map((b, i) => (

@@ -347,24 +347,25 @@ This rule applies to: top_line.text, deal_thesis.thesis, deal_thesis.decision_fr
 
 Internal field values that are enums (posture, severity, urgency, disposition, status, kind, category, firmness) are NOT user-facing prose — those follow the schema and don't get spelled out.
 
-RULE 16 — Collaborative voice. The rep reads this 5 minutes before a call. The voice they should "hear" is a peer colleague making a suggestion, not a manager issuing orders.
+RULE 16 — Direct, human voice. The rep reads this 5 minutes before a call and needs to know what to DO, fast. The voice is a sharp teammate telling you the move in plain English — NOT a hedging advisor ("you might want to consider…"), NOT a manager barking ("you must…"), and NOT sales-ops jargon ("lock the session," "drive alignment"). Every action line is a plain imperative + the specifics + the real "because," so the rep knows exactly what to do next without decoding anything.
 
-VOICE PHRASES to favor for action-oriented fields:
-  - "I'd open with…"
-  - "Here's what I might say…"
-  - "If it were me, I'd try…"
-  - "Something like: '[verbatim]' — that gets you…"
-  - "Worth asking: '[verbatim]' — surfaces…"
-  - "I'd consider…"
+VOICE to favor for action-oriented fields (direct AND conversational):
+  - "Open by asking her…" / "Start with…" / "Lead with…"
+  - "Before you hang up, get an actual date on the calendar for the John meeting — without it, scoping just sits there."
+  - "Ask Denise which question from Kevin scares her most, and script the answer with her on the call."
+  - "Send Priya the three data requests today so she's not the reason next week slips."
+  - "Say something like: '[verbatim]' — that gets you X without putting them on the spot."
 
-VOICE PHRASES to AVOID:
-  - "Open by…" / "Start with…" / "Tell her…" (imperatives)
-  - "You should…" / "You must…" / "You need to…"
-  - "Confirm that…" / "Ensure that…" (management-speak)
-  - "Drive the conversation toward…" (jargon)
-  - "Establish…" / "Position yourself as…" (corporate-speak)
+VOICE to AVOID:
+  - Hedging / deliberation — THE #1 thing to kill (it tells the rep to think, not act):
+    "I'd consider…", "It might be worth…", "You could think about…", "Worth reflecting on…", "Perhaps…", "You may want to…", "Decide whether to…" as a soft opener.
+  - Jargon fragments & clipped command-speak — a rep can't tell what to actually DO:
+    "Lock the session", "Drive alignment", "Co-build the narrative", "Socialize the…", "Establish…", "Position yourself as…", "Circle back", "Align stakeholders".
+  - Manager-barking: "You should…", "You must…", "You need to…". Say it as a peer, not a boss.
 
-Strategic rationale that follows the suggestion is also conversational: "…that gets you X without putting them on the spot" — not "this serves to advance executive alignment objectives."
+THE TEST: would a smart colleague actually say this out loud to you over coffee — and would you know exactly what to do from it? If it's hedged, or it's jargon you'd have to translate, rewrite it as a plain instruction with the reason attached.
+
+Strategic rationale that follows the move is also conversational: "…that gets you X without putting them on the spot" — not "this serves to advance executive alignment objectives."
 
 For coaching_notes[].note (rep-development feedback): voice is a senior peer reflecting with the rep, not a manager grading them. "One thing I'd think about for next time —" not "The rep failed to…"
 
@@ -515,38 +516,30 @@ A. what_surfaced (2-4 bullets): the most consequential NEW information, signal, 
 
    What does NOT count: deal-history recap, restated stakeholder list, restated thesis. Only what was NEW or SHIFTED in the latest interaction.
 
-B. to_think_through (2-4 bullets): DECISIONS — not considerations — that the REP / TEAM needs to land internally before the next external touch. These are NOT buyer-facing questions (those go in open_questions). These are "pause and bring this to the manager / SE / pricing" items.
+B. to_think_through (2-4 bullets): the internal must-dos before the next external touch — the "sort this out on your side first" items (pre-clear with deal desk, get a number from your SE, bring a call to your manager). NOT buyer-facing questions (those go in open_questions).
 
-   STRICT FORMAT — every bullet must answer three things, ideally in this shape:
-     [Decision verb + specific decision] — [who owns it: "you" for a rep-owned decision, a name ONLY for a teammate] — [what changes based on outcome].
+   Write each as a plain-English imperative — what to DO — with the real "because" attached (what happens, or breaks, depending on how it lands). Say it the way a sharp colleague would tell you, NOT as a decision-tree. Rule 16 voice applies in full.
 
-   Required decision verbs (use these — not the banned alternatives below):
-     ✅ "Decide whether…"        ✅ "Confirm…"           ✅ "Align on…"
-     ✅ "Pre-clear with…"        ✅ "Lock in…"            ✅ "Commit to…"
-     ✅ "Choose between X and Y" ✅ "Determine the…"
+   VERBS to use (direct action): "Get…", "Ask…", "Pin down…", "Check with…", "Sort out with…", "Bring … to your manager", "Send…", "Green-light … before…", "Figure out with deal desk whether…". A genuine fork is fine — phrase it like a person ("Figure out with deal desk whether X flies — if it doesn't, rework it before Denise sees it"), NOT as "Decide whether X."
 
-   BANNED soft-framing words (never use these — they signal reflection, not decision):
-     ❌ "consider"     ❌ "think about"      ❌ "evaluate"        ❌ "explore"
-     ❌ "discuss" (alone — must be paired with a decision verb: "Discuss with X to decide Y")
-     ❌ "review" (alone — same rule)        ❌ "look at"          ❌ "reflect on"
+   DO NOT open a bullet with a hedge or a jargon fragment:
+     ❌ "consider" / "think about" / "evaluate" / "explore" / "review" (alone) / "look at" / "reflect on" — these tell the rep to deliberate, not act.
+     ❌ "Decide whether…" / "Lock in…" / "Pre-clear…" / "Align on…" as bare openers — shorthand a rep has to translate ("lock the session" — do WHAT?).
 
-   Each bullet must also signal CONSEQUENCE: what shifts in the deal posture, next-call plan, or commercial structure depending on which way the decision lands. Examples of strong vs. weak:
+   The consequence rides along as a natural clause, not an "if yes / if no" template.
 
-   ✅ STRONG: "Decide whether to request a direct conversation with Nathan Faler before the next touch — your call. If yes, outreach happens this week and the next-call shape changes to a CFO-handoff. If no, you stay on the current path and accept the parent-review blind spot."
+   ✅ STRONG: "Get 20 minutes with John before you write anything down — his data-model boundary is the whole gate, and if you scope around a guess he can veto the entire thing in one review."
+   ❌ WEAK: "Lock in the John Phelan session." (jargon fragment — do WHAT, exactly?)
 
-   ❌ WEAK: "Discuss whether to request a direct executive conversation."
+   ✅ STRONG: "Ask Denise which one question from Kevin she's most worried about, and work out the answer with her on the call — if she can't field it live, you want to find that out before Kevin does, not after."
+   ❌ WEAK: "Decide whether to ask Denise for the questions Kevin is likely to raise." (tells her to deliberate, not act)
 
-   ✅ STRONG: "Pre-clear with deal desk by Tuesday: is the 5-year / Net 30 / 3% escalator structure approvable as-is, or do we need to anchor on a 3-year alternative? If approvable: present at next call. If not: rework before sharing."
+   ✅ STRONG: "Get deal desk to green-light the 5-year / Net-30 structure before you show it to Denise — if it won't fly as-is, you want to rework it now, not walk it back later."
+   ❌ WEAK: "Pre-clear with deal desk whether the commercial structure is approvable." (jargon opener)
 
-   ❌ WEAK: "Consider whether the commercial structure works."
+   The test: a rep reads the bullet and knows exactly what to do next — no decoding, no deliberating. If it tells them to think instead of move, or it's shorthand they'd have to translate, rewrite it.
 
-   ✅ STRONG: "Lock in with Seber whether the hours-per-week implementation estimate Emily requested is ready to send by Wed. If yes, send it and use it as the next-touch trigger. If no, manage Emily's expectation explicitly — silence is worse than a delay-with-context."
-
-   ❌ WEAK: "Pre-clear with Seber Kadak about the hours-per-week implementation estimate."
-
-   The test: a manager could sit with this list and run a 5-minute deal review. Each bullet either gets a decision in that meeting or the rep walks out with a named owner and a deadline. If a bullet generates discussion but no decision, the bullet is too soft.
-
-VOICE: peer-collaborative (Rule 16), second person (Rule 18). "Worth deciding before the next touch whether…" not "The rep should escalate to…" and never "Brendan should…".
+VOICE: direct + human (Rule 16), second person (Rule 18). A plain imperative with the reason — "Get your manager to green-light the phased structure before the next touch — if it's not approved, you rework it before Denise sees it, not after." NOT "Worth deciding whether to escalate…" (hedge), NOT "Lock in escalation" (jargon), and never "Brendan should…".
 
 OMISSION RULE: if substrate has only one external touch (single first-call deal), there is no "previous call" to wrap up — omit post_call_synthesis entirely. If substrate has ≥2 external touches, you MUST produce it.
 
@@ -725,7 +718,8 @@ The system mined these outcome + action lessons from the workspace's OTHER deals
 (labeled WON / LOST / STALLED / AT RISK / ADVANCED). The rep did NOT ask for these
 — YOU surface them. Use them to make the brief proactive about the outcome:
 - If this deal resembles a WON or ADVANCED pattern, name the move that worked — "replicate X; it advanced/won a similar deal."
-- If it resembles a LOST or STALLED pattern, warn early and specifically — "this is the signature that lost/stalled <deal>; the outcome is in question unless you do X."
+- If it resembles a LOST or STALLED pattern, warn early and specifically — "this is the signature that lost a similar deal; the outcome is in question unless you do X."
+NAMING: some lessons name the deal — those are the rep's OWN past deals, and you MAY refer to them by that name. Any lesson that reads "a teammate's deal at your company" is deliberately anonymized — keep it anonymous ("a teammate's deal," "a deal your team lost," "a similar deal"). NEVER coin or infer a name for an anonymized deal, and NEVER lift a company or product name that appears INSIDE a lesson's text (e.g. a tool named in the loss notes) and present it as the deal's name — do not produce "the Mallín deal" or anything like it. The lesson is a pattern, not a named case study.
 Fold this into top_line, deal_thesis, critical_risks, and the recommended actions
 where it genuinely applies. Stay grounded: invoke a pattern ONLY when THIS deal's
 substrate actually resembles it — never fabricate a resemblance.
@@ -743,4 +737,4 @@ ${JSON.stringify(input, null, 2)}
 Produce the PrepArtifact by invoking the emit_prep_artifact tool. Follow the reasoning workflow internally. Apply the rules. Mirror Pass 2's deal_posture. Surface evidence-linked claims only.`;
 }
 
-export const EXECUTION_AGENT_PROMPT_VERSION = "v1.9.0";
+export const EXECUTION_AGENT_PROMPT_VERSION = "v1.10.0";

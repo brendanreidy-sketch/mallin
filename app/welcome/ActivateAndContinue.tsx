@@ -57,8 +57,13 @@ export default function ActivateAndContinue({
         }
         if (cancelled) return;
         // Ask the tenure question, or forward straight in.
+        // Hard navigation (not router.replace): a soft nav reuses a cached RSC
+        // payload / stale auth, so /cockpit can render before the just-set
+        // active org is visible server-side and bounce back here — an infinite
+        // /welcome ⇄ /cockpit loop. A full load forces a fresh request that
+        // carries the updated session.
         if (askExperience) setPhase("asking");
-        else router.replace(next);
+        else window.location.assign(next);
       } catch (e) {
         if (!cancelled) {
           setError((e as Error).message || "Activation failed");
@@ -84,7 +89,8 @@ export default function ActivateAndContinue({
         /* best-effort — never block entry on the save */
       }
     }
-    router.replace(next);
+    // Hard navigation for the same reason as the activation path above.
+    window.location.assign(next);
   }
 
   return (

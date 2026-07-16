@@ -1,24 +1,30 @@
 /**
- * Dev-only: send the founder ONE example proactive-nudge digest, from prod
- * (where RESEND_API_KEY lives — it's a Sensitive var, so local can't send).
+ * Dev-only: let the founder SEE the proactive email path end-to-end. Opening
+ * this URL (signed in as the founder) will:
+ *   1. drop a real SAMPLE draft into your Gmail Drafts — if Gmail is connected;
+ *   2. send the heads-up digest to your inbox (WorkWave marked "drafted in
+ *      Gmail" when step 1 worked).
  *
- * Gated by the logged-in Clerk session AND an email allowlist, so just open this
- * URL in a browser where you're signed in as the founder:
- *   https://mallin.io/api/dev/example-nudge
- * It sends to that same address and returns { ok }. Recipient is hardcoded, so
- * it can never email anyone else. Safe to delete this file after you've seen it.
+ * Gated by the logged-in Clerk session + an email allowlist; the sample draft is
+ * addressed to YOU (not a real prospect), so nothing can leak even if you hit
+ * send. Safe to delete this file after you've seen it.
  *
- * NOT in middleware's public allowlist on purpose — Clerk protects it, so an
- * unauthenticated request is refused and only a signed-in founder gets through.
+ * Open: https://mallin.io/api/dev/example-nudge  (in a browser signed in as the founder)
  */
 import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { sendRepNudgeDigest } from "@/lib/email/resend";
+import { getGmailConnectionStatus } from "@/lib/auth/gmail-oauth";
+import { createDraft } from "@/lib/adapters/gmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const RECIPIENT = "builtalone@gmail.com";
+
+const SAMPLE_SUBJECT = "Re: WorkWave — before Kevin's board deck";
+const SAMPLE_BODY =
+  "Greg,\n\nQuick one before the board deck goes out. I want to make sure whatever you put in front of Kevin holds up the moment he starts asking — so before I put a timeline or a number to it, I'd like to grab 20 minutes with John to confirm the consolidation won't touch the product data model. Once that's clear I can give you a real range you can stand behind, not a placeholder.\n\nCould you intro me to John this week? I'll keep it strictly to the integration boundary.\n\nThanks,\nRyan";
 
 export async function GET() {
   const { userId } = await auth();
@@ -34,6 +40,31 @@ export async function GET() {
     return new NextResponse("Only the founder account can trigger this.", { status: 403 });
   }
 
+  // 1. Drop a real sample draft into your Gmail (only if Gmail is connected).
+  //    Addressed to YOU for the test; the real feature addresses the prospect.
+  let gmailConnected = false;
+  let draftCreated = false;
+  try {
+    const status = await getGmailConnectionStatus(userId);
+    gmailConnected = status.connected;
+    if (gmailConnected) {
+      const bodyHtml = SAMPLE_BODY.split("\n\n")
+        .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+        .join("");
+      await createDraft(userId, {
+        to: RECIPIENT,
+        subject: SAMPLE_SUBJECT,
+        bodyText: SAMPLE_BODY,
+        bodyHtml,
+      });
+      draftCreated = true;
+    }
+  } catch {
+    /* draft is best-effort — the digest still goes out */
+  }
+
+  // 2. Send the heads-up digest. WorkWave is marked as drafted-in-Gmail when
+  //    step 1 succeeded, so you see the "Open Gmail" version.
   const res = await sendRepNudgeDigest({
     email: RECIPIENT,
     name: "Brendan",
@@ -44,10 +75,10 @@ export async function GET() {
         headline: "Gone quiet — 9 days since the last touch.",
         reason:
           "Silence past a week usually means the deal is drifting. Re-open it before it stalls.",
-        move: "Send Greg a two-line check-in: confirm the 20-minute session with John is on the calendar and that the working notes reached Denise. Don't put a number on the table yet.",
-        emailSubject: "Re: WorkWave — before Kevin's board deck",
-        emailBody:
-          "Greg,\n\nQuick one before the board deck goes out. I want to make sure whatever you put in front of Kevin holds up the moment he starts asking — so before I put a timeline or a number to it, I'd like to grab 20 minutes with John to confirm the consolidation won't touch the product data model. Once that's clear I can give you a real range you can stand behind, not a placeholder.\n\nCould you intro me to John this week? I'll keep it strictly to the integration boundary.\n\nThanks,\nRyan",
+        move: "Send Greg a two-line check-in and lock the 20-minute session with John.",
+        emailSubject: SAMPLE_SUBJECT,
+        emailBody: SAMPLE_BODY,
+        gmailDrafted: draftCreated,
       },
       {
         opportunityId: "b1f9b0c2-0000-4000-8000-000000000002",
@@ -68,5 +99,13 @@ export async function GET() {
     ],
   });
 
-  return NextResponse.json({ ok: res.ok, to: RECIPIENT, error: res.error ?? null });
+  return NextResponse.json({
+    ok: res.ok,
+    gmailConnected,
+    draftCreated,
+    digestSent: res.ok,
+    hint: gmailConnected
+      ? "Open Gmail → Drafts to see the sample email that just landed."
+      : "Connect Gmail first (Settings → Integrations), then reload this URL.",
+  });
 }

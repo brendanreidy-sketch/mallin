@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "slack:test": "tsx --env-file=.env.local scripts/test-slack.ts",
     "pilots": "tsx --env-file=.env.local scripts/metrics/pilots.ts",
-    "sdr:sim": "tsx --env-file=.env.local scripts/sdr-sim.ts"
+    "sdr:sim": "tsx --env-file=.env.local scripts/sdr-sim.ts",
+    "eval:brief": "tsx --env-file=.env.local scripts/eval/run-brief-evals.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",

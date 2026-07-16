@@ -22,6 +22,14 @@ export async function POST(req: NextRequest) {
       { status: 401 },
     );
   }
+
+  // Optional: the deal the rep upgraded from, so Checkout returns them to it.
+  let dealId: string | null = null;
+  const reqBody = (await req.json().catch(() => ({}))) as { dealId?: unknown };
+  if (typeof reqBody.dealId === "string" && reqBody.dealId.trim()) {
+    dealId = reqBody.dealId.trim();
+  }
+
   if (!billingConfigured() || !stripe || !STRIPE_PRICE_ID) {
     return NextResponse.json(
       { error: "billing_not_configured", message: "Billing isn't set up yet." },
@@ -72,7 +80,7 @@ export async function POST(req: NextRequest) {
       customer: customerId,
       line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
       allow_promotion_codes: true,
-      success_url: `${origin}/new?upgraded=1`,
+      success_url: `${origin}/new?upgraded=1${dealId ? `&dealId=${encodeURIComponent(dealId)}` : ""}`,
       cancel_url: `${origin}/new?upgrade_canceled=1`,
       metadata: { tenant_id: tenantId },
       subscription_data: { metadata: { tenant_id: tenantId } },

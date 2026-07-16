@@ -40,7 +40,15 @@ export function UpgradeButton({
     setBusy(true);
     setErr(null);
     try {
-      const res = await fetch("/api/billing/checkout", { method: "POST" });
+      // Carry the deal the rep is upgrading from (encoded in `href`, e.g.
+      // /new?dealId=…) through Checkout so we can return them to it afterward.
+      const qs = href.includes("?") ? href.slice(href.indexOf("?") + 1) : "";
+      const dealId = new URLSearchParams(qs).get("dealId");
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dealId ? { dealId } : {}),
+      });
       const data = (await res.json().catch(() => ({}))) as {
         url?: string;
         message?: string;

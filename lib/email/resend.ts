@@ -51,6 +51,79 @@ interface ResendResult {
   error?: string;
 }
 
+/**
+ * Welcome-to-Pro email, sent to the CUSTOMER on the free→pro upgrade (fired
+ * from the Stripe webhook). Until now the upgrade granted access silently — no
+ * receipt, no acknowledgement. Best-effort: never throws, never blocks the
+ * webhook's 2xx. Uses the rep's own deck language ("your deal memory carries
+ * forward") so the welcome sounds like Mallín, not a generic SaaS receipt.
+ */
+export async function sendProWelcome(args: {
+  email: string;
+  name?: string | null;
+}): Promise<ResendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("[pro-welcome] RESEND_API_KEY not set — skipping welcome email.");
+    return { ok: false, error: "no_api_key" };
+  }
+  const from = process.env.RESEND_FROM_EMAIL || "Mallín <onboarding@resend.dev>";
+  const first = (args.name ?? "").trim().split(/\s+/)[0];
+  const greeting = first ? `${first},` : "Hi,";
+
+  const text = [
+    greeting,
+    "",
+    "You're on Mallín Pro — thank you.",
+    "",
+    "Every deal now gets briefed and every call gets logged, with no cap. And the part that compounds: your deal memory carries forward. What won, what lost, what stalled — Mallín learns it and coaches the next deal off it, so your edge grows with every conversation.",
+    "",
+    "Jump back in: https://mallin.io/new",
+    "",
+    "If anything's ever off, just reply — this inbox reaches a human.",
+    "",
+    "— The Mallín team",
+  ].join("\n");
+
+  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;color:#1a2230;max-width:520px;line-height:1.6;">
+    <p style="margin:0 0 16px;">${greeting}</p>
+    <p style="margin:0 0 16px;font-size:18px;font-weight:600;">You&rsquo;re on Mallín Pro — thank you.</p>
+    <p style="margin:0 0 16px;">Every deal now gets briefed and every call gets logged, with no cap. And the part that compounds: <strong>your deal memory carries forward</strong>. What won, what lost, what stalled — Mallín learns it and coaches the next deal off it, so your edge grows with every conversation.</p>
+    <p style="margin:0 0 20px;"><a href="https://mallin.io/new" style="display:inline-block;padding:11px 20px;background:#1a2230;color:#f4f1ea;border-radius:9px;text-decoration:none;font-weight:600;">Jump back in →</a></p>
+    <p style="margin:0 0 16px;color:#6b7689;font-size:14px;">If anything&rsquo;s ever off, just reply — this inbox reaches a human.</p>
+    <p style="margin:0;color:#6b7689;font-size:14px;">— The Mallín team</p>
+  </div>`;
+
+  try {
+    const res = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: args.email,
+        subject: "You're on Mallín Pro",
+        text,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      console.error(`[pro-welcome] Resend failed: ${res.status} ${errBody}`);
+      return { ok: false, error: `resend_${res.status}` };
+    }
+    const data = (await res.json().catch(() => ({}))) as { id?: string };
+    return { ok: true, id: data.id };
+  } catch (err) {
+    console.error(
+      `[pro-welcome] send error: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return { ok: false, error: "send_exception" };
+  }
+}
+
 export async function sendPilotSignupNotification(
   signup: PilotSignupPayload,
 ): Promise<ResendResult> {

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { stripe, FREE_DEAL_LIMIT } from "@/lib/billing/stripe";
 import { supabaseAdmin } from "@/lib/db/client";
+import { sendProWelcome } from "@/lib/email/resend";
 
 /**
  * POST /api/webhooks/stripe — source of truth for plan state.
@@ -59,11 +60,33 @@ export async function POST(req: NextRequest) {
   switch (event.type) {
     case "checkout.session.completed": {
       const s = event.data.object as Stripe.Checkout.Session;
-      await setPlanByCustomer(customerIdOf(s.customer), {
+      const custId = customerIdOf(s.customer);
+      // Read the tenant BEFORE flipping it, so we only welcome on the actual
+      // free→pro transition — never again on a redelivered event.
+      const { data: before } = custId
+        ? await supabaseAdmin
+            .from("tenants")
+            .select("plan, owner_email, first_name")
+            .eq("stripe_customer_id", custId)
+            .maybeSingle()
+        : { data: null };
+      await setPlanByCustomer(custId, {
         plan: "pro",
         deal_limit: null,
         stripe_subscription_id: customerIdOf(s.subscription),
       });
+      // Welcome email — best-effort, never blocks the webhook's 2xx.
+      if (before && before.plan !== "pro") {
+        const email =
+          s.customer_details?.email ?? s.customer_email ?? before.owner_email ?? null;
+        if (email) {
+          try {
+            await sendProWelcome({ email, name: before.first_name });
+          } catch (e) {
+            console.warn(`[stripe-webhook] pro-welcome failed: ${(e as Error).message}`);
+          }
+        }
+      }
       break;
     }
     case "customer.subscription.updated": {

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import IntakeForm from "./IntakeForm";
+import UpgradeCelebration from "./UpgradeCelebration";
 import { getCurrentTenantId } from "@/lib/auth/tenant-context";
 import { supabaseAdmin } from "@/lib/db/client";
 import { reconcileProOnReturn } from "@/lib/billing/reconcile";
@@ -62,10 +63,13 @@ export default async function NewDealPage({
       : undefined;
 
   return (
-    <IntakeForm
-      existingDeals={existingDeals}
-      initialDealId={initialDealId}
-      initialMode={initialMode}
-    />
+    <>
+      {upgraded === "1" && <UpgradeCelebration dealId={initialDealId} />}
+      <IntakeForm
+        existingDeals={existingDeals}
+        initialDealId={initialDealId}
+        initialMode={initialMode}
+      />
+    </>
   );
 }

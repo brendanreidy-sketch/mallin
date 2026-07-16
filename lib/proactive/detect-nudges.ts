@@ -19,8 +19,16 @@ import { supabaseAdmin } from "@/lib/db/client";
  */
 
 const SILENCE_DAYS = 7;
+// A lost deal isn't dead — but don't poke a fresh loss. Re-engage in the 3–6
+// month window, once there's been time to see whether the vendor they chose is
+// actually delivering on what they signed up for.
+const WINBACK_MIN_DAYS = 90;
+const WINBACK_MAX_DAYS = 180;
+// Loss reasons that mean "leave it alone" — no amount of time reopens these.
+const DEAD_END_LOSS =
+  /\bno budget\b|\bno need\b|not a fit|bad fit|killed the project|project (was )?(killed|cancell?ed|shelved)|out of business|went dark/i;
 
-export type NudgeKind = "stall" | "silence";
+export type NudgeKind = "stall" | "silence" | "winback";
 
 export interface Nudge {
   opportunityId: string;
@@ -38,6 +46,12 @@ interface DealSnapshot {
   opportunityId: string;
   name: string;
   lastActivityAt: string | null;
+  /** Recorded outcome if the deal is closed. null/undefined = still active. */
+  outcome?: "won" | "lost" | "no_decision" | null;
+  /** When it closed (deal_outcomes.closed_at) — drives the win-back window. */
+  closedAt?: string | null;
+  /** The rep's loss reason (deal_outcomes.notes) — decides leave-alone vs win-back. */
+  lossReason?: string | null;
   /** The current execution artifact (brief), loosely typed for the few fields read. */
   artifact:
     | null
@@ -56,6 +70,36 @@ interface DealSnapshot {
  */
 export function detectNudges(deal: DealSnapshot, nowMs: number): Nudge[] {
   const nudges: Nudge[] = [];
+
+  // ── Closed deals: the outcome decides everything ──
+  // A WON or no-decision deal is left alone here. A LOST deal isn't gone
+  // forever: in the 3–6 month window, unless the loss was a dead end (no budget
+  // / no need / bad fit), surface a WIN-BACK — enough time has passed to see if
+  // the vendor they chose is delivering, and whether there's an opening to come
+  // back in. This also stops stall/silence from ever firing on a closed deal.
+  if (deal.outcome) {
+    if (deal.outcome === "lost" && deal.closedAt) {
+      const ageDays = (nowMs - new Date(deal.closedAt).getTime()) / 86_400_000;
+      const reason = (deal.lossReason ?? "").trim();
+      const deadEnd = DEAD_END_LOSS.test(reason);
+      if (ageDays >= WINBACK_MIN_DAYS && ageDays <= WINBACK_MAX_DAYS && !deadEnd) {
+        const months = Math.max(3, Math.round(ageDays / 30));
+        nudges.push({
+          opportunityId: deal.opportunityId,
+          dealName: deal.name,
+          kind: "winback",
+          headline: `${deal.name} closed lost about ${months} months ago — worth a win-back look.`,
+          move: "Reach out for a light check-in: are they getting what they signed up for with the vendor they chose? If there's a gap, that's your opening to come back in.",
+          reason: reason
+            ? `Why it closed: ${reason}`
+            : "Enough time has passed to see whether the vendor they chose is actually delivering.",
+        });
+      }
+    }
+    return nudges;
+  }
+
+  // ── Active deals ──
   const a = deal.artifact;
   const posture = (a?.deal_posture ?? "").toLowerCase();
   const move =
@@ -119,24 +163,36 @@ export async function scanTenantForNudges(tenantId: string, nowMs: number): Prom
     if (!opps || opps.length === 0) return [];
 
     const ids = opps.map((o) => o.id);
-    const { data: arts } = await supabaseAdmin
-      .from("execution_artifacts")
-      .select("opportunity_id, artifact")
-      .eq("tenant_id", tenantId)
-      .eq("is_current", true)
-      .in("opportunity_id", ids);
+    const [artsRes, outcomesRes] = await Promise.all([
+      supabaseAdmin
+        .from("execution_artifacts")
+        .select("opportunity_id, artifact")
+        .eq("tenant_id", tenantId)
+        .eq("is_current", true)
+        .in("opportunity_id", ids),
+      supabaseAdmin
+        .from("deal_outcomes")
+        .select("opportunity_id, outcome, closed_at, notes")
+        .eq("tenant_id", tenantId)
+        .in("opportunity_id", ids),
+    ]);
     const artOf = new Map(
-      (arts ?? []).map((r) => [r.opportunity_id, r.artifact as DealSnapshot["artifact"]]),
+      (artsRes.data ?? []).map((r) => [r.opportunity_id, r.artifact as DealSnapshot["artifact"]]),
     );
+    const outcomeOf = new Map((outcomesRes.data ?? []).map((o) => [o.opportunity_id, o]));
 
     const nudges: Nudge[] = [];
     for (const o of opps) {
+      const oc = outcomeOf.get(o.id);
       nudges.push(
         ...detectNudges(
           {
             opportunityId: o.id,
             name: (o.name as string) ?? "A deal",
             lastActivityAt: (o.last_activity_at as string) ?? null,
+            outcome: (oc?.outcome as DealSnapshot["outcome"]) ?? null,
+            closedAt: (oc?.closed_at as string) ?? null,
+            lossReason: (oc?.notes as string) ?? null,
             artifact: artOf.get(o.id) ?? null,
           },
           nowMs,

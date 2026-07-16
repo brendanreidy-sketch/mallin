@@ -44,9 +44,13 @@ function isMissingTableError(err: {
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+// Draft-only. gmail.compose is a SENSITIVE scope (create/manage drafts + send) —
+// it keeps Google OAuth verification OFF the restricted tier and its CASA security
+// assessment. Do NOT add gmail.modify / gmail.readonly (restricted → CASA) unless
+// the voice-conditioning read path (listSentThreads / getMessage in
+// lib/adapters/gmail.ts) actually ships — today those are unimplemented stubs.
 const REQUIRED_SCOPES = [
   "https://www.googleapis.com/auth/gmail.compose",
-  "https://www.googleapis.com/auth/gmail.modify",
   "openid",
   "email",
 ].join(" ");

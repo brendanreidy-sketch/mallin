@@ -54,6 +54,8 @@ export default function IntakeForm({
   const [stakeholders, setStakeholders] = useState("");
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  // Follow-up only: is the pasted content a call transcript or an inbound email?
+  const [channel, setChannel] = useState<"call" | "email">("call");
   const fileRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -235,7 +237,7 @@ export default function IntakeForm({
             upcoming
               ? { company: accountNameHint, productContext, stakeholders, sellerCompany }
               : followUp
-                ? { transcript, opportunityId: dealId }
+                ? { transcript, opportunityId: dealId, channel }
                 : { transcript, productContext, accountNameHint, sellerCompany },
           ),
         },
@@ -414,10 +416,25 @@ export default function IntakeForm({
             </>
           )}
 
+          {followUp && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              {(["call", "email"] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setChannel(c)}
+                  style={channel === c ? S.modeBtnActive : S.modeBtn}
+                >
+                  {c === "call" ? "Call" : "Email"}
+                </button>
+              ))}
+            </div>
+          )}
+
           {!upcoming && (
           <label style={S.label}>
             <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              Call transcript
+              {followUp && channel === "email" ? "Email" : "Call transcript"}
               <span style={{ display: "inline-flex", gap: 8 }}>
                 <button
                   type="button"

@@ -542,8 +542,14 @@ export async function appendCallAndRebuild(args: {
   tenantId: string;
   opportunityId: string;
   transcript: string;
+  /** Channel of the pasted interaction. "email" tags it as an INBOUND email
+   *  (activity type='email', call direction='inbound') so the brief reads and
+   *  labels it as an email, not a call. Content still flows through the same
+   *  summary path that already triangulates correctly. */
+  channel?: "call" | "email";
 }): Promise<void> {
-  const { tenantId, opportunityId, transcript } = args;
+  const { tenantId, opportunityId, transcript, channel = "call" } = args;
+  const isEmail = channel === "email";
 
   // Confirm the opportunity belongs to this tenant and grab its account.
   const { data: opp, error: oppErr } = await supabaseAdmin
@@ -557,8 +563,9 @@ export async function appendCallAndRebuild(args: {
   }
 
   const stamp = new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14);
-  const externalId = `followup-${stamp}`;
+  const externalId = `${isEmail ? "email" : "followup"}-${stamp}`;
   const startedAt = new Date().toISOString();
+  const title = isEmail ? "Pasted email" : "Pasted follow-up call";
 
   const { data: call, error: callErr } = await supabaseAdmin
     .from("calls")
@@ -567,10 +574,11 @@ export async function appendCallAndRebuild(args: {
       account_id: opp.account_id,
       opportunity_id: opportunityId,
       provider: "manual",
-      title: "Pasted follow-up call",
+      title,
       started_at: startedAt,
       duration_seconds: 0,
-      direction: "outbound",
+      // An email from the buyer is inbound; a pasted call stays rep-led/outbound.
+      direction: isEmail ? "inbound" : "outbound",
       party_emails: [],
       summary: transcript,
       key_moments: [],
@@ -590,10 +598,10 @@ export async function appendCallAndRebuild(args: {
     tenant_id: tenantId,
     account_id: opp.account_id,
     opportunity_id: opportunityId,
-    type: "call",
+    type: isEmail ? "email" : "call",
     occurred_at: startedAt,
-    subject: "Pasted follow-up call",
-    summary: "Follow-up call pasted by the rep.",
+    subject: title,
+    summary: isEmail ? "Inbound email pasted by the rep." : "Follow-up call pasted by the rep.",
     call_id: call.id,
     source_system: "manual",
     source_external_id: `act_${externalId}`,

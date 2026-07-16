@@ -50,8 +50,11 @@ export async function POST(req: NextRequest) {
     accountNameHint?: string;
     opportunityId?: string;
     sellerCompany?: string;
+    channel?: string;
   };
   const transcript = (body.transcript ?? "").trim();
+  // Whether the pasted content is a call transcript or an inbound email.
+  const channel = body.channel === "email" ? "email" : "call";
   const productContext = (body.productContext ?? "").trim();
   const accountNameHint = (body.accountNameHint ?? "").trim() || null;
   const sellerCompany = (body.sellerCompany ?? "").trim();
@@ -88,7 +91,7 @@ export async function POST(req: NextRequest) {
   if (opportunityId) {
     try {
       await withUsageContext({ tenantId, opportunityId }, () =>
-        appendCallAndRebuild({ tenantId, opportunityId, transcript }),
+        appendCallAndRebuild({ tenantId, opportunityId, transcript, channel }),
       );
     } catch (err) {
       console.error(`[intake] follow-up rebuild failed for ${opportunityId}:`, err);

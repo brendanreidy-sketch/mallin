@@ -40,23 +40,23 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mallín — the operational layer of the revenue organization",
+  title: "Mallín — the governed judgment layer for revenue teams",
   description:
-    "Agentic AI for revenue ops. Mallín owns the operational work between calls and CRM — qualification, governance, follow-ups — so reps and managers focus on the conversation. We never auto-write your forecast.",
+    "An AI teammate that reads every call, email, and stakeholder in a deal, decides the one move that wins it, and takes the follow-through under the rep's approval — and learns how your team sells from every deal it runs.",
   metadataBase: new URL("https://mallin.io"),
   openGraph: {
-    title: "Mallín — the operational layer of the revenue organization",
+    title: "Mallín — the governed judgment layer for revenue teams",
     description:
-      "Agentic AI for revenue ops. Agents own the operational work; humans own the revenue-critical decisions.",
+      "An AI teammate that decides the move that wins each deal and takes the follow-through under the rep's approval — learning how your team sells from every deal it runs.",
     url: "https://mallin.io",
     siteName: "Mallín",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mallín — the operational layer of the revenue organization",
+    title: "Mallín — the governed judgment layer for revenue teams",
     description:
-      "Agentic AI for revenue ops. Agents own the operational work; humans own the revenue-critical decisions.",
+      "An AI teammate that decides the move that wins each deal and takes the follow-through under the rep's approval — learning how your team sells from every deal it runs.",
   },
 };
 

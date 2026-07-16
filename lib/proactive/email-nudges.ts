@@ -5,6 +5,22 @@ import { generateFollowupDraft } from "@/lib/agents/draft-followup";
 import { getGmailConnectionStatus } from "@/lib/auth/gmail-oauth";
 import { createDraft } from "@/lib/adapters/gmail";
 import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
+import {
+  recordDealSaveCandidate,
+  isDealSaveLedgerEnabled,
+  type RiskSignal,
+  type SaveAction,
+} from "@/lib/coaching/persist-deal-save";
+
+// Nudge kind → save-ledger shape. Only LIVE at-risk deals open a save episode;
+// 'winback' is a deal already closed lost (a fresh pursuit, not a save), so it
+// is deliberately absent — a win-back can never be credited as saved pipeline.
+const SAVE_SHAPE: Partial<
+  Record<Nudge["kind"], { signal: RiskSignal; action: SaveAction }>
+> = {
+  stall: { signal: "stalled", action: "revive_next_step" },
+  silence: { signal: "ghosted", action: "reengage_email" },
+};
 
 /**
  * The EMAIL delivery of the proactive engine — as deals progress, get the rep
@@ -81,7 +97,7 @@ export async function emailNudgesForTenant(
               .eq("account_id", opp?.account_id ?? ""),
             supabaseAdmin
               .from("execution_artifacts")
-              .select("artifact")
+              .select("id, artifact")
               .eq("opportunity_id", n.opportunityId)
               .eq("is_current", true)
               .maybeSingle(),
@@ -113,6 +129,37 @@ export async function emailNudgesForTenant(
                   attribution: draft.attribution,
                 });
                 gmailDrafts += 1;
+
+                // Open a save episode: Mallin just dropped a ready-to-send
+                // recovery move into the rep's own inbox on a live at-risk
+                // deal — the concrete governed action. Idempotent (one open
+                // episode per deal), gated per-tenant, best-effort so a ledger
+                // write can never break the nudge digest. The counterfactual +
+                // recovered/lost resolution are wired separately (resolveDealSave).
+                const shape = SAVE_SHAPE[n.kind];
+                if (shape && isDealSaveLedgerEnabled(tenantId)) {
+                  try {
+                    await recordDealSaveCandidate({
+                      tenantId,
+                      opportunityId: n.opportunityId,
+                      riskSignal: shape.signal,
+                      riskDriver: n.reason,
+                      flaggedAt: new Date(nowMs).toISOString(),
+                      // Value-crediting is deferred until there's a verified
+                      // deal-value source on the opportunity — the ledger still
+                      // counts the save, just without a dollar figure yet.
+                      amountAtFlag: null,
+                      actionTaken: shape.action,
+                      actionArtifactId: (art?.id as string | undefined) ?? null,
+                      // Draft lands in the owner's own inbox for one-click send,
+                      // so the owner is the approver of record.
+                      approvedByUserId: ownerId,
+                    });
+                  } catch {
+                    /* ledger write is best-effort */
+                  }
+                }
+
                 return { ...item, gmailDrafted: true };
               }
             } catch {

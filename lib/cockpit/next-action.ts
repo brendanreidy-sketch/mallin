@@ -124,10 +124,21 @@ const DISPOSITION_RANK: Record<string, number> = {
   unknown: 0,
 };
 
+/** Coerce stakeholder_strategy to an array. The contract types it as
+ *  StakeholderStrategy[], but malformed/legacy artifacts in the DB can carry an
+ *  object keyed by stakeholder id. Spreading or .find()-ing an object throws
+ *  ("is not iterable" / "not a function") and crashes the cockpit render for
+ *  that tenant — normalize instead of trusting the shape. */
+function asStakeholderArray(ss: unknown): StakeholderStrategy[] {
+  if (Array.isArray(ss)) return ss as StakeholderStrategy[];
+  if (ss && typeof ss === 'object') return Object.values(ss) as StakeholderStrategy[];
+  return [];
+}
+
 /** The person to act THROUGH — highest-disposition, then highest priority. */
 function pickChampion(a: PrepArtifact): StakeholderStrategy | undefined {
   const PRIORITY_RANK: Record<string, number> = { high: 3, medium: 2, low: 1 };
-  return [...(a.stakeholder_strategy ?? [])].sort((x, y) => {
+  return [...asStakeholderArray(a.stakeholder_strategy)].sort((x, y) => {
     const d =
       (DISPOSITION_RANK[y.current_state?.disposition ?? 'unknown'] ?? 0) -
       (DISPOSITION_RANK[x.current_state?.disposition ?? 'unknown'] ?? 0);
@@ -138,7 +149,7 @@ function pickChampion(a: PrepArtifact): StakeholderStrategy | undefined {
 
 /** A stakeholder who is the gate but not yet in the room — the multithread target. */
 function pickGateStakeholder(a: PrepArtifact): StakeholderStrategy | undefined {
-  const ss = a.stakeholder_strategy ?? [];
+  const ss = asStakeholderArray(a.stakeholder_strategy);
   // Prefer a high-influence skeptic/blocker/unknown — the unresolved approver.
   return ss.find((s) => {
     const disp = s.current_state?.disposition;

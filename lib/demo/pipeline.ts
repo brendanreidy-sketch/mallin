@@ -146,12 +146,27 @@ export function brief(d: DemoDeal): Record<string, unknown> {
     },
     primary_decision_focus: { focus: d.brief.decisionFrame, why: d.brief.whyMatters },
     critical_risks: risks,
-    stakeholder_strategy: Object.fromEntries(
-      d.stakeholders.map((s) => [
-        `sth_${s.name.toLowerCase().replace(/\s+/g, "_")}`,
-        { name: s.name, role: s.role, disposition: s.note, disposition_rationale: s.note },
-      ]),
-    ),
+    // Must be a StakeholderStrategy[] (see execution-agent-output.ts) — the
+    // cockpit's pickChampion/pickGateStakeholder iterate it. An object here
+    // throws "is not iterable" and crashes /cockpit.
+    stakeholder_strategy: d.stakeholders.map((s) => ({
+      stakeholder_id: `sth_${s.name.toLowerCase().replace(/\s+/g, "_")}`,
+      stakeholder_name: s.name,
+      role: s.role,
+      current_state: {
+        disposition: (s.role === "champion" ? "champion" : "neutral") as
+          | "champion"
+          | "neutral",
+        disposition_rationale: s.note,
+        influence_level: s.role === "economic_buyer" ? "high" : "medium",
+      },
+      call_strategy: s.note,
+      do_list: [] as string[],
+      priority: (s.role === "economic_buyer" || s.role === "champion"
+        ? "high"
+        : "medium") as "high" | "medium" | "low",
+      evidence_ids: evidence,
+    })),
     commercial_reality: { summary: `${d.deal.stageLabel} · ${d.deal.methodology}`, arr: d.deal.arr },
     talk_track: {
       opening_angle: d.brief.opening,

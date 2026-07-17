@@ -41,8 +41,8 @@
 .row { display: flex; align-items: center; gap: 13px; padding: 14px 16px; background: var(--ck-surface);
   border: 0.5px solid var(--ck-rule); border-radius: 11px; text-decoration: none; }
 .rmain { flex: 1; min-width: 0; }
-.rname { font-size: 14.5px; font-weight: 600; color: var(--ck-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rwhy { font-size: 12.5px; color: var(--ck-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.rname { display: block; font-size: 14.5px; font-weight: 600; color: var(--ck-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rwhy { display: block; font-size: 12.5px; color: var(--ck-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 .rchip { font-family: var(--font-jetbrains-mono), ui-monospace, monospace; font-size: 9.5px; font-weight: 600;
   letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 5px;
   background: var(--ck-surface-2); color: var(--ck-ink-3); flex: none; }

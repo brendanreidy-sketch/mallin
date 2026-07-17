@@ -16,6 +16,7 @@
  * ============================================================================
  */
 
+import { Suspense } from "react";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import type {
@@ -23,7 +24,7 @@ import type {
   CriticalRisk,
 } from "@/lib/contracts/execution-agent-output";
 import { loadDealFromDB } from "@/lib/db/load-deal";
-import { generateFollowupDraft } from "@/lib/agents/draft-followup";
+import { getOrGenerateFollowupDraft } from "@/lib/agents/followup-draft-cache";
 import { deriveCrmSuggestions } from "@/lib/agents/derive-crm-suggestions";
 import { getProviderName } from "@/lib/crm";
 import { after } from "next/server";
@@ -178,6 +179,50 @@ function loadSubstrate(artifactFilename: string): Substrate | null {
 // ────────────────────────────────────────────────────────────────────────────
 // Page
 // ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The follow-up email draft is an LLM generation with a validator retry loop —
+ * several seconds. Rendering it inside a Suspense boundary keeps it OFF the
+ * critical path: the brief streams immediately and the email slot fills in when
+ * the draft resolves, instead of every deal click blocking on it.
+ */
+async function FollowupDraftSlot({
+  substrate,
+  artifact,
+  repEmail,
+  gmailConnected,
+  tenantId,
+  opportunityId,
+  artifactId,
+}: {
+  substrate: Substrate | null;
+  artifact: PrepArtifact;
+  repEmail: string | null;
+  gmailConnected: boolean;
+  tenantId?: string | null;
+  opportunityId?: string | null;
+  artifactId?: string | null;
+}) {
+  // Cached per brief version (execution_artifact_id): generated once, then read
+  // on every later view; refreshed only when a new brief is produced.
+  const draft = await getOrGenerateFollowupDraft({
+    tenantId,
+    opportunityId,
+    artifactId,
+    substrate: substrate ?? {},
+    artifact,
+    opts: { rep_email: repEmail ?? undefined },
+  });
+  return <EmailComposer initialDraft={draft} gmailConnected={gmailConnected} />;
+}
+
+function EmailComposerSkeleton() {
+  return (
+    <div style={{ padding: "24px 4px", color: "var(--ck-ink-4)", fontSize: 13 }}>
+      Drafting your follow-up…
+    </div>
+  );
+}
 
 export default async function PrepPage({
   searchParams,
@@ -490,11 +535,11 @@ export default async function PrepPage({
     // gmailConnected = false — composer degrades gracefully.
   }
 
-  // Generate the substrate-driven follow-up draft. Pass the rep's own email
-  // so the auto-picked recipient can never resolve to the rep themselves.
-  const followupDraft = await generateFollowupDraft(substrate ?? {}, artifact, {
-    rep_email: repEmail ?? undefined,
-  });
+  // The follow-up draft is an LLM generation (with a validator retry loop), so
+  // it is deferred into a Suspense boundary (FollowupDraftSlot) in the email
+  // slot below — the brief renders immediately instead of every deal click
+  // blocking on the draft. The rep's own email is passed so the auto-picked
+  // recipient can never resolve to the rep themselves.
 
   // ── Deck-send recipients — resolve buyer-side attendees ONLY. Never the
   //    rep's own inbox: internal_participants + the rep's Clerk email are
@@ -732,10 +777,17 @@ export default async function PrepPage({
               </>
             }
             email={
-              <EmailComposer
-                initialDraft={followupDraft}
-                gmailConnected={gmailConnected}
-              />
+              <Suspense fallback={<EmailComposerSkeleton />}>
+                <FollowupDraftSlot
+                  substrate={substrate}
+                  artifact={artifact}
+                  repEmail={repEmail}
+                  gmailConnected={gmailConnected}
+                  tenantId={substrate?.opportunity?.tenant_id}
+                  opportunityId={substrate?.opportunity?.id}
+                  artifactId={currentArtifactId}
+                />
+              </Suspense>
             }
             crm={
               showSuggestedUpdates ? (

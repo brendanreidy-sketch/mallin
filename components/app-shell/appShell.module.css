@@ -49,6 +49,41 @@
 .navOn { background: var(--ck-blue-tint); color: var(--ck-ink); }
 .navOn:hover { color: var(--ck-ink); }
 
+/* Demo-only industry switcher (IndustryPicker). Sits under the logo. */
+.industryPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 4px 12px;
+  margin-bottom: 8px;
+  border-bottom: 0.5px solid var(--ck-rule);
+}
+.industryLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ck-ink-4);
+  padding: 0 7px 4px;
+}
+.industryPill {
+  appearance: none;
+  text-align: left;
+  padding: 7px 11px;
+  border-radius: 8px;
+  border: 0.5px solid var(--ck-rule);
+  background: transparent;
+  color: var(--ck-ink-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.industryPill:hover:not(:disabled) { color: var(--ck-ink); border-color: var(--ck-ink-3); }
+.industryPillOn,
+.industryPillOn:hover { background: var(--ck-ink); color: var(--ck-paper); border-color: var(--ck-ink); cursor: default; }
+.industryPill:disabled:not(.industryPillOn) { opacity: 0.55; cursor: default; }
+
 .spacer { margin-top: auto; }
 .tools {
   display: flex;

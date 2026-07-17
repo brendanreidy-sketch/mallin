@@ -135,7 +135,8 @@ async function seedDeal(c: C, tenantId: string, d: DemoDeal) {
         source_system: "manual",
         source_external_id: `sth_${slug}_${s.name.toLowerCase().replace(/\s+/g, "_")}`,
       },
-      { onConflict: "tenant_id,source_system,source_external_id" },
+      // account_id is part of the uniqueness key since migration 013.
+      { onConflict: "tenant_id,account_id,source_system,source_external_id" },
     );
     if (error) console.warn(`  ⚠ [${slug}] stakeholder ${s.name}: ${error.message}`);
   }
@@ -158,7 +159,8 @@ async function seedDeal(c: C, tenantId: string, d: DemoDeal) {
         source_system: "manual",
         source_external_id: `int_${slug}_${p.name.toLowerCase().replace(/\s+/g, "_")}`,
       },
-      { onConflict: "tenant_id,source_system,source_external_id" },
+      // account_id is part of the uniqueness key since migration 013.
+      { onConflict: "tenant_id,account_id,source_system,source_external_id" },
     );
     if (error) console.warn(`  ⚠ [${slug}] internal ${p.name}: ${error.message}`);
   }

@@ -17,6 +17,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { pushNudgesForTenant } from "@/lib/proactive/push-nudges";
 import { emailNudgesForTenant } from "@/lib/proactive/email-nudges";
+import { detectAndResolveDealSaves } from "@/lib/coaching/resolve-deal-saves";
+import { isDealSaveLedgerEnabled } from "@/lib/coaching/persist-deal-save";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,6 +57,8 @@ export async function GET(req: NextRequest) {
   let slackSent = 0;
   let emailsSent = 0;
   let gmailDrafts = 0;
+  let savesRecovered = 0;
+  let savesLost = 0;
   for (const t of tenants ?? []) {
     const tenantId = t.id as string;
     try {
@@ -64,6 +68,13 @@ export async function GET(req: NextRequest) {
       const email = await emailNudgesForTenant(tenantId, now);
       if (email.sent) emailsSent += 1;
       gmailDrafts += email.gmailDrafts;
+      // Resolve side of the save ledger: close out open episodes whose deals
+      // have recovered or been lost. Gated per-tenant (DARK) + never throws.
+      if (isDealSaveLedgerEnabled(tenantId)) {
+        const saves = await detectAndResolveDealSaves(tenantId, now);
+        savesRecovered += saves.recovered;
+        savesLost += saves.lost;
+      }
     } catch {
       /* per-tenant isolation — one failure never aborts the run */
     }
@@ -78,5 +89,7 @@ export async function GET(req: NextRequest) {
     slack_sent: slackSent,
     emails_sent: emailsSent,
     gmail_drafts: gmailDrafts,
+    saves_recovered: savesRecovered,
+    saves_lost: savesLost,
   });
 }

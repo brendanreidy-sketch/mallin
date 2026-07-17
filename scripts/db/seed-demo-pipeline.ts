@@ -1,18 +1,28 @@
 /**
- * Seed the full demo pipeline (lib/demo/pipeline-deals.ts) into the mallin-demo
- * tenant — accounts, opportunities, stakeholders, internal participants, calls,
- * the Pass-4 brief (execution_artifact), and deal_outcomes for closed deals.
+ * Seed a demo book of business into a demo tenant — accounts, opportunities,
+ * stakeholders, internal participants, calls, the Pass-4 brief
+ * (execution_artifact), and deal_outcomes for closed deals.
  *
- * Run: tsx --env-file=.env.local scripts/db/seed-demo-pipeline.ts
+ * Two modes:
+ *   • Legacy (no args): the original mixed-industry book (lib/demo/pipeline-deals.ts)
+ *     into the `mallin-demo` tenant.
+ *       tsx --env-file=.env.local scripts/db/seed-demo-pipeline.ts
+ *   • Industry: one industry book (lib/demo/industries/*) into a given tenant.
+ *     The tenant slug is the Clerk org id the industry is provisioned against.
+ *       tsx --env-file=.env.local scripts/db/seed-demo-pipeline.ts --industry saas --tenant <slug>
+ *
  * Idempotent: upserts on (tenant, source_system, source_external_id); the brief
  * uses demote-then-insert so the cockpit always reads the latest is_current.
  */
 import { createClient } from "@supabase/supabase-js";
 import { DEMO_PIPELINE } from "../../lib/demo/pipeline-deals";
 import { brief, type DemoDeal } from "../../lib/demo/pipeline";
+import { INDUSTRIES } from "../../lib/demo/industries";
 
-const SLUG = "mallin-demo";
-const NAME = "Mallin Demo";
+function arg(name: string): string | undefined {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 && i + 1 < process.argv.length ? process.argv[i + 1] : undefined;
+}
 
 function client() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -38,24 +48,24 @@ const POSTURE_MAP: Record<string, string> = {
 const email = (name: string, domain: string) =>
   `${name.toLowerCase().replace(/\s+/g, ".")}@${domain}`;
 
-async function ensureTenant(c: C): Promise<string> {
+async function ensureTenant(c: C, slug: string, name: string): Promise<string> {
   const { data: existing } = await c
     .from("tenants")
     .select("id, is_demo")
-    .eq("slug", SLUG)
+    .eq("slug", slug)
     .maybeSingle();
   if (existing) {
     if (!existing.is_demo) await c.from("tenants").update({ is_demo: true }).eq("id", existing.id);
-    console.log(`✓ tenant: ${existing.id} (${SLUG})`);
+    console.log(`✓ tenant: ${existing.id} (${slug})`);
     return existing.id as string;
   }
   const { data: created, error } = await c
     .from("tenants")
-    .insert({ slug: SLUG, name: NAME, is_demo: true, crm_provider: "hubspot", enabled_sinks: ["slack"] })
+    .insert({ slug, name, is_demo: true, crm_provider: "hubspot", enabled_sinks: ["slack"] })
     .select("id")
     .single();
   if (error || !created) throw new Error(`tenant insert failed: ${error?.message}`);
-  console.log(`+ tenant created: ${created.id}`);
+  console.log(`+ tenant created: ${created.id} (${slug})`);
   return created.id as string;
 }
 
@@ -217,10 +227,33 @@ async function seedDeal(c: C, tenantId: string, d: DemoDeal) {
 
 async function main() {
   const c = client();
-  const tenantId = await ensureTenant(c);
+  const industryKey = arg("industry");
+  const tenantSlug = arg("tenant");
+
+  if (industryKey) {
+    const industry = INDUSTRIES.find((i) => i.key === industryKey);
+    if (!industry) {
+      throw new Error(
+        `Unknown industry "${industryKey}". Known: ${INDUSTRIES.map((i) => i.key).join(", ")}`,
+      );
+    }
+    if (!tenantSlug) {
+      throw new Error(
+        "--industry requires --tenant <slug> (the Clerk org id the industry seeds into)",
+      );
+    }
+    const tenantId = await ensureTenant(c, tenantSlug, `Mallin Demo · ${industry.label}`);
+    console.log(`\nSeeding ${industry.deals.length} ${industry.label} deal(s) into ${tenantSlug}…`);
+    for (const d of industry.deals) await seedDeal(c, tenantId, d);
+    console.log(`\n✓ done — ${industry.deals.length} ${industry.label} deal(s) in ${tenantSlug}`);
+    return;
+  }
+
+  // Legacy: the original mixed-industry book → mallin-demo tenant.
+  const tenantId = await ensureTenant(c, "mallin-demo", "Mallin Demo");
   console.log(`\nSeeding ${DEMO_PIPELINE.length} deals…`);
   for (const d of DEMO_PIPELINE) await seedDeal(c, tenantId, d);
-  console.log(`\n✓ done — ${DEMO_PIPELINE.length} deals in ${SLUG}`);
+  console.log(`\n✓ done — ${DEMO_PIPELINE.length} deals in mallin-demo`);
 }
 
 main().catch((e) => {

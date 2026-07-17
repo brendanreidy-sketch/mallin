@@ -88,6 +88,23 @@ export interface DemoDeal {
   outcome?: DemoOutcome;
 }
 
+/**
+ * An industry "book of business" — one full pipeline for one vertical, seeded
+ * into its own demo tenant so a prospect can flip Mallín between industries
+ * (SaaS / Med Devices / Logistics / Real Estate) and see a world shaped like
+ * theirs. See docs/demo-industry-instances.md for the plan + scenario spread.
+ *
+ * The industry's own identity (`key`, `label`) is separate from the tenant it
+ * seeds into: the tenant slug IS the Clerk org id, assigned at provisioning
+ * time (lib/auth/tenant-context.ts), so it never lives in the book itself.
+ */
+export interface DemoIndustry {
+  key: string; // stable industry key used by the picker + provisioning, e.g. "saas"
+  label: string; // picker label, e.g. "SaaS"
+  sellerContext: string; // who the demo rep sells here — anchors the narrative voice
+  deals: DemoDeal[]; // 7 in a finished book; may be partial while authoring
+}
+
 /** Expand a concise spec into a schema-complete PrepArtifact (JSONB shape the
  *  cockpit + /prep read). Structural boilerplate is filled here; the meaty,
  *  per-deal narrative comes from the spec. */

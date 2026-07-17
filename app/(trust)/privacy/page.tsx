@@ -15,13 +15,14 @@ export const metadata: Metadata = {
 };
 
 const EFFECTIVE_DATE = "2026-05-20";
+const LAST_UPDATED = "2026-07-17";
 
 export default function PrivacyPolicyPage() {
   return (
     <>
       <p className={styles.eyebrow}>— Privacy Policy</p>
       <h1 className={styles.h1}>How we handle <em>your data</em>.</h1>
-      <p className={styles.lastUpdated}>Effective: {EFFECTIVE_DATE} · Last updated: {EFFECTIVE_DATE}</p>
+      <p className={styles.lastUpdated}>Effective: {EFFECTIVE_DATE} · Last updated: {LAST_UPDATED}</p>
 
       <div className={styles.draftBanner}>
         <strong>Note</strong> · This policy reflects Mallín&apos;s current
@@ -216,7 +217,32 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.h2}>11. Contact</h2>
+          <h2 className={styles.h2}>11. How we handle Google user data</h2>
+          <p>
+            When you connect your Gmail account, Mallín requests a single
+            Google permission — <strong>gmail.compose</strong> — which lets it
+            create draft emails in your Gmail Drafts folder. Our access to and
+            use of Google user data is limited to what is described here.
+          </p>
+          <ul>
+            <li><strong>What we access:</strong> the ability to create drafts in your Gmail account, and your Google email address (to show which account is connected). We do <strong>not</strong> read your inbox, sent mail, or any existing messages.</li>
+            <li><strong>How we use it:</strong> solely to place Mallín-drafted follow-up emails into your Drafts folder for you to review and send. <strong>Mallín never sends email on your behalf</strong> — every message is sent by you, from your own inbox.</li>
+            <li><strong>How we store it:</strong> your Google OAuth tokens are stored securely (encrypted at rest via our infrastructure providers) and used only to create the drafts described above. They are never sold, never shared with third parties, and never used for advertising.</li>
+            <li><strong>How to revoke:</strong> disconnect Gmail anytime from Settings → Integrations, or revoke access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Revoking deletes the tokens we store.</li>
+          </ul>
+          <p>
+            Mallín&apos;s use of information received from Google APIs adheres
+            to the{" "}
+            <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+            including the Limited Use requirements. We do not transfer, sell, or
+            use Google user data for any purpose other than providing the
+            drafting feature you requested, and we do not use it to train
+            generalized artificial-intelligence or machine-learning models.
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.h2}>12. Contact</h2>
           <p>
             Privacy questions, requests, complaints:{" "}
             <a href="mailto:privacy@mallin.io">privacy@mallin.io</a>.

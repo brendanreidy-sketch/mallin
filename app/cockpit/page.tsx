@@ -81,6 +81,8 @@ export default async function CockpitRedirectPage() {
     redirect("/welcome");
   }
 
+  try {
+
   // Resolve tenant by Clerk org_id (stored as tenants.slug)
   const { data: tenant } = await supabaseAdmin
     .from("tenants")
@@ -201,6 +203,13 @@ export default async function CockpitRedirectPage() {
       overLimit={usage.over}
     />
   );
+  } catch (err) {
+    const digest = (err as { digest?: string })?.digest;
+    if (typeof digest === "string" && (digest.startsWith("NEXT_REDIRECT") || digest.startsWith("NEXT_NOT_FOUND"))) throw err;
+    console.error("[COCKPIT_DEBUG] MESSAGE:", (err as Error)?.message);
+    console.error("[COCKPIT_DEBUG] STACK:", (err as Error)?.stack);
+    throw err;
+  }
 }
 
 interface Deal {

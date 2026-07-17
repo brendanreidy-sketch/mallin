@@ -24,7 +24,7 @@ import type {
   CriticalRisk,
 } from "@/lib/contracts/execution-agent-output";
 import { loadDealFromDB } from "@/lib/db/load-deal";
-import { generateFollowupDraft } from "@/lib/agents/draft-followup";
+import { getOrGenerateFollowupDraft } from "@/lib/agents/followup-draft-cache";
 import { deriveCrmSuggestions } from "@/lib/agents/derive-crm-suggestions";
 import { getProviderName } from "@/lib/crm";
 import { after } from "next/server";
@@ -191,14 +191,27 @@ async function FollowupDraftSlot({
   artifact,
   repEmail,
   gmailConnected,
+  tenantId,
+  opportunityId,
+  artifactId,
 }: {
   substrate: Substrate | null;
   artifact: PrepArtifact;
   repEmail: string | null;
   gmailConnected: boolean;
+  tenantId?: string | null;
+  opportunityId?: string | null;
+  artifactId?: string | null;
 }) {
-  const draft = await generateFollowupDraft(substrate ?? {}, artifact, {
-    rep_email: repEmail ?? undefined,
+  // Cached per brief version (execution_artifact_id): generated once, then read
+  // on every later view; refreshed only when a new brief is produced.
+  const draft = await getOrGenerateFollowupDraft({
+    tenantId,
+    opportunityId,
+    artifactId,
+    substrate: substrate ?? {},
+    artifact,
+    opts: { rep_email: repEmail ?? undefined },
   });
   return <EmailComposer initialDraft={draft} gmailConnected={gmailConnected} />;
 }
@@ -770,6 +783,9 @@ export default async function PrepPage({
                   artifact={artifact}
                   repEmail={repEmail}
                   gmailConnected={gmailConnected}
+                  tenantId={substrate?.opportunity?.tenant_id}
+                  opportunityId={substrate?.opportunity?.id}
+                  artifactId={currentArtifactId}
                 />
               </Suspense>
             }

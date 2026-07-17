@@ -11,12 +11,18 @@
  */
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import s from "./appShell.module.css";
 import MallinMark from "@/components/MallinMark";
 import { AppSignOut } from "@/components/auth/sign-out-button";
 import ThemeModeToggle from "@/app/prep/ThemeModeToggle";
-import IndustryPicker from "./IndustryPicker";
+
+// Client-only: the picker uses Clerk org hooks that must not run during the
+// server render. Rendering it on the server crashed the cockpit ("Server
+// Components render" error) for demo users (the only ones it renders for).
+// ssr:false keeps it out of the server pass entirely; it mounts after hydration.
+const IndustryPicker = dynamic(() => import("./IndustryPicker"), { ssr: false });
 
 type IconProps = { d: string };
 function Icon({ d }: IconProps) {

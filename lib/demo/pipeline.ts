@@ -88,6 +88,23 @@ export interface DemoDeal {
   outcome?: DemoOutcome;
 }
 
+/**
+ * An industry "book of business" — one full pipeline for one vertical, seeded
+ * into its own demo tenant so a prospect can flip Mallín between industries
+ * (SaaS / Med Devices / Logistics / Real Estate) and see a world shaped like
+ * theirs. See docs/demo-industry-instances.md for the plan + scenario spread.
+ *
+ * The industry's own identity (`key`, `label`) is separate from the tenant it
+ * seeds into: the tenant slug IS the Clerk org id, assigned at provisioning
+ * time (lib/auth/tenant-context.ts), so it never lives in the book itself.
+ */
+export interface DemoIndustry {
+  key: string; // stable industry key used by the picker + provisioning, e.g. "saas"
+  label: string; // picker label, e.g. "SaaS"
+  sellerContext: string; // who the demo rep sells here — anchors the narrative voice
+  deals: DemoDeal[]; // 7 in a finished book; may be partial while authoring
+}
+
 /** Expand a concise spec into a schema-complete PrepArtifact (JSONB shape the
  *  cockpit + /prep read). Structural boilerplate is filled here; the meaty,
  *  per-deal narrative comes from the spec. */
@@ -129,12 +146,27 @@ export function brief(d: DemoDeal): Record<string, unknown> {
     },
     primary_decision_focus: { focus: d.brief.decisionFrame, why: d.brief.whyMatters },
     critical_risks: risks,
-    stakeholder_strategy: Object.fromEntries(
-      d.stakeholders.map((s) => [
-        `sth_${s.name.toLowerCase().replace(/\s+/g, "_")}`,
-        { name: s.name, role: s.role, disposition: s.note, disposition_rationale: s.note },
-      ]),
-    ),
+    // Must be a StakeholderStrategy[] (see execution-agent-output.ts) — the
+    // cockpit's pickChampion/pickGateStakeholder iterate it. An object here
+    // throws "is not iterable" and crashes /cockpit.
+    stakeholder_strategy: d.stakeholders.map((s) => ({
+      stakeholder_id: `sth_${s.name.toLowerCase().replace(/\s+/g, "_")}`,
+      stakeholder_name: s.name,
+      role: s.role,
+      current_state: {
+        disposition: (s.role === "champion" ? "champion" : "neutral") as
+          | "champion"
+          | "neutral",
+        disposition_rationale: s.note,
+        influence_level: s.role === "economic_buyer" ? "high" : "medium",
+      },
+      call_strategy: s.note,
+      do_list: [] as string[],
+      priority: (s.role === "economic_buyer" || s.role === "champion"
+        ? "high"
+        : "medium") as "high" | "medium" | "low",
+      evidence_ids: evidence,
+    })),
     commercial_reality: { summary: `${d.deal.stageLabel} · ${d.deal.methodology}`, arr: d.deal.arr },
     talk_track: {
       opening_angle: d.brief.opening,

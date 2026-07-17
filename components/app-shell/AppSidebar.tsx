@@ -16,6 +16,7 @@ import s from "./appShell.module.css";
 import MallinMark from "@/components/MallinMark";
 import { AppSignOut } from "@/components/auth/sign-out-button";
 import ThemeModeToggle from "@/app/prep/ThemeModeToggle";
+import IndustryPicker from "./IndustryPicker";
 
 type IconProps = { d: string };
 function Icon({ d }: IconProps) {
@@ -48,6 +49,7 @@ export default function AppSidebar({
         <MallinMark size={22} surfaceColor="var(--ck-ink)" streamColor="var(--ck-blue-2)" />
         Mallín
       </div>
+      <IndustryPicker />
       {NAV.map((item) => {
         const active =
           item.href === "/cockpit"

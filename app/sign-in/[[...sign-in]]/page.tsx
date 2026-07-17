@@ -147,6 +147,36 @@ export default function SignInPage() {
               </p>
             </SignIn.Strategy>
 
+            {/* Reset-password code entry. When the user picks "Forgot
+                password?" and a reset code is sent, Clerk makes
+                reset_password_email_code the active strategy. Without this
+                block the verify step rendered blank (no field for the code),
+                so a forgotten password could never be reset. Submitting the
+                code advances Clerk to needs_new_password → the reset-password
+                step below. */}
+            <SignIn.Strategy name="reset_password_email_code">
+              <div className={s.head}>
+                <h1 className={s.title}>Check your email</h1>
+              </div>
+
+              <Clerk.Field name="code" className={s.field}>
+                <Clerk.Label className={s.label}>Reset code</Clerk.Label>
+                <p className={s.subtitle}>
+                  We sent a reset code to your email. Enter it below.
+                </p>
+                <Clerk.Input type="otp" required className={s.input} />
+                <Clerk.FieldError className={s.fieldError} />
+              </Clerk.Field>
+
+              <SignIn.Action submit className={s.primaryBtn}>
+                Continue
+              </SignIn.Action>
+
+              <SignIn.Action resend className={s.linkBtn}>
+                Resend code
+              </SignIn.Action>
+            </SignIn.Strategy>
+
             {/* If Clerk offered a non-password factor but the account HAS a
                 password, let the user switch to it. Only renders when password
                 is a supported-but-not-active strategy. */}

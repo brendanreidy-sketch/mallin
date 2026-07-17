@@ -1,14 +1,8 @@
 import { redirect } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/db/client";
 import { hasCockpitAccess } from "@/lib/cockpit/access";
 import { AppSignOut } from "@/components/auth/sign-out-button";
-import AccountLogo from "@/components/AccountLogo";
-import { UpgradeButton } from "@/components/UpgradeButton";
-import { getHelpUsage } from "@/lib/billing/help-usage";
-import { dealPriority } from "@/lib/cockpit/deal-priority";
-import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
-import type { AccountIntelligenceArtifact } from "@/lib/intelligence/types";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
@@ -44,20 +38,19 @@ const OPTION_DESC: CSSProperties = {
  * the most-recent opportunity in that tenant, and redirects to
  * /prep?dealId=<their-opp-uuid>.
  *
- * Why this exists: ClerkProvider's signInFallbackRedirectUrl is a
- * static string — it can't know which deal belongs to which tenant.
- * /cockpit does the per-tenant lookup at request time.
+ * NOTE (2026-07-17): a deals-home overview render (both the app-shell and the
+ * greeting-card versions of this page) throws an auth-gated Server Components
+ * render error in production (digest 223926392) that could not be reproduced
+ * locally (Clerk-gated). This page is intentionally back to the simple,
+ * last-known-good redirect below until that render bug is isolated. The old
+ * DealsHome/DealGroup/DealRow components live in git history for that fix.
  *
  * Terminal states:
  *   1. Tenant + opp → redirect to /prep?dealId=<uuid>
  *   2. Tenant exists, no opp → render empty-state ("data not ready")
- *      — used while substrate is being provisioned manually
  *   3. Signed in, no org, but a cockpit owner → /cockpit-views (the book).
- *      The owner gate is org-independent (email allowlist), so the owner
- *      must not be bounced just because they have no tenant org. Without
- *      this, a successful sign-in lands on /cockpit, finds no orgId, and
- *      redirects back to /sign-in — indistinguishable from a failed login.
- *   4. No Clerk session → /sign-in
+ *   4. Signed in, no org, not an owner → /welcome (self-serve provisioning).
+ *   5. No Clerk session → /sign-in
  */
 export const dynamic = "force-dynamic";
 
@@ -74,443 +67,38 @@ export default async function CockpitRedirectPage() {
     if (await hasCockpitAccess()) {
       redirect("/cockpit-views");
     }
-    // Otherwise this is a freshly signed-up user with no workspace yet (the
-    // B2C self-serve path, or any signup that didn't get manually provisioned).
-    // /welcome creates their personal org + tenant, activates it, and sends
-    // them back here. This is the trigger for self-serve provisioning.
+    // Otherwise a freshly signed-up user with no workspace yet — /welcome
+    // creates their personal org + tenant, activates it, and sends them back.
     redirect("/welcome");
   }
 
-  try {
-
-  // Resolve tenant by Clerk org_id (stored as tenants.slug)
+  // Resolve tenant by Clerk org_id (stored as tenants.slug).
   const { data: tenant } = await supabaseAdmin
     .from("tenants")
-    .select("id, is_demo, name")
+    .select("id")
     .eq("slug", orgId)
     .maybeSingle();
 
   if (!tenant) {
-    // Logged in but no tenant row yet — fall through to empty state
+    // Logged in but no tenant row yet — data-not-ready empty state.
     return <EmptyState tenantName={null} />;
   }
 
-  // Free-tier meter — gate the "+ New deal" button up front when over limit.
-  const usage = await getHelpUsage(tenant.id);
-
-  // Every opportunity for this tenant — the deals home. (Was a redirect to
-  // the single most-recent deal, which stranded every other deal.)
+  // The most-recent opportunity for this tenant.
   const { data: opps } = await supabaseAdmin
     .from("opportunities")
-    .select("id, name, account_id, created_at")
+    .select("id")
     .eq("tenant_id", tenant.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(1);
 
   if (!opps || opps.length === 0) {
     // Fresh self-serve user, no deal yet — straight into intake.
     redirect("/new?mode=upcoming");
   }
 
-  // Resolve account names/logos + each deal's CURRENT brief (live = a processed
-  // call in execution_artifacts; pre-call = account_intelligence only). The
-  // artifacts feed the priority engine, so the home can rank "what needs you."
-  const accountIds = [...new Set(opps.map((o) => o.account_id).filter(Boolean))];
-  const oppIds = opps.map((o) => o.id);
-  const [accountsRes, liveRes, intelRes] = await Promise.all([
-    accountIds.length
-      ? supabaseAdmin.from("accounts").select("id, name, domain").in("id", accountIds)
-      : Promise.resolve({ data: [] as { id: string; name: string | null; domain: string | null }[] }),
-    supabaseAdmin
-      .from("execution_artifacts")
-      .select("opportunity_id, artifact")
-      .in("opportunity_id", oppIds)
-      .eq("is_current", true),
-    supabaseAdmin
-      .from("account_intelligence_artifacts")
-      .select("opportunity_id, artifact")
-      .in("opportunity_id", oppIds)
-      .eq("is_current", true),
-  ]);
-  const acctById = new Map((accountsRes.data ?? []).map((a) => [a.id, a]));
-  const liveById = new Map(
-    (liveRes.data ?? []).map((r) => [r.opportunity_id, r.artifact as PrepArtifact]),
-  );
-  const intelById = new Map(
-    (intelRes.data ?? []).map((r) => [
-      r.opportunity_id,
-      r.artifact as AccountIntelligenceArtifact,
-    ]),
-  );
-
-  const now = new Date();
-  const deals: Deal[] = opps.map((o) => {
-    const acct = o.account_id ? acctById.get(o.account_id) : null;
-    const live = liveById.get(o.id) ?? null;
-    const intel = intelById.get(o.id) ?? null;
-    const name = o.name || acct?.name || "Untitled deal";
-    const prio = dealPriority({ id: o.id, name, live, intel }, now);
-    return {
-      id: o.id,
-      name,
-      accountName: acct?.name ?? null,
-      domain: acct?.domain ?? null,
-      live: Boolean(live),
-      createdAt: o.created_at as string,
-      ...prio,
-    };
-  });
-
-  // Needs-you first (most urgent on top), then on-track (most recent first —
-  // they're already created_at desc from the query).
-  const needsYou = deals.filter((d) => d.needsYou).sort((a, b) => b.score - a.score);
-  const onTrack = deals.filter((d) => !d.needsYou);
-
-  // Daily-brief framing — the "Mallín is driving" greeting on the deals home.
-  // Everything here is derived from real data: the rep's Clerk first name, the
-  // live needs-you / on-track counts, and the top-priority deal. No placeholders.
-  const greetUser = await currentUser().catch(() => null);
-  const firstName =
-    greetUser?.firstName ??
-    (greetUser?.username ? greetUser.username.split(/[._-]/)[0] : null);
-  const hour = new Date().getHours();
-  const greetWord =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const greetingLine = firstName ? `${greetWord}, ${firstName}` : greetWord;
-  const dateLabel = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-  const brief =
-    needsYou.length > 0
-      ? `${needsYou.length} ${needsYou.length === 1 ? "deal needs" : "deals need"} you today${
-          onTrack.length ? `, ${onTrack.length} on track` : ""
-        }. I'd start with ${needsYou[0].name}.`
-      : onTrack.length > 0
-        ? `Nothing urgent right now — ${onTrack.length} ${
-            onTrack.length === 1 ? "deal" : "deals"
-          } on track.`
-        : "No active deals yet.";
-
-  return (
-    <DealsHome
-      tenantName={tenant.name}
-      greetingLine={greetingLine}
-      dateLabel={dateLabel}
-      brief={brief}
-      needsYou={needsYou}
-      onTrack={onTrack}
-      overLimit={usage.over}
-    />
-  );
-  } catch (err) {
-    const digest = (err as { digest?: string })?.digest;
-    if (typeof digest === "string" && (digest.startsWith("NEXT_REDIRECT") || digest.startsWith("NEXT_NOT_FOUND"))) throw err;
-    console.error("[COCKPIT_DEBUG] MESSAGE:", (err as Error)?.message);
-    console.error("[COCKPIT_DEBUG] STACK:", (err as Error)?.stack);
-    throw err;
-  }
-}
-
-interface Deal {
-  id: string;
-  name: string;
-  accountName: string | null;
-  domain: string | null;
-  live: boolean;
-  createdAt: string;
-  needsYou: boolean;
-  score: number;
-  why: string;
-  tone: "critical" | "caution" | "neutral";
-}
-
-/**
- * DealsHome — the post-sign-in home. Lists every deal so the rep can get
- * back into any of them (and add the next call), instead of being dropped on
- * whichever deal happened to be most recent.
- */
-const TONE_DOT: Record<Deal["tone"], string> = {
-  critical: "var(--ck-crit)",
-  caution: "var(--ck-warn)",
-  neutral: "var(--ck-good)",
-};
-
-function DealsHome({
-  tenantName,
-  greetingLine,
-  dateLabel,
-  brief,
-  needsYou,
-  onTrack,
-  overLimit,
-}: {
-  tenantName: string | null;
-  greetingLine: string;
-  dateLabel: string;
-  brief: string;
-  needsYou: Deal[];
-  onTrack: Deal[];
-  overLimit: boolean;
-}) {
-  return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--ck-paper)",
-        color: "var(--ck-ink-2)",
-        padding: "40px 24px 64px",
-        fontFamily:
-          '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      }}
-    >
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              fontSize: 18,
-              fontWeight: 700,
-              letterSpacing: "-0.015em",
-              color: "var(--ck-ink)",
-            }}
-          >
-            <MallinMark />
-            Mallín
-            {tenantName && (
-              <span
-                style={{
-                  fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: "var(--ck-ink-3)",
-                  letterSpacing: "0.06em",
-                  marginLeft: 6,
-                }}
-              >
-                {tenantName}
-              </span>
-            )}
-          </div>
-          <AppSignOut />
-        </header>
-
-        <div style={{ marginBottom: 30 }}>
-          <p
-            style={{
-              fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: "0.06em",
-              color: "var(--ck-ink-3)",
-              margin: 0,
-            }}
-          >
-            {dateLabel}
-          </p>
-          <h1
-            style={{
-              fontSize: 27,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-              color: "var(--ck-ink)",
-              margin: "8px 0 10px",
-              lineHeight: 1.12,
-            }}
-          >
-            {greetingLine}
-          </h1>
-          <p
-            style={{
-              fontSize: 15.5,
-              lineHeight: 1.55,
-              color: "var(--ck-ink-2)",
-              margin: 0,
-              maxWidth: "48ch",
-            }}
-          >
-            {brief}
-          </p>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            marginBottom: 14,
-          }}
-        >
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 15,
-              fontWeight: 600,
-              letterSpacing: "-0.01em",
-              color: "var(--ck-ink)",
-            }}
-          >
-            Your deals
-          </h2>
-          <UpgradeButton
-            href="/new?mode=upcoming"
-            label="+ New deal"
-            locked={overLimit}
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--ck-paper)",
-              background: "var(--ck-ink)",
-              padding: "9px 14px",
-              borderRadius: 8,
-              textDecoration: "none",
-            }}
-          />
-        </div>
-
-        {needsYou.length > 0 && (
-          <DealGroup
-            label={`Needs you · ${needsYou.length}`}
-            labelColor="var(--ck-crit)"
-            deals={needsYou}
-          />
-        )}
-        {onTrack.length > 0 && (
-          <DealGroup
-            label={`On track · ${onTrack.length}`}
-            labelColor="var(--ck-ink-3)"
-            deals={onTrack}
-            marginTop={needsYou.length > 0 ? 20 : 0}
-          />
-        )}
-      </div>
-    </main>
-  );
-}
-
-function DealGroup({
-  label,
-  labelColor,
-  deals,
-  marginTop = 0,
-}: {
-  label: string;
-  labelColor: string;
-  deals: Deal[];
-  marginTop?: number;
-}) {
-  return (
-    <div style={{ marginTop }}>
-      <div
-        style={{
-          fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-          fontSize: 10.5,
-          fontWeight: 600,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: labelColor,
-          margin: "0 0 8px",
-        }}
-      >
-        {label}
-      </div>
-      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-        {deals.map((d) => (
-          <li key={d.id}>
-            <DealRow d={d} />
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function DealRow({ d }: { d: Deal }) {
-  return (
-    <Link
-      href={`/prep?dealId=${d.id}`}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "13px 16px",
-        background: "var(--ck-surface)",
-        border: "0.5px solid var(--ck-rule)",
-        borderLeft:
-          d.tone === "neutral" ? "0.5px solid var(--ck-rule)" : `2px solid ${TONE_DOT[d.tone]}`,
-        borderRadius: 10,
-        textDecoration: "none",
-      }}
-    >
-      <span
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: TONE_DOT[d.tone],
-          flexShrink: 0,
-        }}
-        aria-hidden="true"
-      />
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span
-          style={{
-            display: "block",
-            fontSize: 15,
-            fontWeight: 600,
-            color: "var(--ck-ink)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {d.name}
-        </span>
-        <span
-          style={{
-            display: "block",
-            fontSize: 12.5,
-            lineHeight: 1.45,
-            color: d.needsYou ? "var(--ck-ink-2)" : "var(--ck-ink-3)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-          title={d.why}
-        >
-          {d.why}
-        </span>
-      </span>
-      <span
-        style={{
-          fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          padding: "3px 8px",
-          borderRadius: 5,
-          background: d.live ? "var(--ck-good-tint)" : "var(--ck-surface-2)",
-          color: d.live ? "var(--ck-good)" : "var(--ck-ink-3)",
-          flexShrink: 0,
-        }}
-      >
-        {d.live ? "Live brief" : "Pre-call"}
-      </span>
-      <span style={{ color: "var(--ck-ink-3)", fontSize: 16 }} aria-hidden="true">
-        →
-      </span>
-    </Link>
-  );
+  // Land the rep on their most-recent deal, which /prep renders reliably.
+  redirect(`/prep?dealId=${opps[0].id}`);
 }
 
 /**

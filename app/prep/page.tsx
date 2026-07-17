@@ -24,6 +24,7 @@ import type {
 } from "@/lib/contracts/execution-agent-output";
 import { loadDealFromDB } from "@/lib/db/load-deal";
 import { generateFollowupDraft } from "@/lib/agents/draft-followup";
+import { ckpt } from "@/lib/diag/checkpoint";
 import { deriveCrmSuggestions } from "@/lib/agents/derive-crm-suggestions";
 import { getProviderName } from "@/lib/crm";
 import { after } from "next/server";
@@ -191,6 +192,7 @@ export default async function PrepPage({
   }>;
 }) {
   const { file, dealId, savedTouch, v, artifactId } = await searchParams;
+  ckpt("/prep", "request entered");
   // Feature flag for the v0 lite cut. Above-the-fold only:
   //   strategic frame + ONE path + signal dots + AskBar.
   // Everything else is hidden. See Brendan's spec: hard cut, no
@@ -222,6 +224,7 @@ export default async function PrepPage({
     // Tenant-membership gate: the opportunity must belong to the
     // current user's tenant. Replaces the previous env-var allowlist.
     const userTenantId = await getCurrentTenantId().catch(() => null);
+    ckpt("/prep", "tenant resolved");
     isSolo = userTenantId ? await isTenantSolo(userTenantId) : false;
     // Free-tier meter — gate the "+ Add the call" buttons up front when over.
     overLimit = userTenantId
@@ -253,6 +256,7 @@ export default async function PrepPage({
     // is confirmed above). Throttled + non-blocking via after() — telemetry
     // never affects the page or the brief.
     const { userId: viewerId } = await auth();
+    ckpt("/prep", "authentication completed");
     if (viewerId && userTenantId) {
       const vTenant = userTenantId;
       after(() =>
@@ -265,6 +269,7 @@ export default async function PrepPage({
     }
 
     const loaded = await loadDealFromDB(safeDealId, safeArtifactId);
+    ckpt("/prep", "deal loaded");
     if (!loaded) {
       return (
         <div className={s.page}>
@@ -411,6 +416,7 @@ export default async function PrepPage({
     latestTouchAt = loaded.latestTouchAt;
     artifactVersions = loaded.artifactVersions;
     currentArtifactId = loaded.currentArtifactId;
+    ckpt("/prep", "artifact loaded");
   } else {
     // ── Path B: file → load from JSON fixture (legacy local path) ───────────
     const safe = (file ?? "").replace(/[^\w.-]/g, "");
@@ -492,9 +498,11 @@ export default async function PrepPage({
 
   // Generate the substrate-driven follow-up draft. Pass the rep's own email
   // so the auto-picked recipient can never resolve to the rep themselves.
+  ckpt("/prep", "follow-up draft lookup started");
   const followupDraft = await generateFollowupDraft(substrate ?? {}, artifact, {
     rep_email: repEmail ?? undefined,
   });
+  ckpt("/prep", "follow-up draft lookup completed");
 
   // ── Deck-send recipients — resolve buyer-side attendees ONLY. Never the
   //    rep's own inbox: internal_participants + the rep's Clerk email are
@@ -565,6 +573,12 @@ export default async function PrepPage({
     ? await isTenantDemo(tenantIdForDemoCheck)
     : false;
 
+  ckpt("/prep", "primary prep render started");
+  // NB (candidate-stable commit): the follow-up draft is awaited synchronously
+  // above — there is no Suspense boundary yet (that defer arrives later in the
+  // bisect range). "primary prep render completed" / "deferred draft render
+  // completed" are not reachable from inside this Server Component and are
+  // inferred from onRequestError NOT firing for this request.
   return (
     <div className={s.page}>
       {/* Applies the user's stored theme (cream default / dark) on load.

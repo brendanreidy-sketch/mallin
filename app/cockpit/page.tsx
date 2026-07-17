@@ -11,6 +11,7 @@ import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
 import type { AccountIntelligenceArtifact } from "@/lib/intelligence/types";
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { ckpt } from "@/lib/diag/checkpoint";
 
 const OPTION_CARD: CSSProperties = {
   display: "block",
@@ -62,7 +63,9 @@ const OPTION_DESC: CSSProperties = {
 export const dynamic = "force-dynamic";
 
 export default async function CockpitRedirectPage() {
+  ckpt("/cockpit", "request entered");
   const { orgId, userId } = await auth();
+  ckpt("/cockpit", "authentication completed");
 
   if (!userId) {
     redirect("/sign-in");
@@ -80,7 +83,9 @@ export default async function CockpitRedirectPage() {
     // them back here. This is the trigger for self-serve provisioning.
     redirect("/welcome");
   }
+  ckpt("/cockpit", "organization resolved");
 
+  ckpt("/cockpit", "database client ready");
   // Resolve tenant by Clerk org_id (stored as tenants.slug)
   const { data: tenant } = await supabaseAdmin
     .from("tenants")
@@ -92,6 +97,7 @@ export default async function CockpitRedirectPage() {
     // Logged in but no tenant row yet — fall through to empty state
     return <EmptyState tenantName={null} />;
   }
+  ckpt("/cockpit", "tenant resolved");
 
   // Free-tier meter — gate the "+ New deal" button up front when over limit.
   const usage = await getHelpUsage(tenant.id);
@@ -108,6 +114,7 @@ export default async function CockpitRedirectPage() {
     // Fresh self-serve user, no deal yet — straight into intake.
     redirect("/new?mode=upcoming");
   }
+  ckpt("/cockpit", "deals query completed");
 
   // Resolve account names/logos + each deal's CURRENT brief (live = a processed
   // call in execution_artifacts; pre-call = account_intelligence only). The
@@ -157,11 +164,13 @@ export default async function CockpitRedirectPage() {
       ...prio,
     };
   });
+  ckpt("/cockpit", "data normalization completed");
 
   // Needs-you first (most urgent on top), then on-track (most recent first —
   // they're already created_at desc from the query).
   const needsYou = deals.filter((d) => d.needsYou).sort((a, b) => b.score - a.score);
   const onTrack = deals.filter((d) => !d.needsYou);
+  ckpt("/cockpit", "sorting completed");
 
   // Daily-brief framing — the "Mallín is driving" greeting on the deals home.
   // Everything here is derived from real data: the rep's Clerk first name, the
@@ -190,6 +199,10 @@ export default async function CockpitRedirectPage() {
           } on track.`
         : "No active deals yet.";
 
+  ckpt("/cockpit", "render started");
+  // NB: "render completed" is not reachable from inside this Server Component —
+  // React renders the returned element after this function returns. Its success
+  // is inferred from onRequestError NOT firing for this request.
   return (
     <DealsHome
       tenantName={tenant.name}

@@ -2204,7 +2204,7 @@ function PriorCallBlock({
         <div>
           <div className={`${s.colHead} ${s.surfaced}`}>What surfaced</div>
           <div className={s.colList}>
-            {syn.what_surfaced.map((b, i) => (
+            {(syn.what_surfaced ?? []).map((b, i) => (
               <div key={i} className={`${s.colItem} ${s.surfaced}`}>
                 {b}
               </div>
@@ -2216,7 +2216,7 @@ function PriorCallBlock({
             Handle before your next call
           </div>
           <div className={s.colList}>
-            {syn.to_think_through.map((b, i) => (
+            {(syn.to_think_through ?? []).map((b, i) => (
               <div key={i} className={`${s.colItem} ${s.thinkThrough}`}>
                 {b}
               </div>

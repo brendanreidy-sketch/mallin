@@ -64,6 +64,7 @@ import IntelAutoRefresh from "./IntelAutoRefresh";
 import ThemeModeToggle from "./ThemeModeToggle";
 import MallinMark from "@/components/MallinMark";
 import { AppSignOut } from "@/components/auth/sign-out-button";
+import { SettingsLink } from "@/components/nav/settings-link";
 import DealOutcome from "./DealOutcome";
 import BriefFeedback from "./BriefFeedback";
 import {
@@ -1035,6 +1036,9 @@ function TopBar({
       />
       <span style={{ marginRight: 12, display: "inline-flex" }}>
         <ThemeModeToggle />
+      </span>
+      <span style={{ marginRight: 12, display: "inline-flex" }}>
+        <SettingsLink />
       </span>
       <span style={{ marginRight: 12, display: "inline-flex" }}>
         <AppSignOut />

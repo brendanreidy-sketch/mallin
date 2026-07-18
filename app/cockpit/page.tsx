@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/db/client";
 import { hasCockpitAccess } from "@/lib/cockpit/access";
 import { AppSignOut } from "@/components/auth/sign-out-button";
+import { SettingsLink } from "@/components/nav/settings-link";
 import AccountLogo from "@/components/AccountLogo";
 import { UpgradeButton } from "@/components/UpgradeButton";
 import { getHelpUsage } from "@/lib/billing/help-usage";
@@ -292,7 +293,10 @@ function DealsHome({
               </span>
             )}
           </div>
-          <AppSignOut />
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <SettingsLink />
+            <AppSignOut />
+          </div>
         </header>
 
         <div style={{ marginBottom: 30 }}>

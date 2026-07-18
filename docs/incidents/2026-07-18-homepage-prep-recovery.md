@@ -28,5 +28,7 @@
 1. ~~**Restore the full Cockpit deals-home page**~~ — **DONE** (commit `4e8e4c6`, live). The `223926392` crash no longer reproduced on current data (scoring engine is fully guarded); un-stubbed `/cockpit` to render the deals-home again.
 2. ~~**Add a `/cockpit` error boundary**~~ — **DONE** (commit `2b16ded`, `app/cockpit/error.tsx`, live). Graceful branded fallback + retry so one malformed artifact can't take down the whole deals-home.
 3. ~~**Add a `/prep` error boundary**~~ — **DONE** (commit `50da444`, `app/prep/error.tsx`, live). Graceful branded fallback + retry / back-to-deals.
-4. **Hide the empty prior-call block** when it has no content (currently renders empty columns for the mismatched-schema artifacts). Separate commit — not yet started.
-5. **Reintroduce social preview (OG/Twitter) images safely** — not at the app root, so they don't break hydration. Parked; do not start until requested.
+Incident closed 2026-07-18 (baseline tag `recovery-stable-2026-07-18`, commit `9f339ca`). The
+remaining non-blocker items moved to the normal product backlog — see [`docs/backlog.md`](../backlog.md):
+hide the empty prior-call block, reintroduce social preview images safely, and one direct SaaS demo
+smoke test.

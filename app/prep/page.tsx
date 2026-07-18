@@ -2178,6 +2178,13 @@ function PriorCallBlock({
 }) {
   const syn = artifact.post_call_synthesis;
   if (!syn) return null;
+  // Hide the block entirely when there's no prior-call content to show. Some
+  // artifacts carry a post_call_synthesis shaped { summary, evidence_ids } with
+  // neither column populated; rendering then leaves an empty "What was said last
+  // time" shell. A label/summary/evidence id alone is not content.
+  if ((syn.what_surfaced ?? []).length === 0 && (syn.to_think_through ?? []).length === 0) {
+    return null;
+  }
   const call = substrate?.calls?.find((c) => c.id === syn.last_interaction_id);
   let meta: string | undefined;
   if (call) {

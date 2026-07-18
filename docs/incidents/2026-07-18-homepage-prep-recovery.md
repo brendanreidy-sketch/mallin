@@ -1,11 +1,11 @@
 # Incident recovery — homepage outage + prep crash (2026-07-18)
 
 ## Current production state
-- **Live deployment:** `dpl_J2z1F1CEHr7quBevJ1cm4LxqibUr` (`revops-autopilot-2txt6xauc`) — serves `mallin.io`; built from commit `0ab95db` (now on `main`).
-- **Immediate rollback deployment:** `dpl_5Mxn52mwb44unoNXc9X9SuWtCPyQ` (`revops-autopilot-6mk7t9i5x`).
-  - Rollback command: `vercel alias set https://revops-autopilot-6mk7t9i5x-roomrefund.vercel.app mallin.io`
-  - This target keeps the **homepage fix** (it lacks only the prep fix).
-  - **Do NOT** roll back to `dpl_VkVWMc5pNXwkmLodkndCT3yPfw9e` — that deployment still contains the homepage crash.
+- **Live deployment:** `dpl_4M9iCdjvinYFgAiA2s41EiSyZAFb` (`revops-autopilot-8vwgi0a37`) — serves `mallin.io`; built from commit `4e8e4c6` (now on `main`). Includes homepage fix + prep fix + Cockpit deals-home restore.
+- **Immediate rollback deployment:** `dpl_J2z1F1CEHr7quBevJ1cm4LxqibUr` (`revops-autopilot-2txt6xauc`, commit `0ab95db`).
+  - Rollback command: `vercel alias set https://revops-autopilot-2txt6xauc-roomrefund.vercel.app mallin.io`
+  - This target keeps the homepage + prep fixes (only difference: cockpit is stubbed to a redirect).
+  - **Do NOT** roll back to `dpl_5Mxn52…` (pre-prep-fix) or `dpl_VkVWMc5…` (has the homepage crash).
 
 ## Root causes
 
@@ -25,7 +25,8 @@
 - Deployments: `dpl_J2z1F1CEHr7quBevJ1cm4LxqibUr` (live) and `dpl_5Mxn52mwb44unoNXc9X9SuWtCPyQ` (rollback)
 
 ## Follow-ups (keep SEPARATE — not bundled with the recovery)
-1. **Restore the full Cockpit deals-home page** — currently stubbed to a redirect to `/prep`; separate server-render bug (digest `223926392`).
-2. **Add a `/prep` error boundary** — graceful fallback for any future render error.
-3. **Hide the empty prior-call block** when it has no content (currently renders empty columns for the mismatched-schema artifacts).
-4. **Reintroduce social preview (OG/Twitter) images safely** — not at the app root, so they don't break hydration.
+1. ~~**Restore the full Cockpit deals-home page**~~ — **DONE** (commit `4e8e4c6`, live). The `223926392` crash no longer reproduced on current data (scoring engine is fully guarded); un-stubbed `/cockpit` to render the deals-home again.
+2. **Add a `/cockpit` error boundary** — graceful fallback so one malformed artifact can't take down the whole deals-home again. Separate commit.
+3. **Add a `/prep` error boundary** — graceful fallback for any future render error. Separate commit.
+4. **Hide the empty prior-call block** when it has no content (currently renders empty columns for the mismatched-schema artifacts).
+5. **Reintroduce social preview (OG/Twitter) images safely** — not at the app root, so they don't break hydration.

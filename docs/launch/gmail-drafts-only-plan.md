@@ -1,115 +1,163 @@
-# Gmail drafts-only conversion — pre-implementation plan
+# Gmail drafts-only conversion — revised implementation plan (Path 2)
 
-**Type:** plan only · **no code changed** · do not implement until approved.
-**Decision:** drafts-only for launch — Mallín creates Gmail drafts and **never sends**.
-**Pairs with:** [gmail-oauth-verification.md](gmail-oauth-verification.md) (audit) and
-[gmail-oauth-launch-decision.md](gmail-oauth-launch-decision.md) (launch paths).
+**Type:** plan only · **no code, no dashboard, no env change** · implement only after approval.
+**Decisions locked:** drafts-only for launch; **OAuth Path 2** (approved test users only, no restricted
+verification yet). Pairs with [audit](gmail-oauth-verification.md) and
+[launch decision](gmail-oauth-launch-decision.md).
 
-**Why this is bigger than "remove one button":** the audit found **two** backend `messages.send`
-paths and **four** UI producers. All must be neutralized for a true "cannot send" guarantee.
-
----
-
-## Complete send surface to neutralize (from the audit)
-
-| # | Kind | Location | Action |
-|---|---|---|---|
-| A | Backend send route | `app/api/gmail/send/route.ts` (messages.send) | **delete** the route |
-| B | Backend queue executor | `lib/action-queue/executors.ts` `executeEmailSend` (:126, send at :144) + dispatch case (:69) + `buildMime` (:333) | **remove** the send executor; make `email_send` impossible to execute |
-| C | UI | `app/prep/EmailComposer.tsx` — "✉ Send via Gmail" button (:265) + "Queue"→`email_send` (:101) | relabel to draft; enqueue `email_draft` (not `email_send`) or drop the queue-send option |
-| D | UI | `app/cockpit-views/BookReview.tsx` — "✉ Send via Gmail" (:468 → send:270) | replace with "Save to Gmail Drafts" (draft path) |
-| E | UI | `app/prep/SendDeckToRoom.tsx` — enqueues `email_send` (:104) | enqueue `email_draft`, or draft directly |
-| F | UI | `app/prep/ActionQueue.tsx` — renders/approves `email_send` (:398) | remove the `email_send` case/label |
-| G | UI (mock) | `app/cockpit-mock/page.tsx` — "✉ Send via Gmail" label (:181) | confirm decorative (stale mock); relabel or leave if it has no live handler |
-| H | Types | `lib/action-queue/types.ts` — `email_send` type + `EmailSendPayload` (:21, :53) | remove the type (or keep only as a rejected/blocked variant) |
+**This release contains ONLY the seven items in §2.** Google token **revocation on disconnect is split
+out to a separate future change** (see §7) and is NOT in this release.
 
 ---
 
-## The nine items
+## 1. Exact active send paths being removed
 
-### 1. Replace every user-facing "Send via Gmail" with "Save to Gmail Drafts"
-- EmailComposer (C): make the primary action **"💾 Save to Gmail Drafts"** (the existing `handleSaveDraft`
-  → `drafts.create`); remove the `handleSend` button and its `sending`/`sent` status states.
-- BookReview (D): replace its "✉ Send via Gmail" one-click with the draft action.
-- cockpit-mock (G): relabel the decorative button (or leave if it does nothing) so no "Send" language
-  remains in shipping surfaces.
-- **Copy:** everywhere the UI says "send," it should say "save to your Drafts — you send from Gmail."
+Two backend `messages.send` paths and their producers (all confirmed in the audit):
 
-### 2. Fix the drafts-route authentication bug
-- `app/api/gmail/drafts/route.ts:19` reads `x-user-id` (with a `TODO: pull from auth()`), but the caller
-  (EmailComposer `handleSaveDraft`) never sends that header → the draft save from `/prep` 400s today.
-- **Fix:** resolve `userId` from Clerk `auth()` in the route (matching `send/route.ts`), drop the
-  `x-user-id` shim. This makes the draft path actually work from the UI (required for the demo video).
+| Kind | Location | This release does |
+|---|---|---|
+| Backend send route | `app/api/gmail/send/route.ts` → `messages.send` (:105) | **delete the route** |
+| Backend queue executor | `lib/action-queue/executors.ts` `executeEmailSend` (:126), send call (:144), dispatch case (:69-70), `buildMime` (:333) | **delete the executor + dispatch + buildMime** |
+| Queue type | `lib/action-queue/types.ts` `email_send` + `EmailSendPayload` (:21, :53-54, :98) | **remove the type** (or convert to a blocked/no-op) |
+| UI producer | `app/prep/EmailComposer.tsx` "✉ Send via Gmail" (:265) + Queue→`email_send` (:101) | button → **Save to Gmail Drafts**; queue enqueues `email_draft` or is dropped |
+| UI producer | `app/cockpit-views/BookReview.tsx` "✉ Send via Gmail" (:468 → send :270) | replace with **Save to Gmail Drafts** (draft path) |
+| UI producer | `app/prep/SendDeckToRoom.tsx` enqueues `email_send` (:104) | enqueue `email_draft`, or draft directly |
+| UI render | `app/prep/ActionQueue.tsx` renders/approves `email_send` (:398) | **remove the `email_send` case** |
+| UI (stale mock) | `app/cockpit-mock/page.tsx` "✉ Send via Gmail" label (:181) | confirm decorative; relabel/remove the "Send" wording |
 
-### 3. Remove or hard-disable every active `messages.send` path
-- **Delete** `app/api/gmail/send/route.ts` (A).
-- **Remove** `executeEmailSend` + its `email_send` dispatch case + `buildMime` in
-  `lib/action-queue/executors.ts` (B). Convert `email_send` producers (C, E) to `email_draft`
-  (the existing `executeEmailDraft` → `drafts.create`), or drop the queue-send option entirely.
-- **Preferred:** delete the send code rather than flag-gate it, so there is no latent path to re-enable
-  by accident. If a queue path is still wanted, it enqueues **drafts only**.
-
-### 4. Confirm no UI component or API route can send email
-- **Guarantee test:** after the change, `grep -rniE 'messages/send|messages\.send|email_send' app lib`
-  returns **zero** shipping references (only historical docs). Add this grep to the verification checklist.
-- Confirm no remaining route calls `.../users/me/messages/send`, and no action type resolves to a send.
-- Re-run the producer inventory (A–H) and confirm each now points at drafts or is removed.
-
-### 5. Correct all stale scope comments
-- `app/api/gmail/send/route.ts:9` "gmail.modify" → removed with the route.
-- `app/prep/EmailComposer.tsx:9` "fires gmail.send immediately" → rewrite for drafts-only.
-- `lib/auth/gmail-oauth.ts:47-49` — the comment calls `gmail.compose` **"a SENSITIVE scope … keeps
-  verification OFF the restricted tier and its CASA assessment."** This is now **factually wrong** (compose
-  is **restricted**). Correct it to state: restricted scope; restricted-scope verification (and possibly
-  CASA) applies; do not add read scopes. (Comment-only; no behavior change.)
-- Sweep for any other "send"/"modify" scope language in comments/JSDoc.
-
-### 6. Keep requested scopes = `gmail.compose`, `openid`, `email`
-- **No change** to `REQUIRED_SCOPES` (gmail-oauth.ts:52-56). Drafts-only still needs `gmail.compose`
-  (the floor for `drafts.create`), plus `openid`+`email` to show the connected account. Verify the array
-  is untouched by the change and that the authorize URL still requests exactly these three.
-
-### 7. Update the privacy policy + OAuth justification to "creates drafts, never sends"
-- **Privacy policy** (`app/(trust)/privacy/page.tsx` §11, :220-229) **already** says "create draft emails"
-  and "Mallín never sends email on your behalf." After the code change this becomes **true**; tighten as
-  needed: state Mallín uses `gmail.compose` **only to create drafts**, never sends, never reads mail;
-  keep the Limited-Use disclosure. Remove any residual "send" language elsewhere (marketing, integrations
-  page copy already says "never sends" — verify).
-- **OAuth consent-screen justification** (Console, not code — do at submission): "Creates draft emails in
-  the user's Gmail Drafts folder; does not send or read mail." Must match the video + policy.
-
-### 8. Confirm disconnect / token-deletion; propose Google revocation
-- **Confirmed:** `disconnectGmail` (gmail-oauth.ts:319-322) deletes the `gmail_oauth_tokens` row for the
-  user. It does **not** revoke the grant at Google, so the grant lingers in the user's Google account until
-  they remove it manually.
-- **Proposal:** on disconnect, also `POST https://oauth2.googleapis.com/revoke?token=<refresh_or_access>`
-  before deleting the row (best-effort; ignore failures). Google reviewers favor apps that revoke. Small,
-  isolated addition to `disconnectGmail`.
-
-### 9. Canary test matrix
-On prod-debug → `canary.mallin.io`, in real + SaaS-demo orgs, light + dark:
-- **Connected state:** integrations page shows "connected as <email>"; `/prep` shows the composer with a
-  **Save to Gmail Drafts** action and **no Send control**.
-- **Draft created:** click Save to Gmail Drafts → a draft appears in the connected Gmail Drafts folder
-  (verifies item 2 fix); status reads "saved," not "sent."
-- **Disconnected state:** after Disconnect → composer shows the "connect Gmail" prompt; token row gone;
-  (if revocation added) grant removed at Google.
-- **Reconnect:** Connect Gmail again → consent → connected; draft works again.
-- **No-send guarantee:** confirm there is no Send button anywhere (prep, cockpit-views, action queue) and
-  the `grep` guarantee (item 4) is clean.
-- Real org unaffected by demo; demo tenants still simulate cleanly.
-- Then prepare a Production candidate and **pause for approval** (standard 12-step flow).
+**End state:** `grep -rniE 'messages/send|messages\.send|email_send' app lib` returns **zero** shipping
+hits.
 
 ---
 
-## Effort & risk
-- **Effort:** ~1–1.5 days. It touches ~8 files across two send backends and four UI producers, plus the
-  privacy copy — more than a one-line change, but all subtractive/relabel work with no new scope surface.
-- **Risk:** low and mostly UI; the draft path already exists and works server-side. The main care items are
-  (a) not breaking the queue for non-email actions when removing `email_send`, and (b) the drafts-route
-  auth fix. Both covered by the canary matrix.
-- **Sequencing:** one focused branch; consider splitting into two commits — (i) drafts-route auth fix +
-  comment corrections, (ii) send removal + UI relabel + privacy update — for a cleaner review. Do **not**
-  bundle the disconnect-revocation improvement unless you want it in the same release.
+## 2. The seven items in this release (file-by-file)
 
-**Do not implement until approved.**
+### (1) Replace all direct-send actions with "Save to Gmail Drafts"
+- `app/prep/EmailComposer.tsx` — remove `handleSend` + the "✉ Send via Gmail" button and the
+  `sending`/`sent` statuses; make **"💾 Save to Gmail Drafts"** the primary action (existing
+  `handleSaveDraft` → `drafts.create`). The "Queue" button, if kept, enqueues `email_draft`.
+- `app/cockpit-views/BookReview.tsx` — replace the one-click "✉ Send via Gmail" with the draft action.
+- `app/cockpit-mock/page.tsx` — relabel/remove the decorative "Send" label (verify it has no live handler).
+- Copy rule: no shipping surface says "send"; it says "saved to your Drafts — you send from Gmail."
+
+### (2) Fix the drafts-route authentication bug
+- `app/api/gmail/drafts/route.ts:19` — replace the `x-user-id` header shim with Clerk `auth()` (mirror
+  `send/route.ts`'s pattern before it's deleted). This makes "Save to Gmail Drafts" from `/prep` actually
+  work (it 400s today).
+
+### (3) Remove/disable both `messages.send` backend paths
+- **Delete** `app/api/gmail/send/route.ts`.
+- **Delete** `executeEmailSend` + its dispatch case + `buildMime` in `lib/action-queue/executors.ts`.
+- Prefer deletion over flag-gating so there is no latent re-enable path.
+
+### (4) Remove every active `email_send` queue producer and executor
+- Producers → `email_draft` (or removed): `EmailComposer.tsx:101`, `SendDeckToRoom.tsx:104`.
+- Executor + type + UI case removed: `executors.ts` (§1), `types.ts:21/53-54/98`, `ActionQueue.tsx:398`.
+- Verify no non-email queue behavior regresses when `email_send` is removed (other action types untouched).
+
+### (5) Confirm no UI component or API route can send email
+- The grep guarantee (§1 end state) is part of the acceptance checklist.
+- Manual sweep of the §1 producer list; confirm each now drafts or is gone; confirm no route calls
+  `.../users/me/messages/send`.
+
+### (6) Correct stale scope/behavior comments
+- `app/prep/EmailComposer.tsx:9` "fires gmail.send" → rewrite for drafts-only.
+- `lib/auth/gmail-oauth.ts:47-49` — the "SENSITIVE scope … keeps verification OFF the restricted tier and
+  CASA" comment is **factually wrong** now (compose is **restricted**). Correct to: restricted scope;
+  restricted-scope verification (possibly CASA) applies; drafts-only; do not add read scopes.
+- Any residual "modify"/"send" scope language in comments/JSDoc.
+
+### (7) Align privacy policy + OAuth wording with drafts-only
+- `app/(trust)/privacy/page.tsx` §11 already says "create draft emails" and "never sends" — after the code
+  change this becomes **true**; tighten to state `gmail.compose` is used **only** to create drafts, never
+  send, never read mail; keep the Limited-Use line. Verify the integrations-page copy matches.
+- OAuth consent-screen justification wording (Console, at submission-time only — not now) must say the same.
+
+**Scopes unchanged:** `gmail.compose` + `openid` + `email` stay exactly as-is (gmail-oauth.ts:52-56). No
+scope edit in this release.
+
+---
+
+## 3. Separate Google Cloud project for testing/canary (constraints 3–5)
+
+**Do NOT touch the current Production project (`mallin-502618`), the "Mallin Web" client, or `mallin.io`.**
+
+**Setup steps (Console — user performs; documented here, not executed):**
+1. Create a **new** Google Cloud project, e.g. `mallin-canary`.
+2. Configure its **OAuth consent screen** in **Testing** mode; app name e.g. "Mallín (Canary)"; add the
+   scopes `gmail.compose`, `openid`, `email`; add the design partners + founder as **test users**.
+3. Create an **OAuth client** ("Mallin Canary Web") with **authorized redirect URI =
+   `https://canary.mallin.io/api/gmail/oauth-callback`** and authorized domain `mallin.io` (canary
+   subdomain). **No `mallin.io` redirect on this client.**
+4. Record the new client id/secret (secret handled only in the Vercel dashboard — never repo/chat).
+
+## 4. Env-var handling — the blocker constraint 4 caught
+
+**Read-only finding (confirmed via `vercel env ls`):** `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`,
+and `GOOGLE_OAUTH_REDIRECT_URI` are **single entries scoped to `Production` AND `prod-debug` together**.
+**They are NOT independent.** Editing any of them **changes Production**. (Preview has its own separate
+entries; prod-debug does not.)
+
+**Therefore we will not edit the shared entries' values.** To point canary/prod-debug at the test client
+without touching Production, split them into independent entries:
+1. **Re-scope** each shared entry to **Production-only** (remove `prod-debug` from its environment list).
+   This does **not** change the value Production uses — Production keeps the exact same client id/secret/
+   redirect.
+2. **Add new `prod-debug`-only entries** for `GOOGLE_OAUTH_CLIENT_ID/SECRET/REDIRECT_URI` with the **test
+   client** values (redirect = `https://canary.mallin.io/api/gmail/oauth-callback`).
+3. **Verify Production is unchanged:** after the split, confirm the Production-scoped values are byte-
+   identical to before (re-pull/inspect), and that `mallin.io` Gmail connect still works.
+
+- This split **is** an edit to the shared entries' *scope* (not their value); because the constraint is
+  "do not edit any variable **shared with Production**," this step is called out explicitly and needs
+  **your explicit approval** before execution, with the Production-unchanged verification above as the gate.
+- **Alternative if you'd rather not touch the shared entries at all:** most acceptance tests (no-send UI,
+  grep guarantee, draft-created, disconnect) can run on canary using the founder's **existing** Gmail
+  connection (the token already lives in the shared Supabase DB, and `drafts.create` needs no redirect).
+  Only the **fresh connect/reconnect** test truly needs the canary test client. We can run everything
+  except fresh-connect without the env split, and verify fresh-connect on `mallin.io` during the eventual
+  Production release. Your call.
+
+---
+
+## 5. Canary acceptance criteria
+
+On prod-debug → `canary.mallin.io`, real + SaaS-demo orgs, light + dark:
+1. **No send anywhere:** no "Send via Gmail" control on `/prep`, `/cockpit-views`, or the action queue;
+   the `grep` guarantee (§1) is clean.
+2. **Connected state:** integrations page shows "connected as <email>"; composer shows **Save to Gmail
+   Drafts** only.
+3. **Draft created (item-2 fix):** click Save to Gmail Drafts → a draft appears in the connected Gmail
+   Drafts folder; status reads "saved," never "sent." (Uses the founder's existing connection.)
+4. **Disconnected state:** Disconnect → composer shows the connect prompt; `gmail_oauth_tokens` row gone.
+5. **Reconnect (needs the test client + env split, if done):** Connect Gmail on `canary.mallin.io` →
+   consent on the **canary test client** → connected → draft works again.
+6. **Queue integrity:** removing `email_send` didn't break other action-queue types.
+7. **Isolation:** real org unaffected by demo; `mallin.io` Gmail connect still works (Production untouched).
+8. Then prepare a Production candidate and **pause for approval** (standard 12-step flow).
+
+## 6. Rollback plan
+- **Code:** single focused branch; rollback = revert the drafts-only commit(s) and re-alias `mallin.io` to
+  the prior live deployment. All changes are subtractive/relabel, so revert is clean.
+- **Env split (if done):** reverse is re-adding `prod-debug` to the Production-scoped entries and deleting
+  the prod-debug-only test entries — Production values were never changed, so no Production impact either
+  way. Keep a note of the exact pre-split scoping to restore it.
+- **Test Cloud project:** independent; can be left or deleted with zero Production effect.
+
+## 7. Explicitly NOT in this release (future, separate changes)
+- **Google token revocation on disconnect** (constraint 1) — add a best-effort
+  `POST oauth2.googleapis.com/revoke` in `disconnectGmail`. Its own commit, later. Disconnect today
+  correctly deletes the local token row; that behavior is unchanged in this release.
+- **Restricted-scope verification / CASA** (Path 1) — only after active design-partner demand for Gmail.
+- **Migration to a separately-verified Production OAuth project** — see the launch-decision doc.
+
+---
+
+## Effort & sequence
+- **Effort:** ~1–1.5 days code (8 files, subtractive), plus the Console/env setup (§3–4) if the env split
+  is approved.
+- **Sequence:** (a) code change on one branch, split into two commits — drafts-route auth fix + comment
+  corrections, then send removal + UI relabel + privacy tightening; (b) test-project + env split (gated,
+  §4); (c) canary acceptance; (d) Production candidate → pause.
+
+**Do not implement code, create the project, or change any env var until approved.**

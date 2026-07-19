@@ -6,6 +6,16 @@ server-stored tokens the restricted-scope path applies and **may require a CASA 
 assessment — unconfirmed with Google.** The product is going **drafts-only**
 ([plan](gmail-drafts-only-plan.md)). No design-partner demo is currently scheduled.
 
+## DECISION (2026-07-18)
+
+- **Chosen now: Path 2** — Gmail available only to **explicitly approved test users** during the
+  design-partner phase. **Do not submit for restricted-scope verification yet.**
+- **Path 3** (copy / open-in-Gmail, no OAuth) — kept **documented as the fallback** if the unverified-app
+  warning or weekly reconnection creates too much friction.
+- **Path 1** (restricted verification + any CASA) — the **next step only after active design-partner
+  demand for Gmail**, not before.
+- Product behavior: **drafts-only** (never sends), landing via the drafts-only plan.
+
 ---
 
 ## Cloud-project question (Google recommends separate test vs Production projects)
@@ -49,11 +59,13 @@ below is chosen.)
   heads-up; **not** acceptable for broad public signup. **Cap: 100 test users.**
 - **Verification requirements:** none now — deferred. Still land drafts-only so the experience and copy are
   correct, and so the eventual verification is a smaller delta.
-- **Unresolved risks:** the unverified-app warning can spook a less-technical partner; the 100-user cap and
-  the Testing-mode 7-day refresh-token expiry (Google can expire refresh tokens for unverified apps in
-  Testing) may cause periodic reconnects — confirm current behavior.
-- **Next action:** land drafts-only; add each design partner as a test user with a short "you'll see an
-  unverified-app screen, that's expected" note; revisit Path 1 after validation.
+- **Unresolved risks:** the unverified-app warning can spook a less-technical partner; the 100-user cap;
+  and — **documented per decision** — apps in **Testing** mode have **refresh tokens that expire after 7
+  days**, so **design partners may need to reconnect Gmail weekly**. This weekly-reconnect friction is the
+  main reason to keep Path 3 as a fallback.
+- **Next action:** land drafts-only; stand up the separate canary test project (drafts-only plan §3); add
+  each design partner as a test user with a short "you'll see an unverified-app screen, and you may need to
+  reconnect weekly — that's expected" note; revisit Path 1 only when Gmail demand is real.
 
 ## Path 3 — No Gmail OAuth at launch; user-controlled copy / open-in-Gmail
 
@@ -86,5 +98,34 @@ pragmatic near-term for design partners (land drafts-only, add partners as test 
 the fallback if you want a public launch before taking on restricted verification. Reserve **Path 1** for
 once traction justifies the CASA cost/time. These paths compose: 2 now → 1 later, with 3 always available
 as the no-OAuth escape hatch.
+
+---
+
+## Migration to a separately-verified Production OAuth project (future — for the Path 1 transition)
+
+When Mallín eventually moves Gmail to a **separately-verified Production OAuth project** (a new project
+distinct from today's `mallin-502618`, or a promotion of one), the **OAuth client changes** — new client
+id/secret, and the authorized redirect stays `https://mallin.io/api/gmail/oauth-callback` but under the new
+client. **Assume every existing user must reconnect**, because:
+
+- Refresh tokens are **bound to the client that issued them**. Tokens in `gmail_oauth_tokens` issued by the
+  old client **cannot be refreshed** by the new client → the next `getAccessTokenForUser` refresh fails.
+
+**Migration steps (when the transition happens):**
+1. Stand up + verify the new Production OAuth client; set its `GOOGLE_OAUTH_*` on Production only.
+2. Treat a refresh failure under the new client as **"needs reconnect"** (surface the connect prompt, don't
+   error). Optionally, on cutover, **mark all `gmail_oauth_tokens` rows stale** (or delete them) so every
+   user is cleanly prompted to reconnect via the new client.
+3. Because Path 2 keeps the connected base tiny (a handful of design partners), a **forced reconnect is
+   cheap** — communicate it ("please reconnect Gmail, one time") ahead of the switch.
+4. Keep the old client alive briefly if you prefer a soft cutover, but the clean path is: new client →
+   invalidate old tokens → everyone reconnects once.
+5. The **canary test client** (drafts-only plan §3) is unaffected — it stays pointed at `canary.mallin.io`
+   and its own project; only Production migrates.
+
+This migration is **not** part of the drafts-only release; it is the Path 1 transition, documented now so
+the reconnect expectation is known in advance.
+
+---
 
 **Do not submit for verification, modify the consent screen, or implement code until a path is approved.**

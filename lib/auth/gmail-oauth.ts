@@ -44,11 +44,16 @@ function isMissingTableError(err: {
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-// Draft-only. gmail.compose is a SENSITIVE scope (create/manage drafts + send) —
-// it keeps Google OAuth verification OFF the restricted tier and its CASA security
-// assessment. Do NOT add gmail.modify / gmail.readonly (restricted → CASA) unless
-// the voice-conditioning read path (listSentThreads / getMessage in
-// lib/adapters/gmail.ts) actually ships — today those are unimplemented stubs.
+// Drafts-only. Mallin uses gmail.compose ONLY to create drafts in the user's
+// Drafts folder; it never sends and never reads existing mail.
+// NOTE (corrected 2026-07-18): Google currently classifies gmail.compose as a
+// RESTRICTED scope, not merely sensitive. Because tokens are stored and Gmail is
+// called server-side, restricted-scope verification applies and MAY require a
+// CASA / third-party security assessment — this is unresolved and must be
+// confirmed with Google before any submission. See
+// docs/launch/gmail-oauth-verification.md. Do NOT add gmail.modify / gmail.readonly;
+// the read-path stubs (listSentThreads / getMessage in lib/adapters/gmail.ts) are
+// intentionally unimplemented.
 const REQUIRED_SCOPES = [
   "https://www.googleapis.com/auth/gmail.compose",
   "openid",

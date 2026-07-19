@@ -1,22 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { createDraft, type GmailDraftPayload } from "@/lib/adapters/gmail";
 
 /**
  * POST /api/gmail/drafts
  *
- * Creates a draft in the user's Gmail Drafts folder. The rep clicks
- * Send from their own inbox — Mallin never sends without explicit
- * user action.
+ * Creates a draft in the user's Gmail Drafts folder. Mallin only ever
+ * creates drafts — it never sends. The user sends from their own inbox.
  *
  * Body shape:
  *   { to, subject, bodyHtml, bodyText, threadId?, attribution? }
  *
- * Auth: this route is gated by Clerk middleware. The user ID comes
- * from the auth context, not from the request body.
+ * Auth: resolves the user from the Clerk session (auth()), matching the
+ * rest of the /api/gmail/* routes. Never trusts a client-supplied id.
  */
 export async function POST(req: NextRequest) {
-  // TODO: pull userId from auth() once Clerk is fully wired
-  const userId = req.headers.get("x-user-id");
+  const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ ok: false, error: "unauthenticated" }, { status: 401 });
   }

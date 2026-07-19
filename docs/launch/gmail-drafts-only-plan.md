@@ -1,12 +1,14 @@
 # Gmail drafts-only conversion — revised implementation plan (Path 2)
 
-**Type:** plan only · **no code, no dashboard, no env change** · implement only after approval.
+**Type:** plan only · **no code, no dashboard, no env, no Supabase change** · implement only after approval.
 **Decisions locked:** drafts-only for launch; **OAuth Path 2** (approved test users only, no restricted
-verification yet). Pairs with [audit](gmail-oauth-verification.md) and
+verification yet); **Option B** — do **not** split or edit the shared `GOOGLE_OAUTH_*` env vars; test on
+canary using the founder's existing connection only. Pairs with [audit](gmail-oauth-verification.md) and
 [launch decision](gmail-oauth-launch-decision.md).
 
-**This release contains ONLY the seven items in §2.** Google token **revocation on disconnect is split
-out to a separate future change** (see §7) and is NOT in this release.
+**This release contains ONLY the seven code items in §2.** No OAuth project/client/consent-screen/env/DB
+changes. Google token **revocation on disconnect** is a separate future change (§7). **Because prod-debug
+shares the Production Supabase (§3), no disconnect/reconnect/token-deletion is done during canary testing.**
 
 ---
 
@@ -78,74 +80,75 @@ scope edit in this release.
 
 ---
 
-## 3. Separate Google Cloud project for testing/canary (constraints 3–5)
+## 3. OAuth / project / env / DB changes in this release: NONE (Option B)
 
-**Do NOT touch the current Production project (`mallin-502618`), the "Mallin Web" client, or `mallin.io`.**
+This release makes **no** change to any Google Cloud project, OAuth client, consent screen, Vercel env
+var, or Supabase. The `GOOGLE_OAUTH_*` env vars are **not** split or edited (they are shared
+Production+prod-debug entries — editing them would change Production). The separate-test-project idea
+moves to the backlog (§7) because, per the safety correction below, a separate project alone is **not**
+sufficient isolation.
 
-**Setup steps (Console — user performs; documented here, not executed):**
-1. Create a **new** Google Cloud project, e.g. `mallin-canary`.
-2. Configure its **OAuth consent screen** in **Testing** mode; app name e.g. "Mallín (Canary)"; add the
-   scopes `gmail.compose`, `openid`, `email`; add the design partners + founder as **test users**.
-3. Create an **OAuth client** ("Mallin Canary Web") with **authorized redirect URI =
-   `https://canary.mallin.io/api/gmail/oauth-callback`** and authorized domain `mallin.io` (canary
-   subdomain). **No `mallin.io` redirect on this client.**
-4. Record the new client id/secret (secret handled only in the Vercel dashboard — never repo/chat).
+### ⚠ Safety correction — prod-debug shares the Production Supabase database
+`prod-debug` (and therefore `canary.mallin.io`) reads/writes the **same** `gmail_oauth_tokens` table as
+Production. Consequences that bound how we test:
+- A **disconnect on canary** would **delete the founder's live Production token** → breaks `mallin.io` Gmail.
+- A **reconnect on canary** (even via a *different* Google client) would **overwrite the same user's token
+  row** → also breaks Production Gmail.
+- So **a separate Google Cloud project is not enough**; true isolation also requires **separate token
+  storage** (a separate Supabase project or environment-specific token rows). That is the backlog item.
 
-## 4. Env-var handling — the blocker constraint 4 caught
-
-**Read-only finding (confirmed via `vercel env ls`):** `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`,
-and `GOOGLE_OAUTH_REDIRECT_URI` are **single entries scoped to `Production` AND `prod-debug` together**.
-**They are NOT independent.** Editing any of them **changes Production**. (Preview has its own separate
-entries; prod-debug does not.)
-
-**Therefore we will not edit the shared entries' values.** To point canary/prod-debug at the test client
-without touching Production, split them into independent entries:
-1. **Re-scope** each shared entry to **Production-only** (remove `prod-debug` from its environment list).
-   This does **not** change the value Production uses — Production keeps the exact same client id/secret/
-   redirect.
-2. **Add new `prod-debug`-only entries** for `GOOGLE_OAUTH_CLIENT_ID/SECRET/REDIRECT_URI` with the **test
-   client** values (redirect = `https://canary.mallin.io/api/gmail/oauth-callback`).
-3. **Verify Production is unchanged:** after the split, confirm the Production-scoped values are byte-
-   identical to before (re-pull/inspect), and that `mallin.io` Gmail connect still works.
-
-- This split **is** an edit to the shared entries' *scope* (not their value); because the constraint is
-  "do not edit any variable **shared with Production**," this step is called out explicitly and needs
-  **your explicit approval** before execution, with the Production-unchanged verification above as the gate.
-- **Alternative if you'd rather not touch the shared entries at all:** most acceptance tests (no-send UI,
-  grep guarantee, draft-created, disconnect) can run on canary using the founder's **existing** Gmail
-  connection (the token already lives in the shared Supabase DB, and `drafts.create` needs no redirect).
-  Only the **fresh connect/reconnect** test truly needs the canary test client. We can run everything
-  except fresh-connect without the env split, and verify fresh-connect on `mallin.io` during the eventual
-  Production release. Your call.
+### How we test safely on the shared infra (constraints 1, 2, 3, 8)
+- **Draft creation:** use the founder's **existing** Gmail connection. `drafts.create` only *reads* the
+  stored token and needs no redirect — it does not modify or delete the token row. Safe.
+- **Do NOT disconnect or reconnect** the personal Gmail account on canary. Do **not** click Disconnect on
+  the live-connected account. Do **not** delete any token row.
+- **Do NOT modify any OAuth env var.**
+- **Connected-state UI:** verify on the founder's real org (already connected).
+- **Disconnected-state UI:** verify on an org that has **no** token — e.g. the **SaaS demo org** (it shows
+  "Not connected"), or a signed-out view — **not** by disconnecting the live account.
+- Fresh connect / disconnect / reconnect / 7-day expiry testing is **deferred** to the isolated
+  environment (§7 backlog), where token storage is separated from Production.
 
 ---
 
-## 5. Canary acceptance criteria
+## 5. Canary acceptance criteria (no token mutation)
 
-On prod-debug → `canary.mallin.io`, real + SaaS-demo orgs, light + dark:
-1. **No send anywhere:** no "Send via Gmail" control on `/prep`, `/cockpit-views`, or the action queue;
-   the `grep` guarantee (§1) is clean.
-2. **Connected state:** integrations page shows "connected as <email>"; composer shows **Save to Gmail
-   Drafts** only.
-3. **Draft created (item-2 fix):** click Save to Gmail Drafts → a draft appears in the connected Gmail
-   Drafts folder; status reads "saved," never "sent." (Uses the founder's existing connection.)
-4. **Disconnected state:** Disconnect → composer shows the connect prompt; `gmail_oauth_tokens` row gone.
-5. **Reconnect (needs the test client + env split, if done):** Connect Gmail on `canary.mallin.io` →
-   consent on the **canary test client** → connected → draft works again.
-6. **Queue integrity:** removing `email_send` didn't break other action-queue types.
-7. **Isolation:** real org unaffected by demo; `mallin.io` Gmail connect still works (Production untouched).
-8. Then prepare a Production candidate and **pause for approval** (standard 12-step flow).
+On prod-debug → `canary.mallin.io`, real + SaaS-demo orgs, light + dark. **No Disconnect click, no
+reconnect, no token deletion** — the shared Production token must be left intact throughout.
+1. **No send anywhere (constraint 4 removal):** no "Send via Gmail" control on `/prep`, `/cockpit-views`,
+   or the action queue.
+2. **Zero send references (constraint 7):** `grep -rniE 'messages/send|messages\.send|email_send' app lib`
+   returns **0** shipping hits.
+3. **Connected-state UI (constraint 8a):** on the founder's real org (already connected), the integrations
+   page shows "connected as <email>" and the composer shows **Save to Gmail Drafts** only — read-only
+   check, no clicks that mutate the token.
+4. **Draft created, nothing sent (constraint 6):** click **Save to Gmail Drafts** → a draft appears in the
+   founder's existing Gmail Drafts folder; status reads "saved," never "sent." Confirm via Gmail that a
+   **draft** exists and **no message was sent**. (Uses the existing connection; does not touch the token
+   row.)
+5. **Disconnected-state UI (constraint 8b):** verify on a **not-connected** org (SaaS demo org shows "Not
+   connected") — the composer shows the "connect Gmail" prompt. **Do not** produce this state by
+   disconnecting the live account.
+6. **Draft-route auth fix (constraint 5):** the draft in #4 proves `/api/gmail/drafts` now resolves the
+   user via Clerk `auth()` (it 400s today).
+7. **Queue integrity:** removing `email_send` didn't break other action-queue types.
+8. **Production untouched:** `mallin.io` Gmail connect + the founder's live token still work after canary
+   testing (nothing was disconnected/overwritten).
+9. Then prepare a Production candidate and **pause for approval** (standard 12-step flow).
 
 ## 6. Rollback plan
-- **Code:** single focused branch; rollback = revert the drafts-only commit(s) and re-alias `mallin.io` to
-  the prior live deployment. All changes are subtractive/relabel, so revert is clean.
-- **Env split (if done):** reverse is re-adding `prod-debug` to the Production-scoped entries and deleting
-  the prod-debug-only test entries — Production values were never changed, so no Production impact either
-  way. Keep a note of the exact pre-split scoping to restore it.
-- **Test Cloud project:** independent; can be left or deleted with zero Production effect.
+- **Code only:** single focused branch; rollback = revert the drafts-only commit(s) and re-alias
+  `mallin.io` to the prior live deployment. All changes are subtractive/relabel, so revert is clean.
+- **No env / project / DB changes were made**, so there is nothing else to reverse. The founder's live
+  Gmail token is never touched by this release or its testing.
 
 ## 7. Explicitly NOT in this release (future, separate changes)
-- **Google token revocation on disconnect** (constraint 1) — add a best-effort
+- **Isolated OAuth testing environment** — the backlog item (see `docs/backlog.md`) that makes safe
+  fresh-connect / disconnect / reconnect / 7-day-expiry testing possible: separate Google Cloud test
+  project, independent prod-debug OAuth vars, **separate token storage (separate Supabase project or
+  environment-specific `gmail_oauth_tokens`)**, and dedicated QA Google + Clerk accounts. Until it exists,
+  those flows are **not** tested on the shared prod-debug/Production database.
+- **Google token revocation on disconnect** (constraint 9) — add a best-effort
   `POST oauth2.googleapis.com/revoke` in `disconnectGmail`. Its own commit, later. Disconnect today
   correctly deletes the local token row; that behavior is unchanged in this release.
 - **Restricted-scope verification / CASA** (Path 1) — only after active design-partner demand for Gmail.
@@ -154,10 +157,10 @@ On prod-debug → `canary.mallin.io`, real + SaaS-demo orgs, light + dark:
 ---
 
 ## Effort & sequence
-- **Effort:** ~1–1.5 days code (8 files, subtractive), plus the Console/env setup (§3–4) if the env split
-  is approved.
+- **Effort:** ~1–1.5 days code (≈8 files, subtractive). **No Console/env/DB work in this release** (Option
+  B) — the isolation setup is the separate backlog item.
 - **Sequence:** (a) code change on one branch, split into two commits — drafts-route auth fix + comment
-  corrections, then send removal + UI relabel + privacy tightening; (b) test-project + env split (gated,
-  §4); (c) canary acceptance; (d) Production candidate → pause.
+  corrections, then send removal + UI relabel + privacy tightening; (b) canary acceptance (§5, no token
+  mutation); (c) Production candidate → pause for approval.
 
 **Do not implement code, create the project, or change any env var until approved.**

@@ -26,3 +26,22 @@ recovery incident is closed (baseline tag `recovery-stable-2026-07-18`, commit `
 2. **Reintroduce social preview (OG/Twitter) images safely.** Not at the app root — the root
    `app/opengraph-image.tsx` / `app/twitter-image.tsx` broke client hydration on dynamic
    routes (the original 2026-07-18 homepage cause). Scope images to public/static routes only.
+
+## Infrastructure
+
+- **Isolated OAuth testing environment.** Today `prod-debug`/`canary.mallin.io` share the **Production
+  Supabase database** and the **Production `GOOGLE_OAUTH_*` env vars**, so Gmail connect/disconnect/reconnect
+  cannot be safely tested on canary — a canary disconnect would delete, and a reconnect would overwrite, the
+  founder's **live Production** `gmail_oauth_tokens` row. Build a genuinely isolated test rig so those flows
+  can be exercised without touching Production. Must include:
+  1. A **separate Google Cloud test project** (own OAuth client + Testing consent screen; redirect
+     `https://canary.mallin.io/api/gmail/oauth-callback`).
+  2. **Independent `prod-debug` OAuth env vars** (split from the shared Production entries).
+  3. **Separate token storage** — a separate Supabase project **or** environment-specific `gmail_oauth_tokens`
+     rows — so canary token writes never hit Production data. (This is the missing piece a separate Google
+     project alone does **not** solve.)
+  4. **Dedicated QA Google and Clerk accounts** (not the founder's personal accounts).
+  5. Coverage for **fresh connect, disconnect, reconnect, and 7-day token-expiry** testing.
+  Context: [docs/launch/gmail-drafts-only-plan.md](launch/gmail-drafts-only-plan.md) §3, §7 and the
+  [OAuth audit](launch/gmail-oauth-verification.md). Prerequisite for the eventual Path 1 restricted-scope
+  verification work.

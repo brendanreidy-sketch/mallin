@@ -1,9 +1,10 @@
 # SaaS demo book v1 — implementation & seed plan
 
-**Status:** plan only · nothing here has been run · no code changed, no data written.
+**Status:** plan only · **ON HOLD until a design-partner demo is booked** · **READY TO IMPLEMENT when
+a demo is scheduled** · nothing here has been run · no code changed, no data written.
 **Pairs with:** [saas-demo-book-v1.md](saas-demo-book-v1.md) (approved narratives).
-**Scope:** seed the four v1 deals (Cloudpeak · won, Northwind/Tanager · lost, Vela · at risk,
-Fathom/Keelstone · on track) into the existing **SaaS demo tenant**, and retire the placeholder.
+**Scope:** seed the four v1 deals (Cloudpeak · won, Tanager Commerce · lost, Vela · at risk,
+Keelstone Data · on track) into the existing **SaaS demo tenant**, and retire the placeholder.
 
 > **Critical safety fact.** The demo tenant lives in the **same Supabase project as real
 > production data** (project `ylbhjgrsifykncfotdbd`). Isolation is therefore by **`tenant_id`
@@ -12,6 +13,22 @@ Fathom/Keelstone · on track) into the existing **SaaS demo tenant**, and retire
 > unscoped statements**. Because this writes to the production database (demo rows only),
 > **executing the seed is a production-data action and needs explicit approval + the
 > canary-first flow** — this document is the plan, not the execution.
+
+---
+
+## Pre-seed gate (mandatory, in order — do not skip)
+
+No write to Supabase happens until all six are satisfied, in this order:
+
+1. **Show the exact target tenant** — run the read-only preflight (§3) and record the tenant id + slug.
+2. **Confirm `is_demo = true`** — the resolved tenant must be the SaaS demo tenant and must not appear
+   in the non-demo list.
+3. **Back up the existing demo-tenant records** (§4) to a timestamped file; keep it until confirmed.
+4. **Run the dry run** (§5) and confirm the planned per-table counts match §1 exactly.
+5. **Confirm the command cannot affect another tenant** (§7) — seeder is `--tenant`-scoped, every
+   cleanup/rollback statement is `WHERE tenant_id = :T`, no unscoped statements.
+6. **Pause for explicit approval before writing to Supabase.** The seed runs only on an explicit "yes,"
+   on the canary/prod-debug path, because the demo tenant shares the production database.
 
 ---
 
@@ -29,7 +46,7 @@ loaders, auth, and the database schema (no migration).
 
 **Deal keys (state-based, name-independent** — so the Appendix-C renames change only display
 strings, never record identifiers**):**
-`saas_won_cloudpeak` · `saas_lost_northwind` · `saas_atrisk_vela` · `saas_ontrack_fathom`.
+`saas_won_cloudpeak` · `saas_lost_tanager` · `saas_atrisk_vela` · `saas_ontrack_keelstone`.
 
 ---
 
@@ -41,7 +58,7 @@ deal the seeder writes: 1 `accounts`, 1 `opportunities`, its `stakeholders`, 2 `
 (Demo Rep, Demo SE), its `calls`, 1 `execution_artifacts` (demote-prior-then-insert `is_current`),
 and 1 `deal_outcomes` **only** for closed deals.
 
-| Table | Cloudpeak (won) | Northwind (lost) | Vela (at risk) | Fathom (on track) | Total |
+| Table | Cloudpeak (won) | Tanager (lost) | Vela (at risk) | Keelstone (on track) | Total |
 |---|---|---|---|---|---|
 | accounts | 1 | 1 | 1 | 1 | **4** |
 | opportunities | 1 | 1 | 1 | 1 | **4** |
@@ -53,16 +70,16 @@ and 1 `deal_outcomes` **only** for closed deals.
 
 Stakeholder rows per deal (name · committee_role written by the seeder's `ROLE_MAP`):
 - **Cloudpeak:** Dana Okafor · champion; Marcus Feld · economic_buyer; Priya Rao · technical_buyer.
-- **Northwind:** Sam Ellis · user (would-be champion, no budget); Rachel Voss · economic_buyer
+- **Tanager:** Sam Ellis · user (would-be champion, no budget); Rachel Voss · economic_buyer
   (present as a record so the *unengaged EB* is visible; she has zero calls).
 - **Vela:** Jordan Wells · champion (departed — still a record, absent from the last call); Erin
   Blake · user; Hal Munoz · economic_buyer.
-- **Fathom:** Gabe Ruiz · champion; Ivy Chen · economic_buyer; Leo Park · technical_buyer.
+- **Keelstone:** Gabe Ruiz · champion; Ivy Chen · economic_buyer; Leo Park · technical_buyer.
 
 `opportunities` fields per deal come straight from the Appendix-A matrix (`stage_label`,
 `stage_position`/`total_stages`, `amount`, `close_date`, `deal_posture` via `POSTURE_MAP`,
 `methodology_type = 'MEDDPICC'`). `deal_outcomes` for Cloudpeak (`won`, `risk_materialized:false`,
-`move_taken:true`) and Northwind (`lost`, `risk_materialized:true`, `move_taken:false`).
+`move_taken:true`) and Tanager (`lost`, `risk_materialized:true`, `move_taken:false`).
 
 **Seed command** (industry mode; writes only to the tenant you pass):
 ```
@@ -162,11 +179,11 @@ select
 select count(*) from opportunities where tenant_id = :T and source_external_id like '%placeholder%'; -- expect 0
 ```
 **Post-seed verification — canary UI (in the SaaS demo org on `canary.mallin.io`):**
-- Cockpit: **Needs you · 1** (Vela), **On track · 1** (Fathom); Cloudpeak + Northwind not cluttering Home.
+- Cockpit: **Needs you · 1** (Vela), **On track · 1** (Keelstone); Cloudpeak + Tanager not cluttering Home.
 - Prep renders cleanly for all four (each section populated where authored; empty-prior-call block
   correctly hidden where there's no synthesis).
-- Ledger: Cloudpeak (won) + Northwind (lost) with correct reasons and risk/move flags.
-- Knowledge: Cloudpeak winning play + Northwind trap present.
+- Ledger: Cloudpeak (won) + Tanager (lost) with correct reasons and risk/move flags.
+- Knowledge: Cloudpeak winning play + Tanager trap present.
 - The placeholder ("Placeholder SaaS Co") is gone.
 - **Real org untouched:** your real cockpit/prep unchanged.
 
@@ -181,12 +198,12 @@ Because this is demo data in the shared DB, rollback is a scoped restore — nev
 -- delete the four new deals' rows (FK-safe order), scoped to the demo tenant and the new keys
 delete from execution_artifacts where tenant_id = :T and opportunity_id in
   (select id from opportunities where tenant_id = :T and source_external_id in
-   ('opp_saas_won_cloudpeak','opp_saas_lost_northwind','opp_saas_atrisk_vela','opp_saas_ontrack_fathom'));
+   ('opp_saas_won_cloudpeak','opp_saas_lost_tanager','opp_saas_atrisk_vela','opp_saas_ontrack_keelstone'));
 delete from deal_outcomes        where tenant_id = :T and opportunity_id in ( …same select… );
 delete from calls                where tenant_id = :T and source_external_id like 'call_saas_won_cloudpeak%'
-                                    or (tenant_id = :T and source_external_id like 'call_saas_lost_northwind%')
+                                    or (tenant_id = :T and source_external_id like 'call_saas_lost_tanager%')
                                     or (tenant_id = :T and source_external_id like 'call_saas_atrisk_vela%')
-                                    or (tenant_id = :T and source_external_id like 'call_saas_ontrack_fathom%');
+                                    or (tenant_id = :T and source_external_id like 'call_saas_ontrack_keelstone%');
 delete from internal_participants where tenant_id = :T and source_external_id like 'int_saas_%';
 delete from stakeholders         where tenant_id = :T and source_external_id like 'sth_saas_won_%'
                                     /* …atrisk/ontrack/lost… */;

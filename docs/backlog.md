@@ -3,10 +3,16 @@
 Normal product development items. These are *not* incident blockers — the 2026-07-18
 recovery incident is closed (baseline tag `recovery-stable-2026-07-18`, commit `9f339ca`).
 
-## Shipped
+## Shipped / done
 
 - **Hide the empty prior-call block when there is no content** — shipped 2026-07-18 (commit
   `05d9f12`, release tag `release-2026-07-18-hide-empty-prior-call-block`).
+- **Settings entry point on cockpit + prep top bars** — shipped 2026-07-18 (commit `01d02f9`,
+  release tag `release-2026-07-18-settings-entry-point`).
+- **Direct SaaS demo organization smoke test** — done 2026-07-18. Verified live on `mallin.io`
+  during the settings-entry-point release: the "Mallin Demo · SaaS" cockpit and the SaaS demo
+  prep deal (`43ab08bc-2441-4385-bed5-4c433f71d182`) render normally, and `/settings/integrations`
+  shows the correct per-tenant state. No longer only equivalence-covered. No code change.
 
 ## Open
 
@@ -20,7 +26,3 @@ recovery incident is closed (baseline tag `recovery-stable-2026-07-18`, commit `
 2. **Reintroduce social preview (OG/Twitter) images safely.** Not at the app root — the root
    `app/opengraph-image.tsx` / `app/twitter-image.tsx` broke client hydration on dynamic
    routes (the original 2026-07-18 homepage cause). Scope images to public/static routes only.
-3. **Run one direct SaaS demo organization smoke test when convenient.** Sign into the
-   "Mallin Demo · SaaS" Clerk org and confirm the SaaS demo cockpit + the SaaS demo prep deal
-   (`43ab08bc-2441-4385-bed5-4c433f71d182`) render normally. Currently covered only by
-   equivalence to the prior verified build.

@@ -75,6 +75,14 @@ export async function POST(req: NextRequest) {
       allOk = false;
       continue;
     }
+    // Drafts-only hard stop: never approve/execute/retry a legacy email_send row
+    // (Mallín never sends). Explicit reject at this server boundary, regardless
+    // of the row's status, in addition to the executor-level refusal.
+    if (row.action_type === "email_send") {
+      results.push({ id, ok: false, error: "email_send_retired" });
+      allOk = false;
+      continue;
+    }
     if (row.status !== "queued" && row.status !== "deferred") {
       results.push({
         id,

@@ -43,6 +43,18 @@ const DEMO_SAFE_ACTION_TYPES: ReadonlySet<ActionPayload["type"]> = new Set([
 export async function execute(
   action: QueuedAction,
 ): Promise<ExecutionResult> {
+  // Drafts-only hard stop: email_send is retired and can never execute or retry.
+  // Explicit reject at the execute boundary (the dispatch switch below also
+  // refuses it — this is defense-in-depth so any future caller is covered).
+  if (action.action_type === "email_send") {
+    return {
+      ok: false,
+      executor: "email_send_retired",
+      error:
+        "email_send is retired — Mallín never sends. Cannot execute or retry.",
+    };
+  }
+
   try {
     const payload = action.payload as ActionPayload;
 

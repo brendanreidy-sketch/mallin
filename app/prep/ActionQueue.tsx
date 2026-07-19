@@ -291,6 +291,9 @@ function ItemRow({
   hideActions,
 }: ItemRowProps) {
   const summary = describeItem(item);
+  // Retired, read-only legacy type (drafts-only). Never executes/retries; the
+  // row is display-only with no Approve/Execute control.
+  const isRetiredSend = item.action_type === "email_send";
   const statusClass =
     item.status === "executed"
       ? s.statusOk
@@ -325,6 +328,13 @@ function ItemRow({
           </span>
         </div>
         <div className={s.summary}>{summary}</div>
+        {isRetiredSend ? (
+          <div
+            style={{ fontSize: 12, fontWeight: 600, color: "var(--ck-ink-3, #6b7689)" }}
+          >
+            Legacy email send — retired
+          </div>
+        ) : null}
         {item.rationale ? (
           <div className={s.rationale}>{item.rationale}</div>
         ) : null}
@@ -341,7 +351,7 @@ function ItemRow({
         ) : null}
       </div>
 
-      {!hideActions ? (
+      {!hideActions && !isRetiredSend ? (
         <div className={s.actions}>
           <button
             className={s.btnApply}

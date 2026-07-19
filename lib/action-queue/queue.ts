@@ -87,6 +87,17 @@ export async function getById(
  * failure — caller (a route handler) should catch and surface a 500.
  */
 export async function enqueue(input: EnqueueInput): Promise<QueuedAction> {
+  // Drafts-only hard stop (2026-07-18). email_send is retired: Mallín creates
+  // drafts and never sends. This is the single authoritative action-creation
+  // boundary (the only path that inserts into action_queue), so rejecting here
+  // guarantees no new send action can ever enter the queue — regardless of
+  // caller. Producers enqueue email_draft; this is defense beyond them.
+  if (input.payload.type === "email_send") {
+    throw new Error(
+      "[action-queue] email_send is retired (drafts-only) — Mallín never sends; refusing to enqueue.",
+    );
+  }
+
   const row = {
     tenant_id: input.tenant_id,
     user_id: input.user_id,

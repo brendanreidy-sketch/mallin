@@ -226,9 +226,9 @@ export default function PrivacyPolicyPage() {
           </p>
           <ul>
             <li><strong>What we access:</strong> the ability to create drafts in your Gmail account, and your Google email address (to show which account is connected). We do <strong>not</strong> read your inbox, sent mail, or any existing messages.</li>
-            <li><strong>How we use it:</strong> solely to place Mallín-drafted follow-up emails into your Drafts folder for you to review and send. <strong>Mallín never sends email on your behalf</strong> — every message is sent by you, from your own inbox.</li>
+            <li><strong>How we use it:</strong> solely to place Mallín-drafted follow-up emails into your Drafts folder for you to review and send yourself. <strong>Mallín only ever creates drafts and never sends email</strong> — every message is sent by you, from your own inbox.</li>
             <li><strong>How we store it:</strong> your Google OAuth tokens are stored securely (encrypted at rest via our infrastructure providers) and used only to create the drafts described above. They are never sold, never shared with third parties, and never used for advertising.</li>
-            <li><strong>How to revoke:</strong> disconnect Gmail anytime from Settings → Integrations, or revoke access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Revoking deletes the tokens we store.</li>
+            <li><strong>How to revoke:</strong> disconnect Gmail anytime from Settings → Integrations, which deletes the OAuth tokens we store. You can also revoke Mallín&apos;s access directly at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
           </ul>
           <p>
             Mallín&apos;s use of information received from Google APIs adheres

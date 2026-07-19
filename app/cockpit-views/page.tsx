@@ -21,9 +21,9 @@ export default async function CockpitViewsBookPage() {
   const rows = DEALS.map((d) => deriveBookRow(d, now));
 
   // Is the signed-in rep's Gmail connected? Governs whether the action cards
-  // can fire a real one-click send (through the rep's OWN account, via the
-  // existing /api/gmail/send route) or fall back to compose-handoff. No Clerk
-  // session in local dev → stays false and the surface degrades gracefully.
+  // offer "Save to Gmail Drafts" (through the rep's OWN account) or fall back to
+  // compose-handoff / copy. Mallín never sends. No Clerk session in local dev →
+  // stays false and the surface degrades gracefully.
   let gmailConnected = false;
   try {
     const { userId } = await auth();

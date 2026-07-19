@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import type { BookReview as Review, BookDecision } from '@/lib/cockpit/book-agent';
 import type { NextAction, ActionChannel } from '@/lib/cockpit/next-action';
@@ -212,28 +212,17 @@ const CHANNEL_META: Record<ActionChannel, { icon: string; label: string }> = {
   stakeholder: { icon: '◎', label: 'Reach stakeholder' },
 };
 
-/** Seconds the message sits in the cancellable "sending…" hold before the
- *  API call actually fires. The undo window is the human safety net that a
- *  bare one-click send removes — keep it long enough to catch a mistake. */
-const UNDO_SECONDS = 8;
-
 type SendPhase =
   | { kind: 'idle' }
-  | { kind: 'confirming' }
-  | { kind: 'holding'; left: number }
-  | { kind: 'sending' }
-  | { kind: 'sent'; messageId?: string; at: string }
   | { kind: 'error'; message: string };
 
 /**
  * The stage-aware move — Phase 2/3 surface. The agent classifies WHAT to do
- * (channel + target + draft); the rep stays the executor. The draft is inline
- * editable, and "Send via Gmail" is a GOVERNED one-click send: confirm → an
- * undo window → the real send through the rep's OWN connected Gmail (the
- * existing /api/gmail/send route, which never fires from a background job or an
- * agent — only a human click). Every send leaves an audit line in the card.
- * Outlook one-click isn't wired (no Graph adapter yet) so it stays a
- * compose-handoff; "Save as draft" drops it in the rep's Gmail to send later.
+ * (channel + target + draft); the rep stays the executor. DRAFTS-ONLY
+ * (2026-07-18): the primary action saves the message to the rep's Gmail Drafts
+ * (drafts.create) — Mallín never sends. The rep reviews and sends from their own
+ * inbox. Outlook stays a compose-handoff; "Copy" and "Open in Outlook" are
+ * user-controlled fallbacks.
  */
 function ActionBlock({
   action,
@@ -251,63 +240,10 @@ function ActionBlock({
   const [copied, setCopied] = useState(false);
   const [savedDraft, setSavedDraft] = useState(false);
   const [phase, setPhase] = useState<SendPhase>({ kind: 'idle' });
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const meta = CHANNEL_META[action.channel];
 
   const enc = encodeURIComponent;
   const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?to=${enc(to)}&subject=${enc(subject)}&body=${enc(body)}`;
-
-  const clearTimer = () => {
-    if (timer.current) {
-      clearInterval(timer.current);
-      timer.current = null;
-    }
-  };
-
-  const doSend = async () => {
-    setPhase({ kind: 'sending' });
-    try {
-      const res = await fetch('/api/gmail/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to, subject, bodyText: body, bodyHtml: bodyTextToHtml(body) }),
-      });
-      const json = await res.json();
-      if (!json.ok) {
-        setPhase({ kind: 'error', message: json.detail || json.error || 'Send failed.' });
-        return;
-      }
-      setPhase({
-        kind: 'sent',
-        messageId: json.message_id,
-        at: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-      });
-    } catch (err) {
-      setPhase({ kind: 'error', message: err instanceof Error ? err.message : 'Send failed.' });
-    }
-  };
-
-  // Confirm → start the cancellable undo countdown; fire the send at zero.
-  const startHold = () => {
-    clearTimer();
-    setPhase({ kind: 'holding', left: UNDO_SECONDS });
-    timer.current = setInterval(() => {
-      setPhase((p) => {
-        if (p.kind !== 'holding') return p;
-        if (p.left <= 1) {
-          clearTimer();
-          void doSend();
-          return { kind: 'sending' };
-        }
-        return { kind: 'holding', left: p.left - 1 };
-      });
-    }, 1000);
-  };
-
-  const cancelHold = () => {
-    clearTimer();
-    setPhase({ kind: 'idle' });
-  };
 
   const saveDraft = async () => {
     try {
@@ -338,8 +274,6 @@ function ActionBlock({
     }
   };
 
-  const sent = phase.kind === 'sent';
-
   return (
     <div className={s.action}>
       <div className={s.actionTop}>
@@ -359,7 +293,7 @@ function ActionBlock({
       </div>
       <p className={s.actionWhy}>{action.stageRationale}</p>
 
-      {open && action.draft && !sent && (
+      {open && action.draft && (
         <div className={s.draft}>
           <label className={s.fieldRow}>
             <span className={s.draftLabel}>To</span>
@@ -386,12 +320,12 @@ function ActionBlock({
             onChange={(e) => setBody(e.target.value)}
             rows={6}
           />
-          <div className={s.draftNote}>Editable up to the moment you confirm — and again during the undo window.</div>
+          <div className={s.draftNote}>Editable before you save it to your Gmail Drafts.</div>
         </div>
       )}
-      {open && action.prepNote && !sent && (
+      {open && action.prepNote && (
         <div className={s.prep}>
-          <span className={s.prepLabel}>For you — not in the send</span>
+          <span className={s.prepLabel}>For you — not in the draft</span>
           <span className={s.prepText}>{action.prepNote}</span>
         </div>
       )}
@@ -403,96 +337,45 @@ function ActionBlock({
         </ul>
       )}
 
-      {/* Audit line — the durable record of a real send, in-session. */}
-      {sent && (
-        <div className={s.audit}>
-          <span className={s.auditCheck}>✓</span>
-          <span>
-            Sent to <strong>{to || action.target.name}</strong> · &ldquo;{subject}&rdquo; · {phase.at}
-            {phase.messageId ? ` · id ${String(phase.messageId).slice(0, 10)}` : ''}
-          </span>
-        </div>
-      )}
       {phase.kind === 'error' && (
         <div className={s.sendError}>✗ {phase.message}</div>
       )}
 
-      {/* Confirm gate — final To/Subject before the undo countdown starts. */}
-      {phase.kind === 'confirming' && (
-        <div className={s.confirm}>
-          <div className={s.confirmHead}>Send this email?</div>
-          <div className={s.confirmLine}>
-            To <strong>{to || <em>(add a recipient first)</em>}</strong> · &ldquo;{subject}&rdquo;
-          </div>
-          <div className={s.confirmBar}>
-            <button
-              type="button"
-              className={`${s.sendBtn} ${s.gmail}`}
-              onClick={startHold}
-              disabled={!to}
-            >
-              Confirm send
-            </button>
-            <button type="button" className={s.sendBtn} onClick={() => setPhase({ kind: 'idle' })}>
-              Back
-            </button>
-          </div>
-        </div>
-      )}
+      <div className={s.actionBar}>
+        <button type="button" className={s.draftToggle} onClick={() => setOpen((v) => !v)}>
+          {open ? 'Hide' : action.draft ? 'Open draft' : 'Talking points'}
+        </button>
 
-      {/* Undo window — the send is armed but cancellable. */}
-      {phase.kind === 'holding' && (
-        <div className={s.holding}>
-          <span className={s.holdingText}>Sending to {to} in {phase.left}s…</span>
-          <button type="button" className={`${s.sendBtn} ${s.undoSend}`} onClick={cancelHold}>
-            Undo
-          </button>
-        </div>
-      )}
-
-      {!sent && phase.kind !== 'holding' && phase.kind !== 'confirming' && (
-        <div className={s.actionBar}>
-          <button type="button" className={s.draftToggle} onClick={() => setOpen((v) => !v)}>
-            {open ? 'Hide' : action.draft ? 'Open draft' : 'Talking points'}
-          </button>
-
-          {open && action.draft && (
-            <div className={s.sendRow}>
-              {gmailConnected ? (
-                <button
-                  type="button"
-                  className={`${s.sendBtn} ${s.gmail}`}
-                  onClick={() => setPhase({ kind: 'confirming' })}
-                  disabled={phase.kind === 'sending'}
-                >
-                  ✉ Send via Gmail
-                </button>
-              ) : (
-                <Link className={`${s.sendBtn} ${s.gmail}`} href="/settings/integrations">
-                  Connect Gmail to send
-                </Link>
-              )}
-              {gmailConnected && (
-                <button type="button" className={s.sendBtn} onClick={saveDraft}>
-                  {savedDraft ? 'Saved to Gmail' : 'Save as draft'}
-                </button>
-              )}
-              <a className={`${s.sendBtn} ${s.outlook}`} href={outlookUrl} target="_blank" rel="noreferrer">
-                Open in Outlook
-              </a>
-              <button type="button" className={s.sendBtn} onClick={copy}>
-                {copied ? 'Copied' : 'Copy'}
+        {open && action.draft && (
+          <div className={s.sendRow}>
+            {gmailConnected ? (
+              <button
+                type="button"
+                className={`${s.sendBtn} ${s.gmail}`}
+                onClick={saveDraft}
+              >
+                {savedDraft ? 'Saved to Gmail' : '💾 Save to Gmail Drafts'}
               </button>
-            </div>
-          )}
-        </div>
-      )}
+            ) : (
+              <Link className={`${s.sendBtn} ${s.gmail}`} href="/settings/integrations">
+                Connect Gmail to save drafts
+              </Link>
+            )}
+            <a className={`${s.sendBtn} ${s.outlook}`} href={outlookUrl} target="_blank" rel="noreferrer">
+              Open in Outlook
+            </a>
+            <button type="button" className={s.sendBtn} onClick={copy}>
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        )}
+      </div>
 
-      {open && action.draft && !sent && (
+      {open && action.draft && (
         <div className={s.execNote}>
           {gmailConnected
-            ? `Sends from your own Gmail after a confirm + ${UNDO_SECONDS}s undo window — Mallín never sends without your click.`
-            : 'Gmail isn’t connected, so one-click send is off. Outlook opens a prefilled compose to send by hand.'}
+            ? 'Mallín saves this to your Gmail Drafts — it never sends. Review and send from your own inbox.'
+            : 'Gmail isn’t connected. Outlook opens a prefilled compose, or use Copy to paste into your mail client.'}
         </div>
       )}
     </div>

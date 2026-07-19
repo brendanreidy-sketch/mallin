@@ -5,10 +5,10 @@
  *
  * Revealed from GenerateDeckButton once a deck exists. The rep confirms
  * recipients and an editable message carrying the deck link, then queues one
- * email_send per recipient into the action queue. Nothing sends until the rep
- * APPROVES in the queue — then it goes from their connected Gmail, audited. No
- * blind auto-send to a prospect. Reuses the existing enqueue rails (same shape
- * as EmailComposer's handleQueue).
+ * email_draft per recipient into the action queue. DRAFTS-ONLY (2026-07-18):
+ * on approval Mallín creates a draft per recipient in the rep's Gmail Drafts —
+ * it never sends. The rep sends from their own inbox. Reuses the existing
+ * enqueue rails (same shape as EmailComposer's handleQueue).
  *
  * Recipients: when the deal substrate has known buyer-side attendee emails, we
  * pre-fill them (via the `recipients` prop, resolved with
@@ -101,13 +101,13 @@ export default function SendDeckToRoom({
           body: JSON.stringify({
             opportunity_id: dealId,
             payload: {
-              type: "email_send",
+              type: "email_draft",
               to: r.email.trim(),
               subject,
               body_text: bodyText,
               body_html: bodyText.replace(/\n/g, "<br>"),
             },
-            rationale: "Deck send to meeting attendee — drafted by Mallín, pending approval",
+            rationale: "Deck draft to meeting attendee — drafted by Mallín, pending approval",
             source_surface: "email_composer",
           }),
         });
@@ -125,7 +125,7 @@ export default function SendDeckToRoom({
   if (status === "done") {
     return (
       <div style={{ marginTop: 10, fontSize: 13, color: INK3, fontFamily: MONO }}>
-        ✓ {queued} send{queued === 1 ? "" : "s"} queued — approve them in your action queue to send from your Gmail.
+        ✓ {queued} draft{queued === 1 ? "" : "s"} queued — approve them in your action queue to create drafts in your Gmail, then send from your inbox.
       </div>
     );
   }
@@ -140,9 +140,9 @@ export default function SendDeckToRoom({
         <div
           style={{ marginBottom: 12, padding: "9px 11px", background: "#fbf3e6", border: "1px solid #e3d3ad", borderRadius: 7, fontSize: 12.5, color: "#8a6d1f", lineHeight: 1.45, fontFamily: MONO }}
         >
-          Sending from your own inbox needs a one-time setup — reach out to your Mallín
-          contact to turn it on. You can still queue these now; they&apos;ll send once
-          you&apos;re connected.
+          Creating drafts in your Gmail needs a one-time setup — reach out to your Mallín
+          contact to turn it on. You can still queue these now; they&apos;ll become drafts
+          once you&apos;re connected.
         </div>
       )}
 

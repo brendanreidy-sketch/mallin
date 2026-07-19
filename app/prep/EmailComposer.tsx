@@ -1,18 +1,18 @@
 "use client";
 
 /**
- * EmailComposer — the cockpit's "send the follow-up" surface.
+ * EmailComposer — the cockpit's "draft the follow-up" surface.
  *
  * Mallín pre-fills To / Subject / Body from the deal substrate. The
  * rep reviews + (optionally) edits + chooses:
  *
- *   - Send via Gmail   (primary — fires gmail.send immediately)
- *   - Save to Drafts   (secondary — drafts.create immediately)
- *   - Queue for batch  (NEW — adds to action_queue for batch approval)
- *   - Edit             (toggle — flips fields into <textarea> mode)
- *   - Rewrite with Mallín (hand off to AskBar with context)
+ *   - Save to Gmail Drafts (primary — drafts.create; Mallín never sends)
+ *   - Queue for batch      (adds an email_draft to action_queue for batch approval)
+ *   - Edit                 (toggle — flips fields into <textarea> mode)
+ *   - Rewrite with Mallín  (hand off to AskBar with context)
  *
- * Voice-line displayed at all times: "Mallín never sends without your click."
+ * DRAFTS-ONLY (2026-07-18): Mallín creates drafts in the rep's Gmail Drafts
+ * folder and NEVER sends. The rep sends from their own inbox.
  */
 
 import { useState } from "react";
@@ -30,7 +30,7 @@ export interface EmailComposerProps {
     attribution: string;
     confidence: number;
   };
-  /** True when the current user has connected Gmail. Disables Send. */
+  /** True when the current user has connected Gmail. Gates the draft actions. */
   gmailConnected: boolean;
   /** Optional Gmail thread ID to reply in-thread. */
   threadId?: string;
@@ -38,10 +38,8 @@ export interface EmailComposerProps {
 
 type Status =
   | { kind: "idle" }
-  | { kind: "sending" }
   | { kind: "saving" }
   | { kind: "queueing" }
-  | { kind: "sent"; messageId?: string }
   | { kind: "saved"; draftId?: string }
   | { kind: "queued"; queueItemId?: string }
   | { kind: "error"; message: string };
@@ -58,38 +56,6 @@ export default function EmailComposer({
   const [editing, setEditing] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
-  async function handleSend() {
-    if (!gmailConnected) return;
-    setStatus({ kind: "sending" });
-    try {
-      const res = await fetch("/api/gmail/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to,
-          subject,
-          bodyText: body,
-          bodyHtml: bodyTextToHtml(body),
-          threadId,
-        }),
-      });
-      const json = await res.json();
-      if (!json.ok) {
-        setStatus({
-          kind: "error",
-          message: json.detail || json.error || "send failed",
-        });
-        return;
-      }
-      setStatus({ kind: "sent", messageId: json.message_id });
-    } catch (err: unknown) {
-      setStatus({
-        kind: "error",
-        message: err instanceof Error ? err.message : "send failed",
-      });
-    }
-  }
-
   async function handleQueue() {
     setStatus({ kind: "queueing" });
     try {
@@ -98,7 +64,7 @@ export default function EmailComposer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           payload: {
-            type: "email_send",
+            type: "email_draft",
             to,
             subject,
             body_text: body,
@@ -236,11 +202,6 @@ export default function EmailComposer({
       </div>
 
       {/* Status banners */}
-      {status.kind === "sent" ? (
-        <div className={`${s.banner} ${s.bannerSuccess}`}>
-          ✓ Sent. Message id: <code>{status.messageId ?? "unknown"}</code>
-        </div>
-      ) : null}
       {status.kind === "saved" ? (
         <div className={`${s.banner} ${s.bannerInfo}`}>
           ✓ Saved to Gmail Drafts. Open Gmail to review + send when ready.
@@ -262,18 +223,10 @@ export default function EmailComposer({
         <button
           type="button"
           className={s.btnPrimary}
-          onClick={handleSend}
-          disabled={!gmailConnected || status.kind === "sending" || !to}
-        >
-          {status.kind === "sending" ? "Sending…" : "✉ Send via Gmail"}
-        </button>
-        <button
-          type="button"
-          className={s.btnSecondary}
           onClick={handleSaveDraft}
           disabled={!gmailConnected || status.kind === "saving" || !to}
         >
-          {status.kind === "saving" ? "Saving…" : "💾 Save to Drafts"}
+          {status.kind === "saving" ? "Saving…" : "💾 Save to Gmail Drafts"}
         </button>
         <button
           type="button"

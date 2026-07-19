@@ -28,7 +28,7 @@ export interface ActionQueueProps {
 
 const ACTION_LABELS: Record<QueuedAction["action_type"], string> = {
   crm_update: "CRM update",
-  email_send: "Email send",
+  email_send: "Email send (legacy)",
   email_draft: "Email draft",
   risk_ack: "Risk acknowledgment",
   manager_escalate: "Manager escalation",
@@ -396,7 +396,9 @@ function describeItem(item: QueuedAction): string {
     case "crm_update":
       return `${p.field_label} → ${truncate(p.value, 120)}`;
     case "email_send":
-      return `Send "${truncate(p.subject, 100)}" to ${p.to}`;
+      // Legacy read-only (retired 2026-07-18). Never executes — label only so
+      // historical rows display.
+      return `Email (legacy) to ${p.to}: "${truncate(p.subject, 100)}"`;
     case "email_draft":
       return `Draft "${truncate(p.subject, 100)}" to ${p.to}`;
     case "risk_ack":

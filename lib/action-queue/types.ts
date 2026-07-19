@@ -18,6 +18,9 @@
 
 export type ActionType =
   | "crm_update"
+  /** @deprecated RETIRED 2026-07-18 (drafts-only). Read-only legacy type kept
+   *  so historical rows still deserialize + display. No producer creates it and
+   *  it has no executor — it can never send. Use "email_draft" instead. */
   | "email_send"
   | "email_draft"
   | "risk_ack"
@@ -50,6 +53,11 @@ export interface CrmUpdatePayload {
   deal_ref: string;
 }
 
+/**
+ * @deprecated RETIRED 2026-07-18 (drafts-only). Legacy read-only payload shape
+ * for historical `email_send` rows. Nothing creates or executes this anymore;
+ * Mallín never sends. Kept only so old queue rows can be read/displayed.
+ */
 export interface EmailSendPayload {
   type: "email_send";
   to: string;

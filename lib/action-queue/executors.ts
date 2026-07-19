@@ -21,7 +21,6 @@ import type {
   CrmUpdatePayload,
   DeferralPayload,
   EmailDraftPayload,
-  EmailSendPayload,
   ExecutionResult,
   ManagerEscalatePayload,
   QueuedAction,
@@ -67,7 +66,18 @@ export async function execute(
       case "crm_update":
         return await executeCrmUpdate(action, payload);
       case "email_send":
-        return await executeEmailSend(action, payload);
+        // RETIRED (drafts-only, 2026-07-18). `email_send` is a deprecated,
+        // read-only legacy type kept only so historical queue rows still
+        // display. It has NO executor and can never send: any attempt to
+        // execute or retry a legacy email_send row hard-fails here without
+        // touching Gmail.
+        return {
+          ok: false,
+          executor: "email_send_retired",
+          error:
+            "email_send is retired — Mallin creates drafts and never sends. " +
+            "This legacy action cannot be executed.",
+        };
       case "email_draft":
         return await executeEmailDraft(action, payload);
       case "risk_ack":
@@ -122,64 +132,8 @@ async function executeCrmUpdate(
   }
 }
 
-// ─── email_send ────────────────────────────────────────────────────────────
-async function executeEmailSend(
-  action: QueuedAction,
-  payload: EmailSendPayload,
-): Promise<ExecutionResult> {
-  // Use the Gmail send path. We could call the route handler, but
-  // calling the helper directly avoids a network hop + reuses the
-  // token-resolution path.
-  try {
-    const { getAccessTokenForUser } = await import("@/lib/auth/gmail-oauth");
-    const accessToken = await getAccessTokenForUser(action.user_id);
-
-    const mime = buildMime(payload);
-    const raw = Buffer.from(mime).toString("base64url");
-    const body = payload.thread_id
-      ? { raw, threadId: payload.thread_id }
-      : { raw };
-
-    const res = await fetch(
-      "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      },
-    );
-
-    if (!res.ok) {
-      return {
-        ok: false,
-        executor: "gmail_messages_send",
-        error: `Gmail send failed: ${res.status} ${(await res.text()).slice(0, 300)}`,
-      };
-    }
-
-    const sent = (await res.json()) as { id?: string; threadId?: string };
-    const messageId = sent.id ?? "";
-    return {
-      ok: true,
-      executor: "gmail_messages_send",
-      external_object_id: messageId,
-      external_object_type: "gmail.message",
-      external_object_url: messageId
-        ? `https://mail.google.com/mail/u/0/#sent/${messageId}`
-        : undefined,
-      result: { message_id: messageId, thread_id: sent.threadId },
-    };
-  } catch (err: unknown) {
-    return {
-      ok: false,
-      executor: "gmail_messages_send",
-      error: err instanceof Error ? err.message : "unknown_error",
-    };
-  }
-}
+// email_send has NO executor (retired 2026-07-18, drafts-only). The dispatch
+// switch hard-fails it above; there is deliberately no send implementation here.
 
 // ─── email_draft ───────────────────────────────────────────────────────────
 async function executeEmailDraft(
@@ -329,31 +283,5 @@ async function executeDeferral(
   };
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
-function buildMime(p: EmailSendPayload): string {
-  const headers = [`To: ${p.to}`, `Subject: ${p.subject}`];
-  if (p.cc) headers.push(`Cc: ${p.cc}`);
-  if (p.bcc) headers.push(`Bcc: ${p.bcc}`);
-  headers.push("MIME-Version: 1.0");
-  headers.push(
-    'Content-Type: multipart/alternative; boundary="MALLIN_QUEUE_BOUNDARY"',
-  );
-  const textPart = [
-    "--MALLIN_QUEUE_BOUNDARY",
-    'Content-Type: text/plain; charset="UTF-8"',
-    "Content-Transfer-Encoding: 7bit",
-    "",
-    p.body_text,
-  ].join("\r\n");
-  const htmlPart = [
-    "--MALLIN_QUEUE_BOUNDARY",
-    'Content-Type: text/html; charset="UTF-8"',
-    "Content-Transfer-Encoding: 7bit",
-    "",
-    p.body_html,
-  ].join("\r\n");
-  const closing = "--MALLIN_QUEUE_BOUNDARY--";
-  return [headers.join("\r\n"), "", textPart, "", htmlPart, "", closing].join(
-    "\r\n",
-  );
-}
+// (No Gmail send MIME helper — email_send is retired; drafts are built by the
+// Gmail adapter's createDraft path, not here.)

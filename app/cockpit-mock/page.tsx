@@ -178,10 +178,7 @@ export default function CockpitMock() {
 
             <div className={s.composerActions}>
               <button className={s.btnPrimary}>
-                ✉ Send via Gmail
-              </button>
-              <button className={s.btnSecondary}>
-                💾 Save to Drafts
+                💾 Save to Gmail Drafts
               </button>
               <button className={s.btnTertiary}>
                 ✏️ Edit

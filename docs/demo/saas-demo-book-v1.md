@@ -358,3 +358,117 @@ synchronously, no LLM. The deal states map to `brief.posture` (`advancing` / `at
 closed deals carry `outcome` (`won` / `lost`) with `risk_materialized` + `move_taken`. The exact
 records, placeholder handling, preflight, backup, validation, and rollback come in the
 **implementation + seed plan after these narratives are approved.**
+
+---
+
+## Appendix A — Consistency matrix
+
+One row per deal. (Wide table — scroll horizontally.)
+
+| Company | State | Amount | Stage | Close date | Champion | Economic buyer | Technical stakeholder | Primary risk | Evidence for the risk | Recommended move | Competitor | Expected outcome | Mallín capability |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **Cloudpeak** | Won | $140k | Closed Won (5/5) | 2026-06-12 | Dana Okafor · VP Product | Marcus Feld · CFO | Priya Rao · Staff Data Eng | Single-threaded on champion + build-in-house threat | Only Dana on calls 1-3; Priya call 2: "build in a quarter" | Multithread to the CFO on the $2.1M Q3 renewal metric | Build-in-house | Won - risk NOT materialized, move taken | Ledger win + Knowledge winning play |
+| **Northwind Commerce** [flag] | Lost | $90k | Closed Lost | 2026-05-28 | Sam Ellis · Analytics Lead (no budget) | Rachel Voss · VP Eng - never engaged | none engaged | Single-threaded on a user with no budget; EB never reached | Sam call 3: "I'll take it to Rachel"; 0 EB calls; 56 days idle | Don't advance until the EB is in a call; qualify out if no access in 2 weeks | Build-in-house | Lost - risk materialized, move NOT taken | Ledger loss + Knowledge trap |
+| **Vela Supply** | Needs attention (at risk) | $160k | Evaluation / Tech Validation (3/5) | 2026-08-15 | Jordan Wells · ex-VP Product - departed 07-03 | Hal Munoz · COO - cold | none engaged since champion left | Champion loss -> single-threaded on a junior PM; EB cold | Jordan-departure signal 07-03; Erin call 4: "not sure who's driving"; no EB call since 05-06 | Convert Erin to champion (one-pager); re-engage Hal on lost RFPs; hold pricing | Build-in-house (RFP-driven) | Open / at risk - Mallin steers it back | Cockpit needs-you + Prep + institutional knowledge (invokes Northwind) |
+| **Fathom Data** [flag] | On track | $180k | Proposal / Mutual Plan (4/5) | 2026-08-05 | Gabe Ruiz · VP Data | Ivy Chen · CFO | Leo Park · Platform Lead | Paper process not started -> procurement could slip the close | No paper-process step logged; Gabe call 5: "send the mutual plan, we'll countersign" | Confirm the mutual action plan; kick off the paper process now | Build-in-house | On track to close 2026-08-05 | Cockpit on-track + Prep healthy read + guided execution |
+
+[flag] = naming flag - see Appendix C, check 6.
+
+---
+
+## Appendix B — Ten-minute demo sequence
+
+Order: **Cloudpeak -> Northwind -> Vela -> Fathom.** The arc is *win (acted) -> loss (didn't act) ->
+live at-risk deal saved by that memory -> healthy deal read honestly.*
+
+**0:00-1:00 · Frame.** Open the **Cockpit (deals home)**.
+- *Say:* "This is my book - a mix of what needs me and what's on track, plus what I've already closed.
+  I'll walk four deals and show how Mallin thinks about each."
+- *Prospect understands:* Mallin is the rep's operating surface across a whole pipeline, not a
+  single-deal toy.
+- *Transition:* "Start with one I won."
+
+**1:00-3:00 · Cloudpeak (won).** Show the **Ledger** entry, then the **Knowledge** winning play.
+- *Say:* "I won Cloudpeak in June. For the first three calls I was single-threaded on my champion,
+  Dana. Mallin flagged that - it knows single-threaded is how my team loses - and told me to get the
+  CFO in on the renewal number Dana gave me. I did; we won. Mallin filed it as a labeled win: the risk
+  it caught and the move that beat it."
+- *Screen:* Ledger row (won, reasons, risk_materialized:false / move_taken:true) -> Knowledge play.
+- *Prospect understands:* Mallin learns from wins and turns them into reusable, evidence-backed plays.
+- *Transition:* "Now watch what happens when I *don't* listen."
+
+**3:00-5:00 · Northwind (lost).** Show the **Ledger** loss, then the **Knowledge** trap.
+- *Say:* "Northwind I lost. In April Mallin told me it was single-threaded on Sam, an analytics lead
+  with no budget, and that it had seen that exact shape die. It said: don't send a proposal until
+  you're with the economic buyer. I got busy, didn't force it - Northwind built in-house and the deal
+  died, for the reason Mallin named. It's a labeled loss now."
+- *Screen:* Ledger row (lost, risk_materialized:true / move_taken:false) -> Knowledge trap.
+- *Prospect understands:* Mallin is not a cheerleader - it remembers what kills deals and holds the
+  rep accountable.
+- *Transition:* "Here's the payoff - watch it use that loss on a live deal."
+
+**5:00-8:00 · Vela (at risk) - the centerpiece.** Open **Cockpit -> the Vela Prep brief.**
+- *Say:* "Vela is live and at risk. Two weeks ago my champion Jordan left. Mallin caught the departure
+  from the data, flagged I'm now single-threaded on Erin - a PM with no budget - and then said the
+  thing no dashboard would: 'this is the same shape as Northwind, the deal you lost in May.' It
+  remembered my loss. Then it gave me the moves - turn Erin into a champion with this one-pager, use it
+  to get the COO back - and drafted both. And notice: Jordan leaving is a *fact*; the budget freeze is
+  an *assumption* it flags as unverified; multithreading now is its *recommended move*."
+- *Screen:* Prep - stakeholder strategy, the evidence-cited risk, the Northwind callout, drafted
+  email/one-pager, and the facts/assumptions/moves separation.
+- *Prospect understands:* institutional knowledge + evidence-backed, guided execution - Mallin applies
+  a past loss to save a live deal and hands the rep the next action, not a chart.
+- *Transition:* "Last one - and deliberately a healthy deal, so you see it's not just an alarm."
+
+**8:00-9:30 · Fathom (on track).** Open the **Fathom Prep brief.**
+- *Say:* "Fathom is multithreaded - champion, CFO, technical, all engaged, security cleared. Mallin
+  confirms the thesis is formed and there's a real compelling event, their own launch. It's not
+  inventing risk to look useful; the *only* thing it flags is that the paper process hasn't started,
+  and it tells me to kick that off now so procurement doesn't slip an August close. It even drafted the
+  mutual action plan."
+- *Screen:* Prep - formed thesis, the single paper-process risk, the drafted mutual plan.
+- *Prospect understands:* Mallin reads a healthy deal accurately and still finds the one execution gap
+  - guided execution, not a wall of green.
+- *Transition (close):* "Four deals, one thread: it remembers what wins and what loses, it backs every
+  call with evidence, and it tells me the next move. That's the difference from a dashboard."
+
+**9:30-10:00 · Close.** Back to **Cockpit.** "This is one rep's book. Every rep's would look like this,
+and Mallin gets sharper on every deal it runs."
+
+---
+
+## Appendix C - Consistency validation
+
+1. **Every recommendation is evidence-backed - PASS.** Each recommended move traces to a cited call
+   quote or data signal: Cloudpeak -> Dana's $2.1M renewal (call 3); Northwind -> Sam's "I'll take it
+   to Rachel" + zero EB calls; Vela -> Jordan-departure signal + Erin call 4; Fathom -> missing
+   paper-process step + Gabe's countersign quote (call 5).
+2. **Facts / assumptions / moves distinguishable - PASS.** The two live deals separate them explicitly
+   (Vela: departure = fact, budget freeze = flagged assumption, multithread = move; Fathom:
+   multithread/security = fact, procurement lead time = flagged assumption, mutual-plan/paper-process =
+   move). The two closed deals state facts + whether the move was taken.
+3. **Dates internally consistent - PASS.** Cloudpeak 02-10 -> 06-12 (~4 mo). Northwind 04-02 last call +
+   56 idle days = 05-28 lost. Vela 04-08 open, last call 07-06 (12 days before "today" 2026-07-18),
+   close 08-15. Fathom 05-05 -> 08-05 (~3 mo), next call 07-24. Every close date falls after the last
+   logged call; all cycle lengths sit in the 3.5-5 month band.
+4. **Titles / authority believable - PASS.** Champions are roadmap owners (VP Product / VP Data);
+   economic buyers are finance/ops execs who sign (CFO / COO); technical stakeholders are staff/platform
+   engineers (the build-vs-buy gatekeepers). The users who lack budget (Analytics Lead, Senior PM) are
+   correctly NOT cast as economic buyers - that mismatch is the point of Northwind and Vela.
+5. **MEDDPICC aligns with each deal's maturity - PASS.** Cloudpeak: full (Metrics, engaged EB, Champion,
+   Competition) -> won. Northwind: gaps (no EB, powerless champion, no Metrics, no Paper Process) ->
+   lost. Vela: was maturing, now regressed (Champion lost, EB cold, compelling event needs
+   reconfirming) -> at risk. Fathom: strong across the board with **Paper Process** the one open field
+   -> on track. Maturity matches state in every case.
+6. **No name collides with a known sample or real company - TWO FLAGS, action recommended.**
+   - **Northwind Commerce - rename recommended.** "Northwind Traders" is Microsoft's canonical sample
+     database; in a data/analytics demo it reads as demo scaffolding and undercuts believability.
+     **Proposed replacement: "Tanager Commerce."**
+   - **Fathom Data - rename recommended.** "Fathom" is a real analytics-adjacent brand (Fathom
+     Analytics; Fathom AI notetaker); since Meridian *is* an analytics product, this risks confusion.
+     **Proposed replacement: "Keelstone Data."**
+   - Cloudpeak, Vela Supply, and the seller product "Meridian" are acceptable - distinct sectors, no
+     direct collision - though "Meridian" is a common name and stays purely the fictional demo product.
+   - These are display-string changes only; the seed plan below uses state-based deal keys, so a rename
+     does not churn any record identifiers. **Awaiting your go/no-go on the two renames before
+     implementation.**

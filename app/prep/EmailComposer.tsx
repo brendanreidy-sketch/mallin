@@ -252,13 +252,13 @@ export default function EmailComposer({
           💡 Rewrite with Mallín
         </button>
         <span className={s.never}>
-          Mallín never sends without your click
+          Mallín saves a draft to Gmail. You review and send it from Gmail.
         </span>
       </div>
 
       {!gmailConnected ? (
         <div className={`${s.banner} ${s.bannerWarn}`}>
-          Connect Gmail to send from this surface.{" "}
+          Connect Gmail to save drafts from this page.{" "}
           <a className={s.link} href="/settings/integrations">
             Go to Settings → Integrations →
           </a>

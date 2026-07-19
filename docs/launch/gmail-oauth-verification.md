@@ -3,9 +3,19 @@
 **Type:** audit only (no code / env / Clerk / Google Console / Production change).
 **Date:** 2026-07-18. **Scope of trace:** active + dead code, privacy policy, launch docs, Clerk relationship.
 **Bottom line:** the app requests **`gmail.compose` + `openid` + `email`** and every live flow works on
-those three; **`gmail.modify` is not requested or required anywhere** (only stale comments). One
-material mismatch to resolve before submitting: the **privacy policy says "never sends," but a live,
-UI-exposed `messages.send` path exists.**
+those three; **`gmail.modify` is not requested or required anywhere** (only stale comments).
+
+> **CORRECTION (2026-07-18, supersedes the "sensitive, no CASA" language below).** Google currently
+> classifies **`gmail.compose` as a RESTRICTED scope**, not merely sensitive. Because Mallín **stores
+> OAuth tokens and calls Gmail from its backend**, the Google API Services User Data Policy
+> **restricted-scope requirements apply — which may include a third-party security assessment (CASA)**.
+> **Do not assume no CASA / no security assessment is required.** This is an **UNRESOLVED verification
+> requirement that must be confirmed directly with Google** before any submission. Every "sensitive,
+> not restricted" or "no CASA" statement in the original draft below is retracted and flagged inline.
+
+Two material items to resolve before submitting: (1) the **restricted-scope / CASA requirement above**,
+and (2) the **privacy policy says "never sends," but a live, UI-exposed `messages.send` path exists**
+(being resolved via the drafts-only decision — see the drafts-only plan).
 
 ---
 
@@ -15,7 +25,7 @@ UI-exposed `messages.send` path exists.**
 
 | Scope | Sensitivity | Where configured | Why |
 |---|---|---|---|
-| `https://www.googleapis.com/auth/gmail.compose` | **Sensitive** (not restricted) | [lib/auth/gmail-oauth.ts:53](lib/auth/gmail-oauth.ts:53) | create drafts + send (compose supersets send) |
+| `https://www.googleapis.com/auth/gmail.compose` | **RESTRICTED** (Google, current — see Correction) | [lib/auth/gmail-oauth.ts:53](lib/auth/gmail-oauth.ts:53) | create drafts + send (compose supersets send) |
 | `openid` | identity | [lib/auth/gmail-oauth.ts:54](lib/auth/gmail-oauth.ts:54) | OIDC id_token |
 | `email` | identity | [lib/auth/gmail-oauth.ts:55](lib/auth/gmail-oauth.ts:55) | read the connected Google email to display it |
 
@@ -63,14 +73,28 @@ Three different scope names in comments; one real requested scope (`gmail.compos
 ### Confirmed active behavior
 - Requested scopes: `gmail.compose` + `openid` + `email` (§1a).
 - Live Gmail API usage: `drafts.create` and `messages.send` — **both** authorized by `gmail.compose`.
-- Send is **real and user-exposed**: `/prep` renders EmailComposer with a primary "✉ Send via Gmail"
-  button ([EmailComposer.tsx:268](app/prep/EmailComposer.tsx:268)) → `/api/gmail/send`. It is gated to an
-  authenticated user click and short-circuits to simulation for demo tenants (send/route.ts:70-79).
+- **Full `messages.send` inventory (corrected — larger than the first pass):**
+  - **Backend send path #1:** `POST /api/gmail/send` → [send/route.ts:105](app/api/gmail/send/route.ts:105).
+  - **Backend send path #2:** the action-queue **`email_send`** executor
+    [executors.ts:126-174](lib/action-queue/executors.ts:126) (`executeEmailSend` → messages.send at :144),
+    dispatched from the case at [executors.ts:69](lib/action-queue/executors.ts:69).
+  - **UI producers:** EmailComposer "✉ Send via Gmail" ([:265](app/prep/EmailComposer.tsx:265)) and its
+    "Queue" button which enqueues `email_send` ([:101](app/prep/EmailComposer.tsx:101)); BookReview
+    "✉ Send via Gmail" ([BookReview.tsx:468](app/cockpit-views/BookReview.tsx:468) → /api/gmail/send:270);
+    SendDeckToRoom enqueues `email_send` ([:104](app/prep/SendDeckToRoom.tsx:104)); a "✉ Send via Gmail"
+    label in the stale `cockpit-mock` page ([:181](app/cockpit-mock/page.tsx:181) — verify decorative).
+    Queued `email_send` items are rendered/approved via ActionQueue ([:398](app/prep/ActionQueue.tsx:398)).
+- **`/cockpit-views` is reachable, not dead:** `/cockpit`, `/deals`, `/knowledge`, `/coaching` redirect
+  to it when `hasCockpitAccess()` — so BookReview's send is live for cockpit-access users.
+- Send is gated to an authenticated user click and short-circuits to simulation for demo tenants
+  (send/route.ts:70-79). The queue executor has no such demo short-circuit — worth noting.
 - Disconnect deletes the local token row; it does **not** call Google's revoke endpoint.
 
 ### Unused / dead code
-- `listSentThreads` and `getMessage` — throw-only stubs; the only things that would need a read scope.
-  They keep the app on the **sensitive** tier, not restricted. Not wired to any surface.
+- `listSentThreads` and `getMessage` — throw-only stubs. They are the only things that would add a
+  *read* scope. **Note:** not shipping them does **not** make the app "non-restricted" —
+  `gmail.compose` is itself restricted (see Correction), so restricted-scope requirements apply
+  regardless. Not wired to any surface.
 
 ### Documentation claims
 - **Privacy policy** [app/(trust)/privacy/page.tsx:220-229](app/(trust)/privacy/page.tsx:220): "requests a
@@ -90,6 +114,11 @@ Three different scope names in comments; one real requested scope (`gmail.compos
 - **Is `mallin.io` domain-verified** in Google Search Console under the same Google account? Required for
   the authorized domain + branding.
 - **Publishing status** (Testing vs In production) and current **test users** list.
+- **Restricted-scope / CASA requirement** — whether Google requires a third-party security assessment for
+  this `gmail.compose` + server-side-token usage. **Must be confirmed with Google** (see Correction, §8).
+- **Separate Cloud projects for testing vs Production?** Google recommends separate projects. Evidence
+  points to a **single** project (`mallin-502618`, per the setup notes); confirm in the Console whether a
+  distinct test project exists or one project serves both.
 
 ### Adjacent code issue (not a scope/verification blocker, but affects the demo)
 - **Drafts route auth mismatch:** [app/api/gmail/drafts/route.ts:19](app/api/gmail/drafts/route.ts:19) requires
@@ -104,9 +133,9 @@ Three different scope names in comments; one real requested scope (`gmail.compos
 ## 3. Google OAuth verification runbook
 
 ### 1. Exact scopes to submit
-- `.../auth/gmail.compose` — **Sensitive**. Justification: "Mallín drafts follow-up emails in the user's
-  voice into their Gmail Drafts folder, and (if the send feature is kept) sends a message the user
-  explicitly clicks Send on. No inbox/message reading."
+- `.../auth/gmail.compose` — **RESTRICTED** (see Correction). Justification: "Mallín creates draft
+  follow-up emails in the user's voice in their Gmail Drafts folder. Mallín never sends and never reads
+  existing mail." (Drafts-only per the launch decision.)
 - `openid`, `email` — identity, to show which Google account is connected.
 - **Do not submit** `gmail.modify` or any read scope.
 
@@ -153,14 +182,23 @@ Three different scope names in comments; one real requested scope (`gmail.compos
   single redirect URI.
 
 ### 8. Expected review path & remaining blockers
-- **Path: standard sensitive-scope verification — NO CASA.** `gmail.compose` is *sensitive*, not
-  *restricted*; CASA only applies to restricted scopes (gmail.modify/readonly), which we do not request.
+- **Path: RESTRICTED-scope verification — CASA / third-party security assessment status UNRESOLVED.**
+  `gmail.compose` is a **restricted** scope (Correction, top of doc). Because Mallín **stores OAuth
+  tokens and calls Gmail server-side**, the restricted-scope path applies and **may require a CASA
+  (third-party) security assessment** in addition to the brand/consent review. **This must be confirmed
+  directly with Google** — do not budget or message launch as if it were a light sensitive-scope review.
+  The earlier "no CASA" claim is retracted.
 - **Blockers to clear first:**
-  1. Remove `gmail.modify` from the consent screen if still listed (dashboard unknown, §2).
-  2. Reconcile the privacy policy vs the live send path (§4) — the biggest substantive item.
-  3. Verify `mallin.io` in Search Console.
-  4. Fix the drafts-route `x-user-id` auth so the demoed draft path works.
-  5. (Nice-to-have Google favors) revoke the token at Google on Disconnect, not just delete locally.
+  1. **Confirm with Google** whether restricted-scope verification for this usage requires a CASA/security
+     assessment, and on what timeline — the top unknown.
+  2. Confirm whether **testing and Production use separate Google Cloud projects** (Google recommends
+     separate; evidence suggests a single project `mallin-502618` today — confirm in Console, §2).
+  3. Remove `gmail.modify` from the consent screen if still listed (dashboard unknown, §2).
+  4. Land the **drafts-only** change so behavior, privacy policy, and consent wording all say "never sends"
+     (see the drafts-only plan).
+  5. Verify `mallin.io` in Search Console.
+  6. Fix the drafts-route `x-user-id` auth so the demoed draft path works.
+  7. (Nice-to-have Google favors) revoke the token at Google on Disconnect, not just delete locally.
 
 ---
 

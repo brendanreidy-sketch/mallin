@@ -3,11 +3,20 @@
 Normal product development items. These are *not* incident blockers — the 2026-07-18
 recovery incident is closed (baseline tag `recovery-stable-2026-07-18`, commit `9f339ca`).
 
+## Shipped
+
+- **Hide the empty prior-call block when there is no content** — shipped 2026-07-18 (commit
+  `05d9f12`, release tag `release-2026-07-18-hide-empty-prior-call-block`).
+
 ## Open
 
-1. **Hide the empty prior-call block when there is no content.** `/prep` currently renders
-   empty "What was said last time" columns for artifacts whose `post_call_synthesis` lacks
-   the expected fields. Show nothing when there's no content. Small, cosmetic, own commit.
+1. **Prep top bar overflows on mobile.** At ~375px the `/prep` top bar (`.topbar` in
+   `app/prep/page.tsx`) is a single non-wrapping row (`flex-wrap: nowrap`, `overflow-x: visible`)
+   whose controls total ~617–697px into ~467px of width, so Sign out / Mark closed / + Log touch
+   run off the right edge and are unreachable (no horizontal scroll). This is **pre-existing**
+   (predates the Settings link added 2026-07-18; the link adds ~80px). Fix by letting the bar
+   wrap or scroll horizontally on narrow widths — its own scoped change, not a redesign bundled
+   into another feature. The Cockpit header is unaffected (simple two-item flex, fits on mobile).
 2. **Reintroduce social preview (OG/Twitter) images safely.** Not at the app root — the root
    `app/opengraph-image.tsx` / `app/twitter-image.tsx` broke client hydration on dynamic
    routes (the original 2026-07-18 homepage cause). Scope images to public/static routes only.

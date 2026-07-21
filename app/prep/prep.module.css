@@ -239,6 +239,21 @@
 .topbarBack a {
   margin-bottom: 0 !important;
 }
+/* Mobile / tablet (≤1000px): the utility bar carries many controls, so lay
+   it out as deliberate wrapping rows rather than one horizontal row that
+   clips (Settings onward were being cut off). "All deals" keeps its own
+   compact row (flex-basis:100%); the growing spacer is removed so the brand
+   and every control pack from the left and wrap as needed — nothing hidden,
+   nothing clipped, no horizontal scroll. Desktop (≥1001px) is unaffected:
+   the spacer stays and the bar remains the approved single right-aligned row. */
+@media (max-width: 1000px) {
+  .topbarBack {
+    flex-basis: 100%;
+  }
+  .topbarSpacer {
+    display: none;
+  }
+}
 .topbarSpacer {
   flex: 1;
 }

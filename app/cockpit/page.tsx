@@ -5,6 +5,8 @@ import { supabaseAdmin } from "@/lib/db/client";
 import { hasCockpitAccess } from "@/lib/cockpit/access";
 import { AppSignOut } from "@/components/auth/sign-out-button";
 import { SettingsLink } from "@/components/nav/settings-link";
+import AppShell from "@/components/app-shell/AppShell";
+import { shellUser } from "@/components/app-shell/chrome";
 import AccountLogo from "@/components/AccountLogo";
 import { UpgradeButton } from "@/components/UpgradeButton";
 import { getHelpUsage } from "@/lib/billing/help-usage";
@@ -98,6 +100,11 @@ export default async function CockpitRedirectPage() {
     redirect("/welcome");
   }
 
+  // Signed-in rep identity for the operating-layer sidebar (the same helper the
+  // other shell surfaces use; Clerk dedupes the read within the request). This
+  // is UI identity only — it does not touch deal, tenant, ranking, or data logic.
+  const { name, initials } = await shellUser();
+
   // Resolve tenant by Clerk org_id (stored as tenants.slug)
   const { data: tenant } = await supabaseAdmin
     .from("tenants")
@@ -106,8 +113,13 @@ export default async function CockpitRedirectPage() {
     .maybeSingle();
 
   if (!tenant) {
-    // Logged in but no tenant row yet — fall through to empty state
-    return <EmptyState tenantName={null} />;
+    // Logged in but no tenant row yet — fall through to empty state,
+    // seated inside the operating-layer shell like the deals home.
+    return (
+      <AppShell name={name} initials={initials}>
+        <EmptyState tenantName={null} />
+      </AppShell>
+    );
   }
 
   // Free-tier meter — gate the "+ New deal" button up front when over limit.
@@ -236,15 +248,17 @@ export default async function CockpitRedirectPage() {
         : "No active deals yet.";
 
   return (
-    <DealsHome
-      tenantName={tenant.name}
-      greetingLine={greetingLine}
-      dateLabel={dateLabel}
-      brief={brief}
-      needsYou={needsYou}
-      onTrack={onTrack}
-      overLimit={usage.over}
-    />
+    <AppShell name={name} initials={initials}>
+      <DealsHome
+        tenantName={tenant.name}
+        greetingLine={greetingLine}
+        dateLabel={dateLabel}
+        brief={brief}
+        needsYou={needsYou}
+        onTrack={onTrack}
+        overLimit={usage.over}
+      />
+    </AppShell>
   );
 }
 

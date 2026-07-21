@@ -7,6 +7,39 @@ records the live deployment and its immediate rollback target. Baseline: the
 commit `50da444`. Tags mark commits; deployments are separate build artifacts —
 this ledger records the two separately per release.
 
+## 2026-07-21 — Cockpit premium visual pass (desktop-widened deals home)
+
+- **Change:** Presentational-only redesign of the `/cockpit` deals home. Deal-home markup moved
+  from inline styles into a new `app/cockpit/cockpit.module.css`; the top needs-attention card is
+  emphasized purely via CSS `:first-child` (no JS, no new selection logic); calmer status pills,
+  restrained tone accents, and 375px header/overflow fixes; then a follow-up widening the desktop
+  container 640→960px (cards full-width, greeting/brief held to a readable measure). **The frozen
+  server/data block in `page.tsx` (queries, tenant filter, ranking, grouping, greeting/brief text)
+  is byte-identical** — no wording, logic, Prep, dark-wiring, or other-file changes.
+- **Commits (exactly two):** `32db354` (premium visual pass) · `f3433b9` (desktop width
+  correction). On `main` (fast-forward, no squash). Complete app-code release diff vs the prior
+  live release (`b4d2d78`) = exactly `app/cockpit/page.tsx` + `app/cockpit/cockpit.module.css`
+  (the intervening `4955d50` was docs-only).
+- **Release tag:** `release-2026-07-21-cockpit-premium-pass` → commit `f3433b9` (annotated).
+- **Live deployment:** `dpl_EbeuX555MRUbyUpZVAVBimWkCZJy` (`revops-autopilot-kz4vfsa5h`), built
+  from commit `f3433b9`.
+- **Git provenance (genuine, GitHub-recorded):** Vercel commit status on `f3433b9` = success →
+  inspector `…/EbeuX555MRUbyUpZVAVBimWkCZJy`; GitHub Deployment `5543591386` (env Production, ref
+  `f3433b9`, status success) → `revops-autopilot-kz4vfsa5h`. Verified via `gh api`, not
+  self-reported metadata.
+- **Immediate rollback:** deployment `dpl_3bkNtF4be5U285Q1niDtVpCMsupp` (`revops-autopilot-d4oaxlezr`),
+  built from commit `b4d2d78` (the prior gmail-drafts-only release).
+  Rollback command: `vercel alias set https://revops-autopilot-d4oaxlezr-roomrefund.vercel.app mallin.io`
+- **Canary acceptance:** owner authenticated review on `canary.mallin.io/cockpit` against the exact
+  candidate — real-org desktop + ~390px, SaaS demo, forced dark, first-card emphasis, wider desktop
+  container, Settings/Sign out, tenant truncation, deal→Prep nav, Prep render, Gmail connected to
+  `builtalone@gmail.com`. All passed.
+- **Live verification (`mallin.io`):** homepage 200, sign-in 200, `/prep` 200, `/cockpit` gated by
+  Clerk (404 protect-rewrite), no 5xx; serves the exact authenticated-tested deployment.
+- **Excluded (deliberately):** the greeting-timezone fix (server UTC `getHours()` — separate
+  backlog), the Prep shell redesign (separate backlog), and all strategy/positioning work.
+- **Status:** CLOSED.
+
 ## 2026-07-18 — Gmail drafts-only (direct send retired)
 
 - **Change:** Mallín now **only creates Gmail drafts and never sends**. Every direct-send path

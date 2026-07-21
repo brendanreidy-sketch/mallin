@@ -7,6 +7,40 @@ records the live deployment and its immediate rollback target. Baseline: the
 commit `50da444`. Tags mark commits; deployments are separate build artifacts —
 this ledger records the two separately per release.
 
+## 2026-07-21 — Landing hero: static product-faithful Cockpit recreation
+
+- **Change:** Presentational-only redesign of the landing **hero** only. The auto-advancing
+  five-panel `HomeWalkthrough` demo is replaced with a **static, product-faithful Cockpit
+  recreation** (cream `--ck-` deals-home in a framed product window) using **fictional
+  illustrative data** (Meridian Freight / Cobalt Analytics / Harbor Point Health; greeting
+  "Jordan"). All timers/step-state/carousel/transitions/interactive chips removed; it renders
+  as a labelled illustrative figure (`role="img"`, `aria-hidden` content) — no motion, no
+  focusable controls. A follow-up wraps the focus-card deal name to two lines (on-track rows keep
+  truncating). **No marketing copy, CTA, href, nav, footer, auth-redirect, or theme change** —
+  `app/page.tsx`, `app/home.module.css`, `SiteNav`, `SiteFooter` are byte-identical.
+- **Commits (exactly two):** `f20f27f` (static recreation) · `18d047f` (2-line focus-name wrap).
+  On `main` (fast-forward, no squash). Release diff = exactly `app/HomeWalkthrough.tsx` +
+  `app/HomeWalkthrough.module.css` (new).
+- **Release tag:** `release-2026-07-21-landing-hero-premium` → commit `18d047f` (annotated).
+- **Live deployment:** `dpl_GvYwMaPXkEVBiui2tD7C783ueDXC` (`revops-autopilot-9q5bquybm`), built
+  from commit `18d047f`.
+- **Git provenance (genuine, GitHub-recorded):** Vercel commit status on `18d047f` = success →
+  inspector `…/GvYwMaPXkEVBiui2tD7C783ueDXC`; GitHub Deployment `5545387823` (env Production, ref
+  `18d047f`, status success) → `revops-autopilot-9q5bquybm`.
+- **Immediate rollback:** deployment `dpl_EbeuX555MRUbyUpZVAVBimWkCZJy`
+  (`revops-autopilot-kz4vfsa5h`), the prior cockpit-premium release.
+  Rollback command: `vercel alias set https://revops-autopilot-kz4vfsa5h-roomrefund.vercel.app mallin.io`
+- **Anonymous acceptance (the key gate):** verified on the **wall-free** production candidate via
+  a truly cookie-free session (no Vercel/Clerk cookies) at **390×844**: `scrollWidth === clientWidth`
+  (zero horizontal overflow), layout stacks (copy → framed product window), the hamburger **opens
+  into the full nav and closes** (live hydration on a cold anonymous load), **no console errors**,
+  accessible figure present. Desktop verified; signed-in `/`→`/cockpit` redirect intact.
+- **Live verification (`mallin.io`):** homepage 200, sign-in 200, `/prep` 200, `/cockpit` Clerk-
+  gated (404 protect-rewrite), no 5xx; serves the exact accepted deployment.
+- **Excluded (deliberately):** the greeting-timezone fix, the Prep shell redesign, and all
+  strategy/positioning work.
+- **Status:** CLOSED.
+
 ## 2026-07-21 — Cockpit premium visual pass (desktop-widened deals home)
 
 - **Change:** Presentational-only redesign of the `/cockpit` deals home. Deal-home markup moved

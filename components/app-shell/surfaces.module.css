@@ -61,12 +61,27 @@
   letter-spacing: 0.11em; text-transform: uppercase; margin: 22px 0 10px; }
 .dgroup.need { color: var(--ck-crit); }
 .dgroup.track { color: var(--ck-ink-4); }
-.drow { display: grid; grid-template-columns: 1fr 120px 92px 20px; align-items: center; gap: 14px;
+.drow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 14px;
   padding: 15px 18px; background: var(--ck-surface); border: 0.5px solid var(--ck-rule); border-radius: 11px;
   margin-bottom: 9px; text-decoration: none; }
-.dnm { font-size: 14.5px; font-weight: 600; color: var(--ck-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dnx { font-size: 12.5px; color: var(--ck-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-.dstage { font-size: 12.5px; color: var(--ck-ink-3); }
+/* The unclassed text wrapper (first grid child) must shrink so the name/next
+   lines truncate instead of forcing the row past the 900px body width. The
+   minmax(0,1fr) track above allows the shrink; this guards the item itself. */
+.drow > :first-child { min-width: 0; }
+.dnm { display: block; font-size: 14.5px; font-weight: 600; color: var(--ck-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dnx { display: block; font-size: 12.5px; color: var(--ck-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.dstage { font-size: 12.5px; color: var(--ck-ink-3); white-space: nowrap; }
+
+/* Deals rows collapse deliberately on narrow widths (<=720px): the deal name +
+   next-step take the full first line; the status label, risk chip, and arrow
+   drop to a second line with the arrow right-aligned. Everything is scoped to
+   .drow so the Home watch rows, Ask, Team, and Knowledge — which share this
+   file — are untouched. */
+@media (max-width: 720px) {
+  .drow { display: flex; flex-wrap: wrap; }
+  .drow > :first-child { flex: 1 1 100%; }
+  .drow .arrow { margin-left: auto; }
+}
 
 /* ask view */
 .qrow { display: flex; align-items: center; gap: 10px; margin: 0 0 22px; }

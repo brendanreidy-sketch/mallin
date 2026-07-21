@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/db/client";
 import { hasCockpitAccess } from "@/lib/cockpit/access";
@@ -13,6 +14,20 @@ import type { AccountIntelligenceArtifact } from "@/lib/intelligence/types";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import s from "./cockpit.module.css";
+
+// The visitor's IANA timezone, from Vercel's edge geolocation header
+// (e.g. "America/Denver"). Validated before use because Intl.DateTimeFormat
+// throws a RangeError on an unknown/malformed zone. Returns null when the
+// header is absent (local dev / non-Vercel) or invalid, so callers fall back.
+function resolveTimeZone(tz: string | null | undefined): string | null {
+  if (!tz) return null;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return tz;
+  } catch {
+    return null;
+  }
+}
 
 const OPTION_CARD: CSSProperties = {
   display: "block",
@@ -172,14 +187,42 @@ export default async function CockpitRedirectPage() {
   const firstName =
     greetUser?.firstName ??
     (greetUser?.username ? greetUser.username.split(/[._-]/)[0] : null);
-  const hour = new Date().getHours();
+  // Greeting + date reflect the visitor's LOCAL calendar day, from the same
+  // `now` instant, using their edge-geolocated timezone. Thresholds:
+  //   morning 00:00–11:59 · afternoon 12:00–16:59 · evening 17:00–23:59.
+  // When the timezone is unavailable/invalid we can't know their time of day,
+  // so we drop to a neutral, never-wrong greeting and the server-default date.
+  const tz = resolveTimeZone((await headers()).get("x-vercel-ip-timezone"));
+  const localHour =
+    tz === null
+      ? null
+      : Number(
+          new Intl.DateTimeFormat("en-US", {
+            hour: "2-digit",
+            hourCycle: "h23",
+            timeZone: tz,
+          }).format(now),
+        );
   const greetWord =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const greetingLine = firstName ? `${greetWord}, ${firstName}` : greetWord;
-  const dateLabel = new Date().toLocaleDateString("en-US", {
+    localHour === null
+      ? null
+      : localHour < 12
+        ? "Good morning"
+        : localHour < 17
+          ? "Good afternoon"
+          : "Good evening";
+  const greetingLine = greetWord
+    ? firstName
+      ? `${greetWord}, ${firstName}`
+      : greetWord
+    : firstName
+      ? `Welcome back, ${firstName}`
+      : "Welcome back";
+  const dateLabel = now.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
+    ...(tz ? { timeZone: tz } : {}),
   });
   const brief =
     needsYou.length > 0

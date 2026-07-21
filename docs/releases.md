@@ -7,6 +7,39 @@ records the live deployment and its immediate rollback target. Baseline: the
 commit `50da444`. Tags mark commits; deployments are separate build artifacts —
 this ledger records the two separately per release.
 
+## 2026-07-21 — Cockpit greeting/date: visitor-local timezone (fix)
+
+- **Change:** The `/cockpit` daily-brief greeting word (morning/afternoon/evening)
+  and the displayed date now reflect the **visitor's local calendar day**, not the
+  Vercel server's UTC clock. Both derive from one shared `now` instant and the
+  visitor's timezone read from Vercel's edge header **`x-vercel-ip-timezone`**. The
+  header is **validated** before `Intl.DateTimeFormat` (which throws on an unknown
+  zone); on a missing or invalid header we fall back to a **neutral, never-wrong
+  greeting** (`Welcome back, {name}`) and the server-default date. Thresholds:
+  **morning 00:00–11:59 · afternoon 12:00–16:59 · evening 17:00–23:59.** No timezone
+  is hard-coded. Presentational/derivation only — **no change to deal queries,
+  ranking, grouping, brief wording, styling, auth, navigation, Prep, Gmail/OAuth,
+  or database behavior.**
+- **Known limitation:** `x-vercel-ip-timezone` is IP-geolocation based, so a VPN or
+  travel can place the visitor in a different zone than their device clock; the
+  greeting/date follow the IP zone in that case (acceptable for a greeting).
+- **Commit (one file):** `2b9ad4b` — `app/cockpit/page.tsx` only (+47 / −4). On
+  `main` (fast-forward, no squash); identical to the commit accepted on canary.
+- **Release tag:** `release-2026-07-21-cockpit-tz-greeting` → commit `2b9ad4b` (annotated).
+- **Live deployment:** **`dpl_DMGoZmpMZ3ww47pK2yAd6NXUhcQF`** (`revops-autopilot-he4vtnu9e`),
+  built from `2b9ad4b`. Provenance: Vercel commit status success + GitHub Deployment
+  `5545946756` (env Production, ref `2b9ad4b`).
+- **Immediate rollback:** **`dpl_GvYwMaPXkEVBiui2tD7C783ueDXC`** (`revops-autopilot-9q5bquybm`),
+  the prior landing-hero release.
+  Rollback command: `vercel alias set https://revops-autopilot-9q5bquybm-roomrefund.vercel.app mallin.io`
+- **Acceptance:** offline suite all-pass (six thresholds incl. the 5 PM boundary, six
+  IANA zones independent, missing/invalid header → neutral, near-midnight date follows
+  local calendar day); owner-accepted on the prod-debug canary (identical commit):
+  "Good afternoon, Brendan · Tuesday, July 21" matched local time, cockpit rendered
+  normally, no flicker/hydration error. Post-promotion `mallin.io`: `/` 200, `/sign-in`
+  200, marketing 200, `/cockpit` + `/prep` gated with no 5xx, correct title.
+- **Status:** CLOSED.
+
 ## 2026-07-21 — Landing hero: static product-faithful Cockpit recreation
 
 - **Change:** Presentational-only redesign of the landing **hero** only. The auto-advancing

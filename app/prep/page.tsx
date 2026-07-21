@@ -635,7 +635,6 @@ export default async function PrepPage({
         <meta httpEquiv="refresh" content="8" />
       )}
       <div className={s.shell}>
-        <BackLink href="/cockpit" label="All deals" />
         {bannerState === "in_flight" && (
           <RegeneratingBanner touchBody={latestTouchBody} />
         )}
@@ -1023,6 +1022,9 @@ function TopBar({
     })) ?? [];
   return (
     <div className={s.topbar}>
+      <span className={s.topbarBack}>
+        <BackLink href="/cockpit" label="All deals" />
+      </span>
       <span className={s.topbarBrand}>
         <MallinMark size={20} surfaceColor="var(--ck-ink)" streamColor="var(--ck-blue-2)" />
         Mallín

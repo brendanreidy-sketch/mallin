@@ -67,6 +67,26 @@
   }
 }
 
+/* Desktop (≥1001px): a flush, full-width workspace instead of a floating
+   rounded card sitting in a cream margin. Drops the card radius/shadow/
+   border, widens toward the viewport, and cuts the dead space above the
+   chrome so the workspace starts higher. Mobile (≤1000px — the cockpit
+   single-column collapse) keeps the base rounded shell untouched. */
+@media (min-width: 1001px) {
+  .page {
+    padding-top: calc(12px * var(--density-scale, 1));
+  }
+  .shell {
+    max-width: min(1760px, 98vw);
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+  .header {
+    padding-top: 20px;
+  }
+}
+
 /* ── Saved-touch banner (shown after a successful touch save) ──────── */
 .savedBanner {
   display: flex;
@@ -201,10 +221,23 @@
 .topbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 8px 14px;
   background: transparent;
   border-bottom: 0.5px solid var(--ck-rule);
+}
+/* "All deals" back-nav, folded into the top chrome (previously a separate
+   row above the bar — the "disconnected All deals row"). Reuses the shared
+   BackLink unchanged; we only neutralise its standalone bottom margin so it
+   sits centered in the flex bar. flex-wrap above keeps the bar overflow-safe
+   on narrow widths now that it carries one more item. */
+.topbarBack {
+  display: inline-flex;
+  align-items: center;
+}
+.topbarBack a {
+  margin-bottom: 0 !important;
 }
 .topbarSpacer {
   flex: 1;

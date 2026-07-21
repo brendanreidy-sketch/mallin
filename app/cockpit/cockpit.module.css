@@ -1,0 +1,239 @@
+/* Cockpit deals-home — focused premium visual pass.
+   Presentational only; every colour comes from the existing --ck-* tokens.
+   Scope: the greeting masthead, deal groups, deal rows, and the first
+   needs-attention card. Data, routing, ranking, grouping, and all wording
+   live untouched in page.tsx (frozen server block). No new palette, no
+   animation, no JS — the lead card is chosen by DOM order via :first-child. */
+
+.main {
+  min-height: 100vh;
+  background: var(--ck-paper);
+  color: var(--ck-ink-2);
+  padding: 40px 24px 64px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ck-ink);
+}
+.tenant {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--ck-ink-3);
+  margin-left: 6px;
+  max-width: 42vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+/* Masthead — greeting + brief. Existing text; rhythm/spacing only. */
+.masthead {
+  margin-bottom: 34px;
+}
+.eyebrow {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--ck-ink-3);
+  margin: 0;
+}
+.greeting {
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: var(--ck-ink);
+  margin: 8px 0 10px;
+}
+.brief {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ck-ink-2);
+  margin: 0;
+  max-width: 48ch;
+}
+
+/* "Your deals" heading row */
+.dealsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.dealsHeading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ck-ink);
+}
+
+/* Groups */
+.groupLabel {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+.list,
+.attentionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Rows */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  background: var(--ck-surface);
+  border: 0.5px solid var(--ck-rule);
+  border-left: 0.5px solid var(--ck-rule);
+  border-radius: 10px;
+  text-decoration: none;
+}
+.row[data-tone="critical"] {
+  border-left: 2px solid var(--ck-crit);
+}
+.row[data-tone="caution"] {
+  border-left: 2px solid var(--ck-warn);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ck-good);
+}
+.dot[data-tone="critical"] {
+  background: var(--ck-crit);
+}
+.dot[data-tone="caution"] {
+  background: var(--ck-warn);
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+}
+.name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ck-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.why {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ck-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.attentionList .why {
+  color: var(--ck-ink-2);
+}
+
+.pill {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: var(--ck-surface-2);
+  color: var(--ck-ink-3);
+  flex-shrink: 0;
+}
+.pill[data-live="true"] {
+  background: var(--ck-good-tint);
+  color: var(--ck-good);
+}
+
+.arrow {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--ck-ink-3);
+}
+
+/* First needs-attention card — emphasized by DOM order, CSS only.
+   The frozen server block already renders the top-priority deal first,
+   so :first-child IS the lead. No index, no sort, no priority variable. */
+.attentionList > li:first-child > .row {
+  padding: 18px 20px;
+  border-left-width: 3px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px var(--ck-shadow);
+}
+.attentionList > li:first-child > .row .name {
+  font-size: 17px;
+}
+.attentionList > li:first-child > .row .why {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Responsive — ~375px. Header controls never clip; nothing overflows. */
+@media (max-width: 480px) {
+  .main {
+    padding: 32px 16px 48px;
+  }
+  .greeting {
+    font-size: 22px;
+  }
+  .brief {
+    font-size: 15px;
+  }
+  .tenant {
+    max-width: 34vw;
+  }
+  .attentionList > li:first-child > .row {
+    padding: 15px 15px;
+  }
+}

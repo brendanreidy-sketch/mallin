@@ -12,6 +12,7 @@ import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
 import type { AccountIntelligenceArtifact } from "@/lib/intelligence/types";
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import s from "./cockpit.module.css";
 
 const OPTION_CARD: CSSProperties = {
   display: "block",
@@ -222,12 +223,6 @@ interface Deal {
  * back into any of them (and add the next call), instead of being dropped on
  * whichever deal happened to be most recent.
  */
-const TONE_DOT: Record<Deal["tone"], string> = {
-  critical: "var(--ck-crit)",
-  caution: "var(--ck-warn)",
-  neutral: "var(--ck-good)",
-};
-
 function DealsHome({
   tenantName,
   greetingLine,
@@ -246,116 +241,32 @@ function DealsHome({
   overLimit: boolean;
 }) {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--ck-paper)",
-        color: "var(--ck-ink-2)",
-        padding: "40px 24px 64px",
-        fontFamily:
-          '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      }}
-    >
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              fontSize: 18,
-              fontWeight: 700,
-              letterSpacing: "-0.015em",
-              color: "var(--ck-ink)",
-            }}
-          >
+    <main className={s.main}>
+      <div className={s.container}>
+        <header className={s.header}>
+          <div className={s.brand}>
             <MallinMark />
             Mallín
             {tenantName && (
-              <span
-                style={{
-                  fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: "var(--ck-ink-3)",
-                  letterSpacing: "0.06em",
-                  marginLeft: 6,
-                }}
-              >
+              <span className={s.tenant} title={tenantName}>
                 {tenantName}
               </span>
             )}
           </div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+          <div className={s.controls}>
             <SettingsLink />
             <AppSignOut />
           </div>
         </header>
 
-        <div style={{ marginBottom: 30 }}>
-          <p
-            style={{
-              fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: "0.06em",
-              color: "var(--ck-ink-3)",
-              margin: 0,
-            }}
-          >
-            {dateLabel}
-          </p>
-          <h1
-            style={{
-              fontSize: 27,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-              color: "var(--ck-ink)",
-              margin: "8px 0 10px",
-              lineHeight: 1.12,
-            }}
-          >
-            {greetingLine}
-          </h1>
-          <p
-            style={{
-              fontSize: 15.5,
-              lineHeight: 1.55,
-              color: "var(--ck-ink-2)",
-              margin: 0,
-              maxWidth: "48ch",
-            }}
-          >
-            {brief}
-          </p>
+        <div className={s.masthead}>
+          <p className={s.eyebrow}>{dateLabel}</p>
+          <h1 className={s.greeting}>{greetingLine}</h1>
+          <p className={s.brief}>{brief}</p>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            marginBottom: 14,
-          }}
-        >
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 15,
-              fontWeight: 600,
-              letterSpacing: "-0.01em",
-              color: "var(--ck-ink)",
-            }}
-          >
-            Your deals
-          </h2>
+        <div className={s.dealsHead}>
+          <h2 className={s.dealsHeading}>Your deals</h2>
           <UpgradeButton
             href="/new?mode=upcoming"
             label="+ New deal"
@@ -377,6 +288,7 @@ function DealsHome({
             label={`Needs you · ${needsYou.length}`}
             labelColor="var(--ck-crit)"
             deals={needsYou}
+            attention
           />
         )}
         {onTrack.length > 0 && (
@@ -397,28 +309,20 @@ function DealGroup({
   labelColor,
   deals,
   marginTop = 0,
+  attention = false,
 }: {
   label: string;
   labelColor: string;
   deals: Deal[];
   marginTop?: number;
+  attention?: boolean;
 }) {
   return (
-    <div style={{ marginTop }}>
-      <div
-        style={{
-          fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-          fontSize: 10.5,
-          fontWeight: 600,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: labelColor,
-          margin: "0 0 8px",
-        }}
-      >
+    <div style={marginTop ? { marginTop } : undefined}>
+      <div className={s.groupLabel} style={{ color: labelColor }}>
         {label}
       </div>
-      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+      <ul className={attention ? s.attentionList : s.list}>
         {deals.map((d) => (
           <li key={d.id}>
             <DealRow d={d} />
@@ -431,77 +335,18 @@ function DealGroup({
 
 function DealRow({ d }: { d: Deal }) {
   return (
-    <Link
-      href={`/prep?dealId=${d.id}`}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "13px 16px",
-        background: "var(--ck-surface)",
-        border: "0.5px solid var(--ck-rule)",
-        borderLeft:
-          d.tone === "neutral" ? "0.5px solid var(--ck-rule)" : `2px solid ${TONE_DOT[d.tone]}`,
-        borderRadius: 10,
-        textDecoration: "none",
-      }}
-    >
-      <span
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: TONE_DOT[d.tone],
-          flexShrink: 0,
-        }}
-        aria-hidden="true"
-      />
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span
-          style={{
-            display: "block",
-            fontSize: 15,
-            fontWeight: 600,
-            color: "var(--ck-ink)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {d.name}
-        </span>
-        <span
-          style={{
-            display: "block",
-            fontSize: 12.5,
-            lineHeight: 1.45,
-            color: d.needsYou ? "var(--ck-ink-2)" : "var(--ck-ink-3)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-          title={d.why}
-        >
+    <Link href={`/prep?dealId=${d.id}`} className={s.row} data-tone={d.tone}>
+      <span className={s.dot} data-tone={d.tone} aria-hidden="true" />
+      <span className={s.rowMain}>
+        <span className={s.name}>{d.name}</span>
+        <span className={s.why} title={d.why}>
           {d.why}
         </span>
       </span>
-      <span
-        style={{
-          fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          padding: "3px 8px",
-          borderRadius: 5,
-          background: d.live ? "var(--ck-good-tint)" : "var(--ck-surface-2)",
-          color: d.live ? "var(--ck-good)" : "var(--ck-ink-3)",
-          flexShrink: 0,
-        }}
-      >
+      <span className={s.pill} data-live={d.live ? "true" : undefined}>
         {d.live ? "Live brief" : "Pre-call"}
       </span>
-      <span style={{ color: "var(--ck-ink-3)", fontSize: 16 }} aria-hidden="true">
+      <span className={s.arrow} aria-hidden="true">
         →
       </span>
     </Link>

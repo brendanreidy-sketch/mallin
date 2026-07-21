@@ -7,6 +7,38 @@ records the live deployment and its immediate rollback target. Baseline: the
 commit `50da444`. Tags mark commits; deployments are separate build artifacts —
 this ledger records the two separately per release.
 
+## 2026-07-21 — Prep desktop shell: flush full-width workspace + mobile header wrap
+
+- **Change:** Presentational redesign of the `/prep` **shell only**. Desktop (≥1001px):
+  drop the floating rounded-card treatment (no radius/shadow/border), widen the shell
+  toward the viewport, cut the dead space above the chrome, and **fold the standalone
+  "All deals" back-link into the top utility bar** (reusing the shared `BackLink`
+  unchanged — only its standalone margin is neutralised) so the chrome reads as one
+  connected header instead of three stacked bands. Mobile/tablet (≤1000px): the utility
+  bar now **wraps deliberately** — "All deals" on its own compact row, the growing
+  spacer removed, every control (Add next call · theme · Settings · Sign out · Mark
+  closed · Log touch) packing left and wrapping — fixing the prior clipping where
+  Settings onward were cut off. **No change to Prep wording, deal data, deal selection,
+  tabs, Gmail draft behavior, Action Queue, Ask Coach, navigation, Settings/Sign out,
+  authentication, or Supabase/Clerk logic — presentational only.**
+- **Commits (two):** `626a1c5` (desktop shell) · `be8e819` (mobile header wrapping fix).
+  On `main` (fast-forward, no squash). Diff = exactly `app/prep/page.tsx` (+3/−1) +
+  `app/prep/prep.module.css` (+48).
+- **Release tag:** `release-2026-07-21-prep-desktop-shell` → commit `be8e819` (annotated).
+- **Live deployment:** **`dpl_ArGMWz56tRZQ8bknCK2CHsUePY7q`** (`revops-autopilot-e7yzir14q`),
+  built from `be8e819`. Provenance: Vercel commit status success + GitHub Deployment
+  `5546775182` (env Production, ref `be8e819`).
+- **Immediate rollback:** **`dpl_DMGoZmpMZ3ww47pK2yAd6NXUhcQF`** (`revops-autopilot-he4vtnu9e`),
+  the prior cockpit-timezone release.
+  Rollback command: `vercel alias set https://revops-autopilot-he4vtnu9e-roomrefund.vercel.app mallin.io`
+- **Acceptance:** typecheck/build clean; desktop accepted on the literal authenticated
+  canary (one connected chrome row, flush workspace); mobile accepted by the owner on a
+  real phone at portrait (All deals own row, all controls visible/tappable, no clipping,
+  no horizontal scroll) and corroborated by measurement on the real bar at 375px & 390px
+  (8 controls, 0 clipped). Post-promotion `mallin.io`: `/` 200, `/sign-in` 200, marketing
+  200, `/cockpit` Clerk-gated, `/prep` 200, no 5xx.
+- **Status:** CLOSED.
+
 ## 2026-07-21 — Cockpit greeting/date: visitor-local timezone (fix)
 
 - **Change:** The `/cockpit` daily-brief greeting word (morning/afternoon/evening)

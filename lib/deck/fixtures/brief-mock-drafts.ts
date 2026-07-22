@@ -1,0 +1,164 @@
+/**
+ * brief-mock-drafts — deterministic mocked model output for the fictional
+ * Northwind Freight deal (Commit 2 tests). No live model calls.
+ *
+ * Content items are BUILT from the real EvidencePacket/ChangeSet so their
+ * evidenceIds, sourceFactKeys, provenance, confidence, and assurance are
+ * correct by construction — exactly what a well-behaved model must produce.
+ * Tests then mutate a fresh valid draft to exercise each rejection path.
+ */
+
+import { buildEvidencePacket, comparableValue, type EvidenceItem, type Provenance } from "@/lib/deck/brief-evidence";
+import { detectChanges } from "@/lib/deck/brief-change-detection";
+import { currentSnapshot, previousSnapshot } from "@/lib/deck/fixtures/brief-test-deal";
+import {
+  deriveAssurance,
+  deriveConfidenceCeiling,
+  deriveProvenanceUnion,
+  type BriefContentItem,
+  type BriefContentType,
+  type BriefDraft,
+  type BriefSection,
+} from "@/lib/deck/brief-model";
+import type { BriefRequest } from "@/lib/deck/brief-agent";
+
+export const packet = buildEvidencePacket(currentSnapshot);
+export const previousPacket = buildEvidencePacket(previousSnapshot);
+export const changeSet = detectChanges(packet, previousPacket);
+export const noPriorChangeSet = detectChanges(packet, null);
+
+export const request: BriefRequest = {
+  packet,
+  changeSet,
+  cover: { dealName: "Northwind Freight — Dispatch Automation Rollout", preparedFor: "RVP", asOf: "2026-07-18" },
+};
+
+// ── builders ────────────────────────────────────────────────────────────────
+
+const one = (lk: string): EvidenceItem => packet.items.find((i) => i.logicalKey === lk)!;
+const all = (lk: string): EvidenceItem[] => packet.items.filter((i) => i.logicalKey === lk);
+export const factKeyOf = (lk: string): string => one(lk).sourceFactKey;
+
+function fromItems(
+  id: string,
+  contentType: BriefContentType,
+  section: BriefSection,
+  items: EvidenceItem[],
+  text: string,
+  extra: Partial<BriefContentItem> = {},
+): BriefContentItem {
+  return {
+    id,
+    contentType,
+    section,
+    text,
+    evidenceIds: items.map((i) => i.evidenceId),
+    sourceFactKeys: [...new Set(items.map((i) => i.sourceFactKey))],
+    provenance: deriveProvenanceUnion(items),
+    confidence: deriveConfidenceCeiling(items),
+    assurance: deriveAssurance(items),
+    appendixEligible: true,
+    ...extra,
+  };
+}
+
+function packetItem(
+  id: string,
+  contentType: BriefContentType,
+  section: BriefSection,
+  keys: string[],
+  text: string,
+  extra: Partial<BriefContentItem> = {},
+): BriefContentItem {
+  return fromItems(id, contentType, section, keys.map(one), text, extra);
+}
+
+function changeItem(id: string, type: string, text: string): BriefContentItem {
+  const c = changeSet.changes.find((x) => x.type === type)!;
+  const resolvable = c.currentEvidenceIds
+    .map((eid) => packet.items.find((i) => i.evidenceId === eid))
+    .filter((x): x is EvidenceItem => !!x);
+  const provenance: Provenance[] = resolvable.length
+    ? deriveProvenanceUnion(resolvable)
+    : c.assurance === "unresolved"
+      ? ["open_question"]
+      : ["mallin_inference"];
+  return {
+    id,
+    contentType: "what_changed",
+    section: "what_changed",
+    text,
+    evidenceIds: [...c.previousEvidenceIds, ...c.currentEvidenceIds],
+    sourceFactKeys: c.sourceFactKeys,
+    provenance,
+    confidence: deriveConfidenceCeiling(resolvable),
+    assurance: c.assurance,
+    appendixEligible: true,
+  };
+}
+
+/** A fresh, fully-valid Northwind brief draft. */
+export function makeValidDraft(): BriefDraft {
+  return {
+    executiveSummary: [
+      packetItem("es1", "executive_conclusion", "executive_summary", ["deal:posture"], "Deal posture is at_risk heading into the next call."),
+      packetItem("es2", "executive_conclusion", "executive_summary", ["risk:r_champion_exit"], "The champion is transitioning out, putting continuity at risk."),
+      packetItem("es3", "executive_conclusion", "executive_summary", ["opp:amount"], "Deal amount remains unconfirmed."),
+    ],
+    whatChanged: [
+      changeItem("wc1", "stage_change", "Stage advanced from Discovery to Evaluation."),
+      changeItem("wc2", "close_date_change", "Close date moved to 2026-11-15."),
+      changeItem("wc3", "posture_change", "Deal posture shifted from advancing to at_risk."),
+      changeItem("wc4", "commitment_completed", "Security review packet was completed."),
+      changeItem("wc5", "commitment_removed", "A prior redline commitment is no longer on the list; status unresolved."),
+    ],
+    customerPriorities: [
+      packetItem("cp1", "customer_priority", "priorities", ["intel:priority:peak-season-reliability"], "Reducing peak-season dispatch errors is the stated top operational priority."),
+      packetItem("cp2", "customer_priority", "priorities", ["txn:call_nw_2:0"], "Buyer signaled willingness to proceed if cutover is phased after peak."),
+    ],
+    stakeholders: [
+      packetItem("sh1", "stakeholder_assessment", "stakeholders", ["stk:sh_dana:disposition"], "Dana Ruiz has shifted to a supporter."),
+      packetItem("sh2", "stakeholder_assessment", "stakeholders", ["stk:sh_marcus:role"], "Marcus Bell is read as the deal's champion."),
+    ],
+    decisionProcess: [
+      packetItem("dp1", "decision_process", "decision_process", ["opp:stage"], "The deal is in the Evaluation stage."),
+      packetItem("dp2", "decision_process", "decision_process", ["opp:closeDate"], "Target close date is 2026-11-15."),
+      fromItems("dp3", "decision_process", "decision_process", all("deal:nextAction"), "The recorded CRM next step and the recommended next action disagree."),
+    ],
+    risks: [
+      packetItem("rk1", "risk", "risks", ["risk:r_champion_exit"], "Champion transition threatens continuity; no successor sponsor identified."),
+      packetItem("rk2", "risk", "risks", ["risk:r_integration"], "Telematics integration feasibility is still unproven."),
+      packetItem("rk3", "risk", "risks", ["opp:amount"], "Deal amount is unconfirmed, limiting forecast confidence."),
+    ],
+    actionPlan: {
+      customerCommitments: [
+        packetItem("ac1", "customer_commitment", "action_plan", ["txn:call_nw_2:0"], "Buyer committed to back the deal internally if cutover is phased after peak."),
+      ],
+      sellerActions: [
+        packetItem("as1", "seller_action", "action_plan", ["commit:c_security"], "Security review packet completed and signed off.", {
+          commitmentClaim: { sourceFactKey: factKeyOf("commit:c_security"), status: "completed" },
+        }),
+      ],
+      mallinRecommendations: [
+        packetItem("ar1", "mallin_recommendation", "action_plan", ["risk:r_champion_exit"], "Recommend securing a successor sponsor before the champion departs."),
+      ],
+      unresolvedActions: [
+        fromItems("au1", "unresolved_action", "action_plan", all("deal:nextAction"), "The next action is contested between the CRM step and the recommended action; resolve before the call.", {
+          nextActionClaim: true,
+        }),
+      ],
+    },
+    appendix: [],
+  };
+}
+
+/** A valid draft that exceeds the risks budget → overflow must go to appendix. */
+export function makeOverBudgetDraft(): BriefDraft {
+  const d = makeValidDraft();
+  // 3 existing risks + 4 more supported risk items (all cite valid evidence).
+  const extras = ["ov1", "ov2", "ov3", "ov4"].map((id) =>
+    packetItem(id, "risk", "risks", ["risk:r_integration"], "Telematics integration feasibility is still unproven."),
+  );
+  d.risks = [...d.risks, ...extras]; // 7 total, budget is 5 → 2 overflow
+  return d;
+}

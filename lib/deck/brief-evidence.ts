@@ -1,38 +1,40 @@
 /**
  * brief-evidence — deterministic evidence packet for the INTERNAL executive
- * deal brief (Commit 1 foundation, hardened in Commit 1A).
+ * deal brief (Commit 1 foundation; hardened in 1A; finalized in 1B).
  *
  * Pure TypeScript. No LLM, no rendering, no I/O, no clock, no randomness.
  * Given a point-in-time `DealSnapshot`, it produces a normalized,
  * provenance-classified `EvidencePacket` whose items carry TYPED payloads
- * (a discriminated union) and STABLE, coordinate-derived ids.
+ * (a discriminated union) and TWO deterministic identifiers.
+ *
+ * ── Two identifiers ────────────────────────────────────────────────────────
+ *   evidenceId    — identity of a specific evidence OCCURRENCE, in one
+ *                   snapshot/artifact version. Includes the snapshot id, so it
+ *                   changes every snapshot even if the value is unchanged.
+ *   sourceFactKey — identity of the same LOGICAL fact across snapshots. Excludes
+ *                   the snapshot id; built from the immutable source record and
+ *                   a stable field path. Used to match a fact over time.
+ * Both are collision-resistant: components are length-prefixed (netstring
+ * style), so delimiter characters inside values cannot forge a boundary.
  *
  * ── Source → provenance contract ──────────────────────────────────────────
  * `customer_stated` is earned ONLY by an explicitly identified customer-side
  * speaker (a transcript statement whose speaker resolves to a buyer-side
  * attendee). It is NEVER inferred from a source label alone.
  *
- *   Source                                    → Provenance        Why
- *   transcript, speakerSide = "buyer"         → customer_stated   explicit buyer speaker
- *   transcript, speakerSide = "seller"        → seller_provided   explicit seller speaker
- *   transcript, speakerSide = "unknown"       → system_recorded   recorded, author unverified
- *   opportunity field (seller/CRM origin)     → seller_provided   seller-entered/imported
- *   opportunity field (unknown origin)        → system_recorded   connected system, author unknown
- *   intelligence SourcedFact "manual"         → seller_provided   rep-entered research
- *   intelligence SourcedFact "customer_input" → system_recorded   conservative: no per-fact speaker
- *   intelligence SourcedFact (all others)     → system_recorded   automated/external, author unknown
- *   intelligence role read / prep posture / prep risk / prep disposition
- *                                             → mallin_inference  Mallín conclusion
- *   missing / unsupported field / stated gap  → open_question     "Not confirmed"
+ *   transcript, speakerSide = "buyer"         → customer_stated
+ *   transcript, speakerSide = "seller"        → seller_provided
+ *   transcript, speakerSide = "unknown"       → system_recorded
+ *   opportunity field (seller/CRM origin)     → seller_provided
+ *   opportunity field (unknown origin)        → system_recorded
+ *   intelligence SourcedFact "manual"         → seller_provided
+ *   intelligence SourcedFact "customer_input" → system_recorded (conservative)
+ *   intelligence SourcedFact (all others)     → system_recorded
+ *   role read / prep posture / risk / disposition / commitment → mallin_inference
+ *   missing / unsupported field / stated gap  → open_question ("Not confirmed")
  *
- * Confidence is preserved from the source and NEVER raised (it may only fall
- * to "none" when unknown). Provenance is NOT confidence and NOT change
- * assurance — those are separate axes (see brief-change-detection.ts).
- *
- * ── Stable evidence ids ────────────────────────────────────────────────────
- * Ids derive only from immutable source coordinates (tenant, deal, snapshot,
- * source type, source record id, field path, optional source version) — never
- * from array position, claim prose, or mutable display text. See `evidenceId`.
+ * Confidence is preserved and NEVER raised (only degraded to "none"). Provenance
+ * is NOT confidence and NOT change assurance — separate axes.
  */
 
 import type { Confidence, IntelligenceSource } from "@/lib/intelligence/types";
@@ -63,8 +65,14 @@ export type EvidenceSourceType =
 
 export type SpeakerSide = "buyer" | "seller" | "unknown";
 
-// ── Typed evidence payloads (replaces the old free-form `meta`) ─────────────
-// Change detection reads these typed fields — it never parses `claim` prose.
+/** Who/what proves a commitment reached its state (done/missed). Its presence
+ *  is what separates "observed" completion from an unproven inference. */
+export interface CommitmentStateEvidence {
+  confirmedBy: "customer" | "seller" | "activity" | "system";
+  note?: string;
+}
+
+// ── Typed evidence payloads (change detection reads these, never `claim`) ────
 
 export type EvidencePayload =
   | { kind: "opportunity_value"; field: "stage" | "amount" | "closeDate"; value: string }
@@ -73,7 +81,14 @@ export type EvidencePayload =
   | { kind: "intel_fact"; factKey: string; value: string }
   | { kind: "stakeholder"; stakeholderId: string; aspect: "disposition" | "role"; value: string }
   | { kind: "risk"; riskId: string; severity: RiskSeverity; title: string }
-  | { kind: "commitment"; commitmentId: string; state: "open" | "done"; expectedBy: string | null; label: string }
+  | {
+      kind: "commitment";
+      commitmentId: string;
+      state: "open" | "done" | "missed";
+      expectedBy: string | null;
+      label: string;
+      stateEvidence?: CommitmentStateEvidence;
+    }
   | { kind: "deal_posture"; posture: DealPosture }
   | { kind: "open_question"; topic: string };
 
@@ -102,11 +117,14 @@ export function comparableValue(p: EvidencePayload): string {
 }
 
 export interface EvidenceItem {
-  /** Stable id — a pure function of the coordinates below (see evidenceId). */
-  id: string;
+  /** Occurrence identity — snapshot-specific (see evidenceId). */
+  evidenceId: string;
+  /** Logical-fact identity — stable across snapshots (see sourceFactKey). */
+  sourceFactKey: string;
   tenantId: string;
   dealId: string;
-  /** Cross-snapshot key: what the fact is ABOUT, version-independent. */
+  /** Semantic grouping key — snapshot-independent; may span multiple sources
+   *  (e.g. deal:nextAction) so change detection can surface conflicts. */
   logicalKey: string;
   /** Immutable field coordinate within the source record (e.g. "stage",
    *  "risk/r_x", "segment/1200"). Never array position or prose. */
@@ -131,12 +149,8 @@ export interface EvidenceItem {
 export interface EvidencePacket {
   tenantId: string;
   dealId: string;
-  /** Immutable per-snapshot id (ordering + id coordinate). */
   snapshotId: string;
-  /** ISO timestamp of the snapshot (primary ordering key). */
   capturedAt: string;
-  /** Immutable monotonic ledger sequence, when available — the ordering
-   *  tie-breaker for equal timestamps. */
   sequence?: number;
   version: {
     intelligenceVersionId?: string;
@@ -163,16 +177,12 @@ export interface OpportunityFields {
 
 export interface TranscriptExcerpt {
   transcriptId: string;
-  /** Immutable segment identity within the transcript (e.g. start-ms or a
-   *  segment row id). NEVER an array index. */
+  /** Immutable segment identity within the transcript. NEVER an array index. */
   segmentId: string;
   callDate: string | null; // ISO
   speaker: string | null;
-  /** The ONLY thing that earns customer_stated — an explicit buyer speaker. */
   speakerSide?: SpeakerSide;
   text: string;
-  /** Optional shared topic key so a statement can conflict with / change a
-   *  structured source (rarely used; most statements diff by presence). */
   topicKey?: string;
 }
 
@@ -222,8 +232,13 @@ export interface PrepStakeholderStateInput {
 export interface PrepCommitmentInput {
   id: string;
   label: string;
-  state: "open" | "done";
+  /** Raw recorded state. "done"/"missed" require a source that actually asserts
+   *  it — a bare disappearance is NOT a state (see brief-change-detection). */
+  state: "open" | "done" | "missed";
   expectedBy?: string | null; // ISO
+  /** Proof of the done/missed state (activity record, confirmation). When
+   *  present, a completion/miss is observed rather than merely inferred. */
+  stateEvidence?: CommitmentStateEvidence;
   route?: string | null;
   evidenceIds?: string[];
 }
@@ -236,17 +251,17 @@ export interface PrepInput {
   criticalRisks: PrepRiskInput[];
   stakeholderStates: PrepStakeholderStateInput[];
   commitments: PrepCommitmentInput[];
+  /** The current next action, ONLY when an explicit, semantically-correct
+   *  source field supplies it. The adapter leaves this undefined because the
+   *  real PrepArtifact has no such field (see brief-artifact-adapter). */
   nextAction?: string | null;
 }
 
 export interface DealSnapshot {
   tenantId: string;
   dealId: string;
-  /** Immutable per-snapshot id (ordering + evidence-id coordinate). */
   snapshotId: string;
-  /** ISO — when this snapshot's artifacts were generated. */
-  capturedAt: string;
-  /** Immutable monotonic ledger sequence, when available. */
+  capturedAt: string; // ISO
   sequence?: number;
   opportunity: OpportunityFields;
   intelligence?: IntelInput;
@@ -256,35 +271,35 @@ export interface DealSnapshot {
 
 // ── Source → provenance mapping ─────────────────────────────────────────────
 
-/** Intelligence SourcedFact.source → provenance. NEVER customer_stated: a
- *  source label is not an identified speaker. Only rep-entered `manual`
- *  research is seller_provided; everything else is system_recorded. */
 export function intelSourceToProvenance(src: IntelligenceSource): Provenance {
   if (src === "manual") return "seller_provided";
   return "system_recorded";
 }
 
-/** Transcript speaker side → provenance. Only an explicit buyer speaker earns
- *  customer_stated; unknown side never does. */
 export function transcriptSideToProvenance(side: SpeakerSide | undefined): Provenance {
   if (side === "buyer") return "customer_stated";
   if (side === "seller") return "seller_provided";
   return "system_recorded";
 }
 
-/** Opportunity field origin → provenance. Never customer_stated on its own. */
 export function oppOriginToProvenance(origin: OpportunityFields["origin"]): Provenance {
   if (origin === "seller_entered" || origin === "crm_import") return "seller_provided";
   return "system_recorded";
 }
 
-/** Preserve confidence; only degrade unknown → "none". Never raise. */
 export function normalizeConfidence(c?: Confidence | null): EvidenceConfidence {
   if (c === "high" || c === "medium" || c === "low") return c;
   return "none";
 }
 
-// ── Stable, coordinate-derived evidence ids ─────────────────────────────────
+// ── Collision-resistant identifiers ─────────────────────────────────────────
+
+/** Length-prefixed (netstring-style) packing: each component is emitted as
+ *  `<byteLen>:<value>`, so a delimiter or ":" inside a value can never forge a
+ *  component boundary. Deterministic; no randomness or time. */
+function packKey(parts: string[]): string {
+  return parts.map((p) => `${p.length}:${p}`).join("");
+}
 
 export interface EvidenceCoordinates {
   tenantId: string;
@@ -296,13 +311,26 @@ export interface EvidenceCoordinates {
   sourceVersion?: string;
 }
 
-/** Deterministic evidence id from immutable coordinates only. Reordering
- *  items or editing display text cannot change it; two distinct source facts
- *  cannot collide because at least one coordinate differs. */
+/** Snapshot-specific occurrence id. */
 export function evidenceId(c: EvidenceCoordinates): string {
   const parts = [c.tenantId, c.dealId, c.snapshotId, c.sourceType, c.sourceRecordId, c.fieldPath];
-  if (c.sourceVersion) parts.push(c.sourceVersion);
-  return "ev:" + parts.map((p) => encodeURIComponent(p)).join("|");
+  if (c.sourceVersion != null) parts.push(c.sourceVersion);
+  return "ev:" + packKey(parts);
+}
+
+export interface SourceFactCoordinates {
+  tenantId: string;
+  dealId: string;
+  sourceType: EvidenceSourceType;
+  /** Immutable record id: the opportunity/transcript id, or a stable per-deal
+   *  stream key ("intelligence"/"prep") — never an artifact VERSION id. */
+  factRecordId: string;
+  fieldPath: string;
+}
+
+/** Cross-snapshot logical-fact key. Excludes the snapshot/version. */
+export function sourceFactKey(c: SourceFactCoordinates): string {
+  return "sf:" + packKey([c.tenantId, c.dealId, c.sourceType, c.factRecordId, c.fieldPath]);
 }
 
 // ── Assembly ────────────────────────────────────────────────────────────────
@@ -318,6 +346,8 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
   const add = (args: {
     logicalKey: string;
     fieldPath: string;
+    /** Stable record id for the sourceFactKey (defaults to sourceRecordId). */
+    factRecordId?: string;
     claim: string;
     sourceType: EvidenceSourceType;
     sourceRecordId: string;
@@ -330,19 +360,22 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
     confidenceNote?: string;
     payload: EvidencePayload;
   }) => {
-    const id = evidenceId({
-      tenantId,
-      dealId,
-      snapshotId,
-      sourceType: args.sourceType,
-      sourceRecordId: args.sourceRecordId,
-      fieldPath: args.fieldPath,
-      sourceVersion: args.sourceVersion,
+    const { factRecordId, ...rest } = args;
+    items.push({
+      evidenceId: evidenceId({
+        tenantId, dealId, snapshotId,
+        sourceType: args.sourceType, sourceRecordId: args.sourceRecordId,
+        fieldPath: args.fieldPath, sourceVersion: args.sourceVersion,
+      }),
+      sourceFactKey: sourceFactKey({
+        tenantId, dealId, sourceType: args.sourceType,
+        factRecordId: factRecordId ?? args.sourceRecordId, fieldPath: args.fieldPath,
+      }),
+      tenantId, dealId, status: "current", ...rest,
     });
-    items.push({ id, tenantId, dealId, status: "current", ...args });
   };
 
-  // ── Opportunity fields (seller/system; never customer-confirmed) ──
+  // ── Opportunity fields ──
   const opp = snapshot.opportunity;
   const oppProv = oppOriginToProvenance(opp.origin);
   const oppOrigin =
@@ -379,12 +412,36 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
       confidence: "none", payload: { kind: "opportunity_value", field: "closeDate", value: opp.closeDate },
     });
   }
+
+  // ── Next action: only from explicit sources; else "Not confirmed" ──
+  let hasNextAction = false;
   if (opp.nextStep != null) {
+    hasNextAction = true;
     add({
       logicalKey: "deal:nextAction", fieldPath: "nextStep", claim: `Next step: ${opp.nextStep}`,
       sourceType: "opportunity", sourceRecordId: opp.recordId, sourceVersion: snapshotId,
       sourceDate: null, origin: oppOrigin, support: { value: opp.nextStep }, provenance: oppProv,
       confidence: "none", payload: { kind: "next_action", origin: "opportunity", value: opp.nextStep },
+    });
+  }
+  if (snapshot.prep?.nextAction != null) {
+    hasNextAction = true;
+    const prep = snapshot.prep;
+    add({
+      logicalKey: "deal:nextAction", fieldPath: "nextAction", factRecordId: "prep",
+      claim: `Recommended next action: ${prep.nextAction}`, sourceType: "prep_artifact",
+      sourceRecordId: prep.versionId, sourceVersion: prep.versionId, sourceDate: prep.generatedAt,
+      origin: "Mallín", support: { value: prep.nextAction! }, provenance: "mallin_inference",
+      confidence: "none", payload: { kind: "next_action", origin: "prep", value: prep.nextAction! },
+    });
+  }
+  if (!hasNextAction) {
+    // No explicit next-action source → surface it, do not fabricate one.
+    add({
+      logicalKey: "deal:nextAction", fieldPath: "nextAction", factRecordId: "prep",
+      claim: "Next action — Not confirmed", sourceType: "opportunity", sourceRecordId: opp.recordId,
+      sourceVersion: snapshotId, sourceDate: null, origin: null, support: {}, provenance: "open_question",
+      confidence: "none", payload: { kind: "open_question", topic: "next action" },
     });
   }
 
@@ -406,7 +463,7 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
   if (intel) {
     for (const f of intel.facts) {
       add({
-        logicalKey: `intel:${f.key}`, fieldPath: `fact/${f.key}`, claim: f.value,
+        logicalKey: `intel:${f.key}`, fieldPath: `fact/${f.key}`, factRecordId: "intelligence", claim: f.value,
         sourceType: "intelligence_artifact", sourceRecordId: intel.versionId, sourceVersion: intel.versionId,
         sourceDate: f.capturedAt ?? intel.generatedAt, origin: f.source, support: { value: f.value },
         provenance: intelSourceToProvenance(f.source), confidence: normalizeConfidence(f.confidence),
@@ -417,9 +474,10 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
       if (sh.roleInDeal) {
         add({
           logicalKey: `stk:${sh.stakeholderId}:role`, fieldPath: `stakeholder/${sh.stakeholderId}/role`,
-          claim: `${sh.name} — role read: ${sh.roleInDeal.value}`, sourceType: "intelligence_artifact",
-          sourceRecordId: intel.versionId, sourceVersion: intel.versionId, sourceDate: intel.generatedAt,
-          origin: "Mallín", support: { value: sh.roleInDeal.value, excerpt: sh.roleInDeal.rationale },
+          factRecordId: "intelligence", claim: `${sh.name} — role read: ${sh.roleInDeal.value}`,
+          sourceType: "intelligence_artifact", sourceRecordId: intel.versionId, sourceVersion: intel.versionId,
+          sourceDate: intel.generatedAt, origin: "Mallín",
+          support: { value: sh.roleInDeal.value, excerpt: sh.roleInDeal.rationale },
           provenance: "mallin_inference", confidence: normalizeConfidence(sh.roleInDeal.confidence),
           payload: { kind: "stakeholder", stakeholderId: sh.stakeholderId, aspect: "role", value: sh.roleInDeal.value },
         });
@@ -428,7 +486,7 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
     for (const g of intel.gaps ?? []) {
       const s = slug(g);
       add({
-        logicalKey: `gap:${s}`, fieldPath: `gap/${s}`, claim: `${g} — Not confirmed`,
+        logicalKey: `gap:${s}`, fieldPath: `gap/${s}`, factRecordId: "intelligence", claim: `${g} — Not confirmed`,
         sourceType: "intelligence_artifact", sourceRecordId: intel.versionId, sourceVersion: intel.versionId,
         sourceDate: intel.generatedAt, origin: null, support: {}, provenance: "open_question",
         confidence: "none", payload: { kind: "open_question", topic: g },
@@ -436,40 +494,32 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
     }
   }
 
-  // ── Prep artifact: posture, next action, risks, dispositions, commitments ──
+  // ── Prep: posture, risks, dispositions, commitments ──
   const prep = snapshot.prep;
   if (prep) {
     if (prep.posture) {
       add({
-        logicalKey: "deal:posture", fieldPath: "posture", claim: `Deal posture: ${prep.posture}`,
-        sourceType: "prep_artifact", sourceRecordId: prep.versionId, sourceVersion: prep.versionId,
-        sourceDate: prep.generatedAt, origin: "Mallín", support: { value: prep.posture, excerpt: prep.topLine },
-        provenance: "mallin_inference", confidence: "none", payload: { kind: "deal_posture", posture: prep.posture },
-      });
-    }
-    if (prep.nextAction != null) {
-      add({
-        logicalKey: "deal:nextAction", fieldPath: "nextAction", claim: `Recommended next action: ${prep.nextAction}`,
-        sourceType: "prep_artifact", sourceRecordId: prep.versionId, sourceVersion: prep.versionId,
-        sourceDate: prep.generatedAt, origin: "Mallín", support: { value: prep.nextAction },
-        provenance: "mallin_inference", confidence: "none",
-        payload: { kind: "next_action", origin: "prep", value: prep.nextAction },
+        logicalKey: "deal:posture", fieldPath: "posture", factRecordId: "prep",
+        claim: `Deal posture: ${prep.posture}`, sourceType: "prep_artifact", sourceRecordId: prep.versionId,
+        sourceVersion: prep.versionId, sourceDate: prep.generatedAt, origin: "Mallín",
+        support: { value: prep.posture, excerpt: prep.topLine }, provenance: "mallin_inference",
+        confidence: "none", payload: { kind: "deal_posture", posture: prep.posture },
       });
     }
     for (const r of prep.criticalRisks) {
       add({
-        logicalKey: `risk:${r.id}`, fieldPath: `risk/${r.id}`, claim: `${r.title} (${r.severity})`,
-        sourceType: "prep_artifact", sourceRecordId: prep.versionId, sourceVersion: prep.versionId,
-        sourceDate: prep.generatedAt, origin: "Mallín", support: { value: r.severity, excerpt: r.description ?? r.title },
-        provenance: "mallin_inference", confidence: "none",
-        payload: { kind: "risk", riskId: r.id, severity: r.severity, title: r.title },
+        logicalKey: `risk:${r.id}`, fieldPath: `risk/${r.id}`, factRecordId: "prep",
+        claim: `${r.title} (${r.severity})`, sourceType: "prep_artifact", sourceRecordId: prep.versionId,
+        sourceVersion: prep.versionId, sourceDate: prep.generatedAt, origin: "Mallín",
+        support: { value: r.severity, excerpt: r.description ?? r.title }, provenance: "mallin_inference",
+        confidence: "none", payload: { kind: "risk", riskId: r.id, severity: r.severity, title: r.title },
       });
     }
     for (const s of prep.stakeholderStates) {
       if (s.disposition) {
         add({
           logicalKey: `stk:${s.stakeholderId}:disposition`, fieldPath: `stakeholder/${s.stakeholderId}/disposition`,
-          claim: `${s.name} — disposition: ${s.disposition}`, sourceType: "prep_artifact",
+          factRecordId: "prep", claim: `${s.name} — disposition: ${s.disposition}`, sourceType: "prep_artifact",
           sourceRecordId: prep.versionId, sourceVersion: prep.versionId, sourceDate: prep.generatedAt,
           origin: "Mallín", support: { value: s.disposition, excerpt: s.dispositionRationale },
           provenance: "mallin_inference", confidence: "none",
@@ -479,18 +529,20 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
     }
     for (const c of prep.commitments) {
       add({
-        logicalKey: `commit:${c.id}`, fieldPath: `commitment/${c.id}`,
+        logicalKey: `commit:${c.id}`, fieldPath: `commitment/${c.id}`, factRecordId: "prep",
         claim: `${c.label} — ${c.state}${c.expectedBy ? ` (expected by ${c.expectedBy})` : ""}`,
         sourceType: "prep_artifact", sourceRecordId: prep.versionId, sourceVersion: prep.versionId,
         sourceDate: prep.generatedAt, origin: "Mallín", support: { value: c.state, excerpt: c.label },
         provenance: "mallin_inference", confidence: "none",
-        payload: { kind: "commitment", commitmentId: c.id, state: c.state, expectedBy: c.expectedBy ?? null, label: c.label },
+        payload: {
+          kind: "commitment", commitmentId: c.id, state: c.state, expectedBy: c.expectedBy ?? null,
+          label: c.label, ...(c.stateEvidence ? { stateEvidence: c.stateEvidence } : {}),
+        },
       });
     }
   }
 
-  // Deterministic ordering: by logicalKey, then id.
-  items.sort((a, b) => (a.logicalKey === b.logicalKey ? cmp(a.id, b.id) : cmp(a.logicalKey, b.logicalKey)));
+  items.sort((a, b) => (a.logicalKey === b.logicalKey ? cmp(a.evidenceId, b.evidenceId) : cmp(a.logicalKey, b.logicalKey)));
 
   const gaps = items.filter((i) => i.provenance === "open_question").map((i) => i.claim);
 

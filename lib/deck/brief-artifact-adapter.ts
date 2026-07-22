@@ -14,12 +14,22 @@
  * Faithfulness notes (documented limitations of today's real artifacts):
  *   - `PrepArtifact.deliverables` items carry no completion state and no due
  *     date, so every deliverable maps to a commitment with state "open" and
- *     `expectedBy: null`. Completed is therefore derived across snapshots by
- *     the deliverable LEAVING the "waiting on" list; missed-by-date cannot fire
- *     from real deliverables until that data exists. The fixture supplies both
- *     to prove the logic.
- *   - `next_action` is mapped from the first deliverable (the thing to send
- *     first); the opportunity record carries no next-step field today.
+ *     `expectedBy: null`. A deliverable later LEAVING the list is reported by
+ *     the change layer as `commitment_removed` (assurance unresolved) — never
+ *     assumed completed. `commitment_completed`/`missed` require an explicit
+ *     state, which real deliverables do not yet carry; the fixture supplies it.
+ *   - NEXT ACTION: the real PrepArtifact has NO explicit next-action field.
+ *     Audited candidates and why each is NOT the current next action:
+ *       · deliverables[] — "what {buyer} is waiting on before they decide"
+ *         (buyer-blocking checklist; first item is a proxy, forbidden)
+ *       · how_you_win    — "The ONE strategic play that closes this deal"
+ *         (win condition/strategy, not the immediate next action)
+ *       · talk_track.opening_angle — "Opening line / framing for the call"
+ *       · commercial_reality.asks  — negotiation asks (CommercialAsk[])
+ *       · pre_mortem_paths[].forcing_move — per-failure-path move (anticipation)
+ *     None has "current next action" semantics, so the adapter leaves
+ *     `nextAction` undefined and the evidence layer emits a Not-confirmed
+ *     open_question. The opportunity record has no next-step field either.
  *   - `customer_stated` is only ever produced from a transcript statement whose
  *     speaker resolves to a buyer-side attendee (explicit side metadata).
  */
@@ -180,9 +190,10 @@ function mapPrep(prep: PrepArtifact, versionId?: string): PrepInput {
     generatedAt: prep.metadata.generated_at,
     posture: prep.top_line.posture,
     topLine: prep.top_line.text,
-    // No dedicated next-step field on the artifact; the first deliverable is
-    // the thing to send first. Null when there is no deliverable list.
-    nextAction: deliverables[0]?.label ?? null,
+    // No explicit next-action field exists on PrepArtifact (see the header
+    // audit). Leave undefined — the evidence layer emits a Not-confirmed
+    // open_question rather than proxying the first deliverable.
+    nextAction: undefined,
     criticalRisks: prep.critical_risks.map((r) => ({
       id: r.id,
       title: r.title,

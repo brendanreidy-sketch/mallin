@@ -103,6 +103,7 @@ export const previousSnapshot: DealSnapshot = {
     commitments: [
       { id: "c_security", label: "Complete security review packet", state: "open", expectedBy: "2026-06-30" },
       { id: "c_pricing", label: "Send tiered pricing proposal", state: "open", expectedBy: "2026-07-01" },
+      { id: "c_legal", label: "Return redlined MSA draft", state: "open", expectedBy: "2026-07-10" },
     ],
   },
   transcripts: [
@@ -207,8 +208,18 @@ export const currentSnapshot: DealSnapshot = {
       },
     ],
     commitments: [
-      { id: "c_security", label: "Complete security review packet", state: "done", expectedBy: "2026-06-30" }, // completed
-      { id: "c_pricing", label: "Send tiered pricing proposal", state: "open", expectedBy: "2026-07-01" }, // missed
+      // Completed WITH explicit proof → observed completion.
+      {
+        id: "c_security",
+        label: "Complete security review packet",
+        state: "done",
+        expectedBy: "2026-06-30",
+        stateEvidence: { confirmedBy: "seller", note: "Sanjay confirmed the packet was returned and signed off." },
+      },
+      // Explicitly missed state (no external confirmation) → inferred miss.
+      { id: "c_pricing", label: "Send tiered pricing proposal", state: "missed", expectedBy: "2026-07-01" },
+      // c_legal (redlined MSA) simply DISAPPEARS this cycle → commitment_removed,
+      // assurance unresolved. Its absence is NOT proof it was completed.
     ],
   },
   transcripts: [

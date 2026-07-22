@@ -164,9 +164,15 @@ describe("toDealSnapshot — real artifact mapping", () => {
     expect(snap.opportunity.stageLabel).toBe("Discovery");
     expect(snap.intelligence?.versionId).toBe("intel_cedar_v1");
     expect(snap.prep?.posture).toBe("advancing");
-    expect(snap.prep?.nextAction).toBe("Send ROI model"); // first deliverable
     expect(snap.transcripts).toHaveLength(3);
     expect(snap.transcripts[0].segmentId).toBe("1200"); // immutable segment id, not index
+  });
+
+  it("does NOT proxy the first deliverable as next action — leaves it Not confirmed", () => {
+    expect(snap.prep?.nextAction).toBeUndefined();
+    const nextAction = buildEvidencePacket(snap).items.find((i) => i.logicalKey === "deal:nextAction")!;
+    expect(nextAction.provenance).toBe("open_question");
+    expect(nextAction.claim).toMatch(/Not confirmed/i);
   });
 
   it("maps deliverables to open commitments with a stable label-derived id", () => {

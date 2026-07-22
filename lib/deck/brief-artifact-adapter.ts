@@ -217,6 +217,9 @@ function mapPrep(prep: PrepArtifact, versionId?: string): PrepInput {
       label: d.label,
       state: "open" as const,
       expectedBy: null,
+      // Deliverables are seller-side sends; a customer commitment needs a
+      // distinct typed record, which the real artifact does not yet carry.
+      party: "seller" as const,
       route: d.route ?? null,
       evidenceIds: [],
     })),

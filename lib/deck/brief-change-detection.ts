@@ -58,6 +58,8 @@ export type BriefChangeType =
 export type ChangeAssurance = "observed" | "inferred" | "conflicting" | "unresolved";
 
 export interface BriefChange {
+  /** Deterministic id — a pure function of the (unique) logicalKey. */
+  changeId: string;
   type: BriefChangeType;
   logicalKey: string;
   /** Stable cross-snapshot keys of the source fact(s) behind this change. */
@@ -165,6 +167,7 @@ export function detectChanges(
   for (const txnId of [...newTxnIds].sort(cmp)) {
     const backing = current.items.filter((i) => i.sourceType === "transcript" && i.sourceRecordId === txnId);
     changes.push({
+      changeId: `chg:txn:${txnId}`,
       type: "new_transcript_evidence",
       logicalKey: `txn:${txnId}`,
       sourceFactKeys: uniq(backing.map((b) => b.sourceFactKey)),
@@ -220,6 +223,7 @@ function classify(
   capturedAt: string,
 ): BriefChange | null {
   const base = {
+    changeId: `chg:${key}`,
     logicalKey: key,
     sourceFactKeys: uniq([...prevVal.factKeys, ...curVal.factKeys]),
     previousValue: prevVal.value,

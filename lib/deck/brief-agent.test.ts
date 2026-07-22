@@ -60,6 +60,23 @@ describe("generateExecutiveBrief", () => {
     expect("brief" in res).toBe(false);
   });
 
+  it("parses the repair response through the same strict schema", async () => {
+    const schemaBad = makeValidDraft() as unknown as Record<string, unknown>;
+    (schemaBad.executiveSummary as Record<string, unknown>[])[0].bogusField = true; // schema-invalid
+    const res = await generateExecutiveBrief(request, clientReturning(schemaBad as unknown as BriefDraft, makeValidDraft()));
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.attempts).toBe(2);
+  });
+
+  it("fails closed when a schema-invalid repair is returned", async () => {
+    const schemaBad = { ...makeValidDraft(), unexpectedTopLevel: 1 } as unknown as BriefDraft;
+    const res = await generateExecutiveBrief(request, clientReturning(schemaBad, schemaBad));
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.errors.some((e) => e.code === "schema_invalid")).toBe(true);
+  });
+
   it("omits the 'what changed' section when there is no reliable prior state", async () => {
     const draft = makeValidDraft();
     draft.whatChanged = []; // no material change to report without a prior

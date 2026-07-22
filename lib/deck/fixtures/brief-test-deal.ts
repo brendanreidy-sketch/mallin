@@ -218,6 +218,10 @@ export const currentSnapshot: DealSnapshot = {
       },
       // Explicitly missed state (no external confirmation) → inferred miss.
       { id: "c_pricing", label: "Send tiered pricing proposal", state: "missed", expectedBy: "2026-07-01" },
+      // A typed CUSTOMER-party commitment (structured record + named owner) —
+      // this is what a real customer commitment requires, distinct from a
+      // generic buyer statement of preference.
+      { id: "c_voldata", label: "Provide peak-season volume data", state: "open", party: "customer", owner: "Dana Ruiz", expectedBy: "2026-07-25" },
       // c_legal (redlined MSA) simply DISAPPEARS this cycle → commitment_removed,
       // assurance unresolved. Its absence is NOT proof it was completed.
     ],

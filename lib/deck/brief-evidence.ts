@@ -77,9 +77,9 @@ export interface CommitmentStateEvidence {
 export type EvidencePayload =
   | { kind: "opportunity_value"; field: "stage" | "amount" | "closeDate"; value: string }
   | { kind: "next_action"; origin: "opportunity" | "prep"; value: string }
-  | { kind: "transcript_statement"; transcriptId: string; segmentId: string; side: SpeakerSide }
+  | { kind: "transcript_statement"; transcriptId: string; segmentId: string; side: SpeakerSide; text: string }
   | { kind: "intel_fact"; factKey: string; value: string }
-  | { kind: "stakeholder"; stakeholderId: string; aspect: "disposition" | "role"; value: string }
+  | { kind: "stakeholder"; stakeholderId: string; name: string; aspect: "disposition" | "role"; value: string }
   | { kind: "risk"; riskId: string; severity: RiskSeverity; title: string }
   | {
       kind: "commitment";
@@ -87,6 +87,11 @@ export type EvidencePayload =
       state: "open" | "done" | "missed";
       expectedBy: string | null;
       label: string;
+      /** Whose commitment this is. A customer commitment REQUIRES party
+       *  "customer" — a generic buyer statement never qualifies. */
+      party?: "customer" | "seller";
+      /** Named owner/speaker on the committing side, when known. */
+      owner?: string;
       stateEvidence?: CommitmentStateEvidence;
     }
   | { kind: "deal_posture"; posture: DealPosture }
@@ -236,6 +241,10 @@ export interface PrepCommitmentInput {
    *  it — a bare disappearance is NOT a state (see brief-change-detection). */
   state: "open" | "done" | "missed";
   expectedBy?: string | null; // ISO
+  /** Whose commitment (customer vs seller). */
+  party?: "customer" | "seller";
+  /** Named owner/speaker on the committing side. */
+  owner?: string;
   /** Proof of the done/missed state (activity record, confirmation). When
    *  present, a completion/miss is observed rather than merely inferred. */
   stateEvidence?: CommitmentStateEvidence;
@@ -454,7 +463,7 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
       sourceType: "transcript", sourceRecordId: t.transcriptId, sourceDate: t.callDate,
       origin: t.speaker, support: { excerpt: t.text }, provenance: transcriptSideToProvenance(side),
       confidence: "none",
-      payload: { kind: "transcript_statement", transcriptId: t.transcriptId, segmentId: t.segmentId, side },
+      payload: { kind: "transcript_statement", transcriptId: t.transcriptId, segmentId: t.segmentId, side, text: t.text },
     });
   }
 
@@ -479,7 +488,7 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
           sourceDate: intel.generatedAt, origin: "Mallín",
           support: { value: sh.roleInDeal.value, excerpt: sh.roleInDeal.rationale },
           provenance: "mallin_inference", confidence: normalizeConfidence(sh.roleInDeal.confidence),
-          payload: { kind: "stakeholder", stakeholderId: sh.stakeholderId, aspect: "role", value: sh.roleInDeal.value },
+          payload: { kind: "stakeholder", stakeholderId: sh.stakeholderId, name: sh.name, aspect: "role", value: sh.roleInDeal.value },
         });
       }
     }
@@ -523,7 +532,7 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
           sourceRecordId: prep.versionId, sourceVersion: prep.versionId, sourceDate: prep.generatedAt,
           origin: "Mallín", support: { value: s.disposition, excerpt: s.dispositionRationale },
           provenance: "mallin_inference", confidence: "none",
-          payload: { kind: "stakeholder", stakeholderId: s.stakeholderId, aspect: "disposition", value: s.disposition },
+          payload: { kind: "stakeholder", stakeholderId: s.stakeholderId, name: s.name, aspect: "disposition", value: s.disposition },
         });
       }
     }
@@ -536,7 +545,10 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
         provenance: "mallin_inference", confidence: "none",
         payload: {
           kind: "commitment", commitmentId: c.id, state: c.state, expectedBy: c.expectedBy ?? null,
-          label: c.label, ...(c.stateEvidence ? { stateEvidence: c.stateEvidence } : {}),
+          label: c.label,
+          ...(c.party ? { party: c.party } : {}),
+          ...(c.owner ? { owner: c.owner } : {}),
+          ...(c.stateEvidence ? { stateEvidence: c.stateEvidence } : {}),
         },
       });
     }

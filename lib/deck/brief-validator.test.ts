@@ -85,10 +85,12 @@ describe("validateBriefDraft — rejections (fail closed)", () => {
     expect(codes(d)).toContain("confidence_raised");
   });
 
-  it("rejects an unsupported person / amount / date", () => {
+  it("rejects a real evidence id paired with an unsupported claim (unbound entities)", () => {
     const d = makeValidDraft();
+    // es1 still cites the (real) posture evidence, but the text now asserts a
+    // fabricated amount, person, and date — none bound to typed evidence.
     d.executiveSummary[0].text = "Deal amount is $999,999 per Jane Halloway on 2031-01-01.";
-    expect(codes(d)).toContain("unsupported_entity");
+    expect(codes(d)).toContain("unbound_fact");
   });
 
   it("rejects presenting a conflicting next action as a confirmed seller action", () => {
@@ -111,7 +113,9 @@ describe("validateBriefDraft — rejections (fail closed)", () => {
 
   it("rejects a Mallín recommendation placed among customer commitments", () => {
     const d = makeValidDraft();
-    d.actionPlan.customerCommitments.push(makeValidDraft().actionPlan.mallinRecommendations[0]);
+    const rec = makeValidDraft().actionPlan.mallinRecommendations[0];
+    rec.id = "rec_moved"; // unique id so the schema's duplicate check doesn't fire first
+    d.actionPlan.customerCommitments.push(rec);
     expect(codes(d)).toContain("recommendation_as_commitment");
   });
 
@@ -142,5 +146,88 @@ describe("validateBriefDraft — rejections (fail closed)", () => {
       sourceFactKeys: [orphan.sourceFactKey],
     };
     expect(codes(d)).toContain("source_fact_key_not_found");
+  });
+});
+
+describe("validateBriefDraft — typed fact bindings & 2A semantics", () => {
+  it("rejects a bound value that does not match the typed payload", () => {
+    const d = makeValidDraft();
+    d.executiveSummary[0].factBindings[0].value = "advancing"; // posture is actually at_risk
+    expect(codes(d)).toContain("binding_value_mismatch");
+  });
+
+  it("rejects a value bound to the wrong (uncited) evidence item", () => {
+    const d = makeValidDraft();
+    const stage = packet.items.find((i) => i.logicalKey === "opp:stage")!;
+    d.executiveSummary[0].factBindings[0].evidenceId = stage.evidenceId; // es1 cites posture, not stage
+    expect(codes(d)).toContain("binding_evidence_mismatch");
+  });
+
+  it("every 'what changed' item references a valid change id", () => {
+    const d = makeValidDraft();
+    const changeIds = new Set(changeSet.changes.map((c) => c.changeId));
+    for (const wc of d.whatChanged) {
+      const cids = wc.factBindings.map((b) => b.changeId).filter(Boolean);
+      expect(cids.length).toBeGreaterThan(0);
+      for (const cid of cids) expect(changeIds.has(cid!)).toBe(true);
+    }
+    expect(validateBriefDraft(d, ctx).valid).toBe(true);
+  });
+
+  it("rejects a 'what changed' item citing a non-existent change id", () => {
+    const d = makeValidDraft();
+    d.whatChanged[0].factBindings[0].changeId = "chg:does-not-exist";
+    expect(codes(d)).toContain("change_id_not_found");
+  });
+
+  it("does not let a generic customer statement become a commitment", () => {
+    const d = makeValidDraft();
+    const t = packet.items.find((i) => i.logicalKey === "txn:call_nw_2:0")!;
+    d.actionPlan.customerCommitments = [
+      {
+        id: "cc_bad",
+        contentType: "customer_commitment",
+        section: "action_plan",
+        assertionMode: "sourced_fact",
+        text: "The buyer committed to proceed.",
+        evidenceIds: [t.evidenceId],
+        sourceFactKeys: [t.sourceFactKey],
+        factBindings: [{ evidenceId: t.evidenceId, sourceFactKey: t.sourceFactKey, payloadKind: "transcript_statement", fieldPath: "side", value: "buyer" }],
+        provenance: ["customer_stated"],
+        confidence: "none",
+        assurance: "observed",
+        appendixEligible: true,
+      },
+    ];
+    expect(codes(d)).toContain("customer_commitment_not_typed");
+  });
+
+  it("allows an explicit, typed customer-party commitment", () => {
+    expect(codes(makeValidDraft())).not.toContain("customer_commitment_not_typed");
+  });
+
+  it("rejects an invented owner or deadline in a recommendation", () => {
+    const d = makeValidDraft();
+    d.actionPlan.mallinRecommendations[0].text = "Recommend Sanjay Gupta finish this by 2026-08-15.";
+    expect(codes(d)).toContain("unbound_fact");
+  });
+
+  it("rejects a supported_synthesis that introduces a new amount", () => {
+    const d = makeValidDraft();
+    d.executiveSummary[1].assertionMode = "supported_synthesis";
+    d.executiveSummary[1].text = "The champion transition could cost $250,000 in pipeline.";
+    expect(codes(d)).toContain("unbound_fact");
+  });
+
+  it("rejects asserting unresolved evidence as a sourced_fact", () => {
+    const d = makeValidDraft();
+    d.executiveSummary[2].assertionMode = "sourced_fact"; // es3 cites open_question amount
+    expect(codes(d)).toContain("assertion_mode_invalid");
+  });
+
+  it("rejects a mislabeled recommendation assertion mode", () => {
+    const d = makeValidDraft();
+    d.actionPlan.mallinRecommendations[0].assertionMode = "sourced_fact";
+    expect(codes(d)).toContain("assertion_mode_invalid");
   });
 });

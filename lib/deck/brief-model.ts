@@ -10,7 +10,7 @@
  * `mallin_recommendation` and are never customer commitments or sourced facts.
  */
 
-import { comparableValue, type EvidenceConfidence, type EvidenceItem, type Provenance } from "@/lib/deck/brief-evidence";
+import { comparableValue, type EvidenceConfidence, type EvidenceItem, type EvidencePayload, type Provenance } from "@/lib/deck/brief-evidence";
 
 export type BriefAssurance = "observed" | "inferred" | "conflicting" | "unresolved";
 
@@ -62,6 +62,66 @@ export interface CommitmentClaim {
   status: "completed" | "missed" | "open" | "removed";
 }
 
+/** How strongly a content item asserts. Orthogonal to provenance/assurance. */
+export type AssertionMode =
+  /** Maps directly to typed evidence values (every concrete value is bound). */
+  | "sourced_fact"
+  /** Summarizes multiple cited facts; introduces no new entity/value/causal claim. */
+  | "supported_synthesis"
+  /** A labeled seller-action proposal; cites its why-evidence; never customer-agreed. */
+  | "mallin_recommendation"
+  /** Uncertain language only; never written as a conclusion. */
+  | "unresolved";
+
+/** Binds a concrete value used in the content to the exact TYPED value in a
+ *  cited evidence payload (or a ChangeSet change). The validator confirms the
+ *  bound value equals `selectTypedValue(payload, fieldPath)` — claim prose is
+ *  never the source of truth. */
+export interface FactBinding {
+  evidenceId: string;
+  sourceFactKey: string;
+  payloadKind: EvidencePayload["kind"];
+  /** Typed selector into the payload (e.g. "value", "severity", "state",
+   *  "posture", "disposition", "party", "segmentId"). */
+  fieldPath: string;
+  /** The exact supported value the content uses. */
+  value: string;
+  entityId?: string;
+  changeId?: string;
+}
+
+/** Deterministically read one typed field from a payload. Returns the string
+ *  form of the value, or undefined when the selector does not apply. */
+export function selectTypedValue(payload: EvidencePayload, fieldPath: string): string | undefined {
+  const p = payload as Record<string, unknown>;
+  switch (payload.kind) {
+    case "opportunity_value":
+      return pick(p, fieldPath, ["value", "field"]);
+    case "next_action":
+      return pick(p, fieldPath, ["value", "origin"]);
+    case "transcript_statement":
+      return pick(p, fieldPath, ["transcriptId", "segmentId", "side", "text"]);
+    case "intel_fact":
+      return pick(p, fieldPath, ["value", "factKey"]);
+    case "stakeholder":
+      return pick(p, fieldPath, ["value", "aspect", "stakeholderId", "name"]);
+    case "risk":
+      return pick(p, fieldPath, ["severity", "title", "riskId"]);
+    case "commitment":
+      return pick(p, fieldPath, ["state", "label", "expectedBy", "commitmentId", "party", "owner"]);
+    case "deal_posture":
+      return pick(p, fieldPath, ["posture"]);
+    case "open_question":
+      return pick(p, fieldPath, ["topic"]);
+  }
+}
+
+function pick(p: Record<string, unknown>, fieldPath: string, allowed: string[]): string | undefined {
+  if (!allowed.includes(fieldPath)) return undefined;
+  const v = p[fieldPath];
+  return v == null ? undefined : String(v);
+}
+
 export interface BriefContentItem {
   /** Unique content-item id (author-assigned; validator enforces uniqueness). */
   id: string;
@@ -69,8 +129,12 @@ export interface BriefContentItem {
   /** Concise rendered text. Display only; never the basis for provenance. */
   text: string;
   section: BriefSection;
+  /** How strongly the item asserts (drives what it may / may not introduce). */
+  assertionMode: AssertionMode;
   evidenceIds: string[];
   sourceFactKeys: string[];
+  /** Typed value bindings — every concrete fact in `text` must be bound. */
+  factBindings: FactBinding[];
   /** Inherited from the cited evidence — never assigned independently. */
   provenance: Provenance[];
   /** Inherited; no higher than the lowest material supporting evidence. */

@@ -1,16 +1,29 @@
 /**
- * brief-validator — deterministic, fail-closed validation of a model-generated
- * BriefDraft against the deterministic EvidencePacket + ChangeSet (Commit 2).
+ * brief-validator — deterministic, fail-closed validation of an UNTRUSTED model
+ * response against the deterministic EvidencePacket + ChangeSet (Commit 2, 2A).
  *
- * Pure TypeScript. No LLM. It rejects the WHOLE draft when any factual claim is
- * unsupported, provenance was upgraded, confidence was raised, an unresolved
- * item is written as certain, a conflict is unlabeled, a completed commitment
- * lacks proof, a removed commitment is claimed completed, an unsupported next
- * action appears, a "what changed" item is absent from the ChangeSet, or a real
- * person/company/date/amount appears without supporting evidence.
+ * Pure TypeScript. No LLM, no second-model judge. Layers (primary controls
+ * first; the entity heuristic is defense-in-depth only):
+ *   1. STRICT RUNTIME SCHEMA (brief-schema) — shape, enums, id formats, budgets,
+ *      unknown-field rejection, duplicate ids. Untrusted JSON is not typed.
+ *   2. TYPED FACT BINDINGS — every bound value must equal the exact typed value
+ *      in the cited evidence payload (selectTypedValue); claim prose is never
+ *      the source of truth.
+ *   3. EVIDENCE/VALUE CORRESPONDENCE — evidenceIds ↔ sourceFactKeys ↔ bindings.
+ *   4. EXACT CHANGE REFERENCES — every what_changed item cites real changeIds
+ *      whose before/after evidence and assurance match; text may not strengthen
+ *      an unresolved/inferred change.
+ *   5. PROVENANCE + CONFIDENCE INHERITANCE — never upgraded, never raised.
+ *   6. ASSERTION MODES — sourced_fact / supported_synthesis / mallin_recommendation
+ *      / unresolved, each with its own rules.
+ *   7. ENTITY HEURISTIC (defense in depth) — detected people/dates/amounts in the
+ *      text must be covered by a binding value. Known limits are documented in
+ *      the packet: false positives (an evidence-supported phrase the heuristic
+ *      misreads as an entity) and false negatives (a fabricated claim carrying no
+ *      name/date/amount is not detected here — bindings + correspondence are the
+ *      real control).
  *
- * It NEVER silently drops content and continues — a failure returns structured
- * errors; the agent decides on the single constrained repair.
+ * A failure returns structured errors and NEVER silently drops content.
  */
 
 import { comparableValue, type EvidenceItem, type EvidencePacket, type Provenance } from "@/lib/deck/brief-evidence";
@@ -20,25 +33,34 @@ import {
   deriveConfidenceCeiling,
   deriveProvenanceUnion,
   confidenceRank,
+  selectTypedValue,
   FACTUAL_CONTENT_TYPES,
   type BriefContentItem,
   type BriefDraft,
   type BriefSection,
   type CoverMetadata,
 } from "@/lib/deck/brief-model";
+import { parseBriefDraftStrict } from "@/lib/deck/brief-schema";
 
 export type ValidationErrorCode =
+  | "schema_invalid"
   | "duplicate_content_id"
   | "evidence_id_not_found"
   | "source_fact_key_not_found"
   | "evidence_key_mismatch"
   | "factual_item_missing_evidence"
+  | "binding_evidence_mismatch"
+  | "binding_value_mismatch"
+  | "unbound_fact"
+  | "assertion_mode_invalid"
+  | "change_id_not_found"
+  | "change_reference_mismatch"
   | "provenance_upgraded"
   | "confidence_raised"
   | "unresolved_written_as_certain"
   | "conflict_unlabeled"
   | "assurance_mismatch"
-  | "customer_commitment_unsupported"
+  | "customer_commitment_not_typed"
   | "completed_commitment_without_evidence"
   | "unsupported_next_action"
   | "what_changed_not_in_changeset"
@@ -71,57 +93,58 @@ interface Located {
   isWhatChanged: boolean;
 }
 
-export function validateBriefDraft(draft: BriefDraft, ctx: ValidatorContext): ValidationResult {
-  const errors: ValidationError[] = [];
-  const { packet, changeSet } = ctx;
-
-  const evidenceById = new Map(packet.items.map((i) => [i.evidenceId, i]));
-  const packetFactKeys = new Set(packet.items.map((i) => i.sourceFactKey));
-  const changeEvidenceIds = new Set<string>();
-  const changeFactKeys = new Set<string>();
-  for (const c of changeSet.changes) {
-    for (const id of [...c.previousEvidenceIds, ...c.currentEvidenceIds]) changeEvidenceIds.add(id);
-    for (const k of c.sourceFactKeys) changeFactKeys.add(k);
-  }
-  const allFactKeys = new Set<string>([...packetFactKeys, ...changeFactKeys]);
-  const nextAction = describeNextAction(packet);
-
-  const located = locate(draft);
-
-  // Global: unique content ids.
-  const seen = new Set<string>();
-  for (const { item, section } of located) {
-    if (seen.has(item.id)) {
-      errors.push({ code: "duplicate_content_id", itemId: item.id, section, message: `Duplicate content id "${item.id}".` });
-    }
-    seen.add(item.id);
-  }
-
-  for (const loc of located) {
-    validateItem(loc, { evidenceById, packetFactKeys, changeEvidenceIds, changeFactKeys, allFactKeys, changeSet, cover: ctx.cover, nextAction }, errors);
-  }
-
-  return { valid: errors.length === 0, errors };
-}
-
-// ── per-item validation ──────────────────────────────────────────────────────
-
 interface Maps {
   evidenceById: Map<string, EvidenceItem>;
-  packetFactKeys: Set<string>;
+  allFactKeys: Set<string>;
   changeEvidenceIds: Set<string>;
   changeFactKeys: Set<string>;
-  allFactKeys: Set<string>;
+  changeById: Map<string, BriefChange>;
   changeSet: ChangeSet;
   cover: CoverMetadata;
   nextAction: NextActionState;
 }
 
+export function validateBriefDraft(input: unknown, ctx: ValidatorContext): ValidationResult {
+  // 1. Strict runtime schema — untrusted JSON is not typed.
+  const parsed = parseBriefDraftStrict(input);
+  if (!parsed.ok) {
+    return { valid: false, errors: parsed.errors.map((e) => ({ code: "schema_invalid" as const, message: `${e.path || "<root>"}: ${e.message}` })) };
+  }
+  const draft = parsed.draft as unknown as BriefDraft;
+  const { packet, changeSet } = ctx;
+
+  const maps: Maps = {
+    evidenceById: new Map(packet.items.map((i) => [i.evidenceId, i])),
+    allFactKeys: new Set<string>(),
+    changeEvidenceIds: new Set<string>(),
+    changeFactKeys: new Set<string>(),
+    changeById: new Map<string, BriefChange>(),
+    changeSet,
+    cover: ctx.cover,
+    nextAction: describeNextAction(packet),
+  };
+  for (const i of packet.items) maps.allFactKeys.add(i.sourceFactKey);
+  for (const c of changeSet.changes) {
+    maps.changeById.set(c.changeId, c);
+    for (const id of [...c.previousEvidenceIds, ...c.currentEvidenceIds]) maps.changeEvidenceIds.add(id);
+    for (const k of c.sourceFactKeys) {
+      maps.changeFactKeys.add(k);
+      maps.allFactKeys.add(k);
+    }
+  }
+
+  const errors: ValidationError[] = [];
+  for (const loc of locate(draft)) validateItem(loc, maps, errors);
+  return { valid: errors.length === 0, errors };
+}
+
+// ── per-item ─────────────────────────────────────────────────────────────────
+
 function validateItem(loc: Located, maps: Maps, errors: ValidationError[]): void {
   const { item, section, bucket, isWhatChanged } = loc;
   const push = (code: ValidationErrorCode, message: string) => errors.push({ code, itemId: item.id, section, message });
 
-  if (item.contentType === "decorative") return; // labels need no evidence
+  if (item.contentType === "decorative") return;
 
   const factual = FACTUAL_CONTENT_TYPES.has(item.contentType);
   if (factual && item.evidenceIds.length === 0) {
@@ -129,28 +152,60 @@ function validateItem(loc: Located, maps: Maps, errors: ValidationError[]): void
     return;
   }
 
-  // Recommendations are never customer commitments.
-  if (bucket === "customerCommitments" && item.contentType === "mallin_recommendation") {
+  // Assertion mode ⇔ recommendation label.
+  const isRec = item.contentType === "mallin_recommendation";
+  if (isRec !== (item.assertionMode === "mallin_recommendation")) {
+    push("assertion_mode_invalid", "mallin_recommendation content and assertion mode must agree.");
+  }
+  if (bucket === "customerCommitments" && isRec) {
     push("recommendation_as_commitment", "A mallin_recommendation cannot be a customer commitment.");
   }
-
-  if (isWhatChanged) {
-    validateWhatChanged(loc, maps, errors);
-  } else {
-    validatePacketBacked(loc, maps, errors);
+  if (item.assertionMode === "sourced_fact" && item.factBindings.length === 0) {
+    push("assertion_mode_invalid", "A sourced_fact must carry at least one typed fact binding.");
   }
 
-  // Next-action guard (applies regardless of domain).
+  validateBindings(loc, maps, errors);
+
+  if (isWhatChanged) validateWhatChanged(loc, maps, errors);
+  else validatePacketBacked(loc, maps, errors);
+
+  checkEntityCoverage(loc, maps, errors);
+
   if (item.nextActionClaim) {
     const na = maps.nextAction;
     const uncertain = na.notConfirmed || na.conflicting;
-    const allowedType = item.contentType === "mallin_recommendation" || item.contentType === "unresolved_action";
+    const allowedType = isRec || item.contentType === "unresolved_action";
     const labeledUncertain = item.assurance === "unresolved" || item.assurance === "conflicting";
     if (uncertain && (!allowedType || !labeledUncertain)) {
-      push(
-        "unsupported_next_action",
-        `Next action is ${na.notConfirmed ? "Not confirmed" : "conflicting"}; it cannot be presented as a confirmed action.`,
-      );
+      push("unsupported_next_action", `Next action is ${na.notConfirmed ? "Not confirmed" : "conflicting"}; cannot be presented as confirmed.`);
+    }
+  }
+}
+
+/** Each binding must reference cited evidence AND its value must equal the
+ *  exact TYPED value in that evidence payload. */
+function validateBindings(loc: Located, maps: Maps, errors: ValidationError[]): void {
+  const { item, section } = loc;
+  const push = (code: ValidationErrorCode, message: string) => errors.push({ code, itemId: item.id, section, message });
+  const cited = new Set(item.evidenceIds);
+  const citedKeys = new Set(item.sourceFactKeys);
+
+  for (const b of item.factBindings) {
+    if (!cited.has(b.evidenceId)) push("binding_evidence_mismatch", `Binding references uncited evidence "${b.evidenceId}".`);
+    if (!citedKeys.has(b.sourceFactKey)) push("binding_evidence_mismatch", `Binding references uncited sourceFactKey "${b.sourceFactKey}".`);
+
+    const ev = maps.evidenceById.get(b.evidenceId);
+    if (ev) {
+      if (ev.sourceFactKey !== b.sourceFactKey) push("binding_evidence_mismatch", `Binding sourceFactKey ≠ evidence for "${b.evidenceId}".`);
+      if (ev.payload.kind !== b.payloadKind) push("binding_evidence_mismatch", `Binding payloadKind "${b.payloadKind}" ≠ evidence "${ev.payload.kind}".`);
+      const typed = selectTypedValue(ev.payload, b.fieldPath);
+      if (typed !== b.value) push("binding_value_mismatch", `Bound value "${b.value}" ≠ typed ${b.payloadKind}.${b.fieldPath} = "${typed ?? "∅"}".`);
+    } else if (maps.changeEvidenceIds.has(b.evidenceId)) {
+      // Prior-snapshot (change-side) evidence has no live payload — require a
+      // change reference instead of a typed-value check.
+      if (!b.changeId || !maps.changeById.has(b.changeId)) push("change_id_not_found", `Change-side binding "${b.evidenceId}" lacks a valid changeId.`);
+    } else {
+      push("evidence_id_not_found", `Binding evidence id "${b.evidenceId}" does not exist.`);
     }
   }
 }
@@ -165,20 +220,16 @@ function validatePacketBacked(loc: Located, maps: Maps, errors: ValidationError[
     if (!found) push("evidence_id_not_found", `Evidence id "${id}" does not exist in the packet.`);
     else cited.push(found);
   }
-  for (const k of item.sourceFactKeys) {
-    if (!maps.allFactKeys.has(k)) push("source_fact_key_not_found", `Source-fact key "${k}" does not exist.`);
-  }
-  if (cited.length !== item.evidenceIds.length) return; // can't derive from missing evidence
+  for (const k of item.sourceFactKeys) if (!maps.allFactKeys.has(k)) push("source_fact_key_not_found", `Source-fact key "${k}" does not exist.`);
+  if (cited.length !== item.evidenceIds.length) return;
 
-  // Correspondence: the cited evidence's fact keys must equal the item's.
-  const citedKeys = new Set(cited.map((c) => c.sourceFactKey));
-  const claimedKeys = new Set(item.sourceFactKeys);
-  if (!setsEqual(citedKeys, claimedKeys)) {
+  if (!setsEqual(new Set(cited.map((c) => c.sourceFactKey)), new Set(item.sourceFactKeys))) {
     push("evidence_key_mismatch", "Cited evidenceIds and sourceFactKeys do not correspond.");
   }
 
-  checkProvenanceConfidenceAssurance(loc, cited, deriveAssurance(cited), errors);
-  checkEntities(loc, corpusFor(cited, maps.cover), errors);
+  const derived = deriveAssurance(cited);
+  checkProvenanceConfidence(loc, cited, errors);
+  checkAssuranceAndMode(loc, derived, errors);
   checkTypeRules(loc, cited, maps, errors);
 }
 
@@ -190,72 +241,74 @@ function validateWhatChanged(loc: Located, maps: Maps, errors: ValidationError[]
     push("what_changed_without_prior_state", "A 'what changed' item is not allowed without a reliable prior state.");
     return;
   }
-  for (const id of item.evidenceIds) {
-    if (!maps.changeEvidenceIds.has(id)) push("evidence_id_not_found", `Evidence id "${id}" is not part of any ChangeSet change.`);
-  }
-  for (const k of item.sourceFactKeys) {
-    if (!maps.changeFactKeys.has(k)) push("source_fact_key_not_found", `Source-fact key "${k}" is not part of any ChangeSet change.`);
-  }
+  for (const k of item.sourceFactKeys) if (!maps.changeFactKeys.has(k)) push("source_fact_key_not_found", `"${k}" is not part of any ChangeSet change.`);
 
-  const match = matchChange(item, maps.changeSet.changes);
-  if (!match) {
-    push("what_changed_not_in_changeset", "This 'what changed' item does not correspond to a deterministic change.");
+  const changeIds = [...new Set(item.factBindings.map((b) => b.changeId).filter((c): c is string => !!c))];
+  if (changeIds.length === 0) {
+    push("what_changed_not_in_changeset", "A 'what changed' item must reference at least one changeId.");
     return;
   }
+  const changes: BriefChange[] = [];
+  for (const cid of changeIds) {
+    const c = maps.changeById.get(cid);
+    if (!c) push("change_id_not_found", `changeId "${cid}" does not exist.`);
+    else changes.push(c);
+  }
+  if (changes.length === 0) return;
 
-  // Assurance must equal the change's assurance.
-  if (item.assurance !== match.assurance) {
-    if (match.assurance === "unresolved") push("unresolved_written_as_certain", "Change is unresolved but the item is more certain.");
-    else if (match.assurance === "conflicting") push("conflict_unlabeled", "Change is conflicting but the item is not labeled conflicting.");
-    else push("assurance_mismatch", `Assurance "${item.assurance}" ≠ change assurance "${match.assurance}".`);
+  const allowedEvidence = new Set(changes.flatMap((c) => [...c.previousEvidenceIds, ...c.currentEvidenceIds]));
+  for (const id of item.evidenceIds) if (!allowedEvidence.has(id)) push("change_reference_mismatch", `Evidence "${id}" is not part of the referenced change(s).`);
+
+  const assurances = new Set(changes.map((c) => c.assurance));
+  if (assurances.size === 1) {
+    const a = [...assurances][0];
+    if (item.assurance !== a) {
+      if (a === "unresolved") push("unresolved_written_as_certain", "Change is unresolved but the item is more certain.");
+      else if (a === "conflicting") push("conflict_unlabeled", "Change is conflicting but the item is not labeled conflicting.");
+      else push("assurance_mismatch", `Assurance "${item.assurance}" ≠ change "${a}".`);
+    }
+    // Text may not strengthen an unresolved/inferred change into a sourced fact.
+    if ((a === "unresolved" || a === "inferred") && item.assertionMode === "sourced_fact") {
+      push("assertion_mode_invalid", `A ${a} change cannot be asserted as a sourced_fact.`);
+    }
   }
 
-  // Provenance/confidence from the resolvable (current-side) evidence.
   const resolvable = item.evidenceIds.map((id) => maps.evidenceById.get(id)).filter((x): x is EvidenceItem => !!x);
-  const allowed: Provenance[] = resolvable.length
+  const allowedProv: Provenance[] = resolvable.length
     ? deriveProvenanceUnion(resolvable)
-    : match.assurance === "unresolved"
+    : assurances.has("unresolved")
       ? ["open_question"]
       : ["mallin_inference"];
-  for (const p of item.provenance) {
-    if (!allowed.includes(p)) push("provenance_upgraded", `Provenance "${p}" is not supported by the change's evidence.`);
-  }
+  for (const p of item.provenance) if (!allowedProv.includes(p)) push("provenance_upgraded", `Provenance "${p}" is not supported by the change evidence.`);
   if (item.provenance.includes("customer_stated") && !resolvable.some((r) => r.provenance === "customer_stated")) {
     push("provenance_upgraded", "customer_stated claimed without a customer-stated source.");
   }
   const ceiling = deriveConfidenceCeiling(resolvable);
-  if (confidenceRank(item.confidence) > confidenceRank(ceiling)) {
-    push("confidence_raised", `Confidence "${item.confidence}" exceeds ceiling "${ceiling}".`);
-  }
-
-  checkEntities(loc, corpusForChange(match, maps.cover), errors);
-  checkTypeRules(loc, resolvable, maps, errors);
+  if (confidenceRank(item.confidence) > confidenceRank(ceiling)) push("confidence_raised", `Confidence "${item.confidence}" exceeds ceiling "${ceiling}".`);
 }
 
-function checkProvenanceConfidenceAssurance(
-  loc: Located,
-  cited: EvidenceItem[],
-  derivedAssurance: ReturnType<typeof deriveAssurance>,
-  errors: ValidationError[],
-): void {
+function checkProvenanceConfidence(loc: Located, cited: EvidenceItem[], errors: ValidationError[]): void {
+  const { item, section } = loc;
+  const push = (code: ValidationErrorCode, message: string) => errors.push({ code, itemId: item.id, section, message });
+  const union = deriveProvenanceUnion(cited);
+  if (item.provenance.length === 0) push("provenance_upgraded", "Item has no inherited provenance.");
+  for (const p of item.provenance) if (!union.includes(p)) push("provenance_upgraded", `Provenance "${p}" is not present in the supporting evidence.`);
+  const ceiling = deriveConfidenceCeiling(cited);
+  if (confidenceRank(item.confidence) > confidenceRank(ceiling)) push("confidence_raised", `Confidence "${item.confidence}" exceeds "${ceiling}".`);
+}
+
+function checkAssuranceAndMode(loc: Located, derived: ReturnType<typeof deriveAssurance>, errors: ValidationError[]): void {
   const { item, section } = loc;
   const push = (code: ValidationErrorCode, message: string) => errors.push({ code, itemId: item.id, section, message });
 
-  const union = deriveProvenanceUnion(cited);
-  if (item.provenance.length === 0) push("provenance_upgraded", "Item has no inherited provenance.");
-  for (const p of item.provenance) {
-    if (!union.includes(p)) push("provenance_upgraded", `Provenance "${p}" is not present in the supporting evidence.`);
+  if (item.assurance !== derived) {
+    if (derived === "unresolved") push("unresolved_written_as_certain", "Evidence is unresolved but the item is more certain.");
+    else if (derived === "conflicting") push("conflict_unlabeled", "Evidence conflicts but the item is not labeled conflicting.");
+    else push("assurance_mismatch", `Assurance "${item.assurance}" ≠ derived "${derived}".`);
   }
-
-  const ceiling = deriveConfidenceCeiling(cited);
-  if (confidenceRank(item.confidence) > confidenceRank(ceiling)) {
-    push("confidence_raised", `Confidence "${item.confidence}" exceeds the lowest supporting confidence "${ceiling}".`);
-  }
-
-  if (item.assurance !== derivedAssurance) {
-    if (derivedAssurance === "unresolved") push("unresolved_written_as_certain", "Supporting evidence is unresolved but the item is more certain.");
-    else if (derivedAssurance === "conflicting") push("conflict_unlabeled", "Supporting evidence conflicts but the item is not labeled conflicting.");
-    else push("assurance_mismatch", `Assurance "${item.assurance}" ≠ derived "${derivedAssurance}".`);
+  // Unresolved/conflicting evidence cannot be asserted as a plain sourced fact.
+  if ((derived === "unresolved" || derived === "conflicting") && item.assertionMode === "sourced_fact") {
+    push("assertion_mode_invalid", `${derived} evidence cannot be a sourced_fact.`);
   }
 }
 
@@ -264,10 +317,10 @@ function checkTypeRules(loc: Located, cited: EvidenceItem[], maps: Maps, errors:
   const push = (code: ValidationErrorCode, message: string) => errors.push({ code, itemId: item.id, section, message });
 
   if (item.contentType === "customer_commitment") {
-    const backed =
-      cited.some((c) => c.provenance === "customer_stated") ||
-      cited.some((c) => c.payload.kind === "commitment" && c.payload.stateEvidence);
-    if (!backed) push("customer_commitment_unsupported", "Customer commitment lacks customer-stated / confirmed support.");
+    // A generic customer_stated transcript is NOT a commitment: require a typed
+    // commitment record on the customer side.
+    const typed = cited.some((c) => c.payload.kind === "commitment" && c.payload.party === "customer");
+    if (!typed) push("customer_commitment_not_typed", "Customer commitment requires a typed customer-party commitment record.");
   }
 
   const claim = item.commitmentClaim;
@@ -276,50 +329,42 @@ function checkTypeRules(loc: Located, cited: EvidenceItem[], maps: Maps, errors:
       (c) => c.payload.kind === "commitment" && c.sourceFactKey === claim.sourceFactKey && c.payload.state === "done" && !!c.payload.stateEvidence,
     );
     const removed = maps.changeSet.changes.some((c) => c.type === "commitment_removed" && c.sourceFactKeys.includes(claim.sourceFactKey));
-    const provenByChange = maps.changeSet.changes.some(
-      (c) => c.type === "commitment_completed" && c.assurance === "observed" && c.sourceFactKeys.includes(claim.sourceFactKey),
-    );
+    const provenByChange = maps.changeSet.changes.some((c) => c.type === "commitment_completed" && c.assurance === "observed" && c.sourceFactKeys.includes(claim.sourceFactKey));
     if (removed || !(provenByPacket || provenByChange)) {
       push("completed_commitment_without_evidence", `Commitment ${claim.sourceFactKey} claimed completed without explicit completion evidence.`);
     }
   }
 }
 
-// ── entity extraction (dates / amounts / multi-word proper nouns) ────────────
-
-function checkEntities(loc: Located, corpus: string, errors: ValidationError[]): void {
+/** Defense-in-depth: every detected entity in the text must be covered by a
+ *  binding value, or by trusted (deterministic) cover metadata. */
+function checkEntityCoverage(loc: Located, maps: Maps, errors: ValidationError[]): void {
   const { item, section } = loc;
-  const entities = extractEntities(item.text);
-  const hay = corpus.toLowerCase();
-  for (const e of entities) {
-    if (!hay.includes(e.toLowerCase())) {
-      errors.push({ code: "unsupported_entity", itemId: item.id, section, message: `Unsupported entity "${e}" not found in supporting evidence.` });
+  const covered = [
+    ...item.factBindings.map((b) => b.value),
+    maps.cover.dealName,
+    maps.cover.preparedFor ?? "",
+    maps.cover.classification,
+  ]
+    .join(" \n ")
+    .toLowerCase();
+  for (const e of extractEntities(item.text)) {
+    if (!covered.includes(e.toLowerCase())) {
+      errors.push({ code: "unbound_fact", itemId: item.id, section, message: `Entity "${e}" in text is not bound to typed evidence.` });
     }
   }
 }
 
 function extractEntities(text: string): string[] {
   const out = new Set<string>();
-  const dateRe = /\b\d{4}-\d{2}-\d{2}\b/g;
-  const monthRe = /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{4})?\b/g;
-  const amountRe = /\$\s?\d[\d,]*(?:\.\d+)?\s?[kKmM]?\b/g;
-  const namesRe = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b/g;
-  for (const re of [dateRe, monthRe, amountRe, namesRe]) {
-    for (const m of text.matchAll(re)) out.add(m[0].trim());
-  }
+  const res = [
+    /\b\d{4}-\d{2}-\d{2}\b/g,
+    /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{4})?\b/g,
+    /\$\s?\d[\d,]*(?:\.\d+)?\s?[kKmM]?\b/g,
+    /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b/g,
+  ];
+  for (const re of res) for (const m of text.matchAll(re)) out.add(m[0].trim());
   return [...out];
-}
-
-function corpusFor(cited: EvidenceItem[], cover: CoverMetadata): string {
-  const parts: string[] = [cover.dealName, cover.preparedFor ?? "", cover.classification];
-  for (const c of cited) {
-    parts.push(c.claim, c.support.excerpt ?? "", c.support.value ?? "", comparableValue(c.payload));
-  }
-  return parts.join(" \n ");
-}
-
-function corpusForChange(change: BriefChange, cover: CoverMetadata): string {
-  return [cover.dealName, cover.preparedFor ?? "", cover.classification, change.previousValue ?? "", change.currentValue ?? "", change.logicalKey].join(" \n ");
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -334,16 +379,6 @@ function describeNextAction(packet: EvidencePacket): NextActionState {
   const notConfirmed = items.some((i) => i.provenance === "open_question");
   const values = new Set(items.filter((i) => i.provenance !== "open_question").map((i) => comparableValue(i.payload)));
   return { notConfirmed, conflicting: values.size > 1, confirmed: !notConfirmed && values.size === 1 };
-}
-
-function matchChange(item: BriefContentItem, changes: BriefChange[]): BriefChange | undefined {
-  const itemKeys = new Set(item.sourceFactKeys);
-  const itemIds = new Set(item.evidenceIds);
-  return changes.find((c) => {
-    const cKeys = new Set(c.sourceFactKeys);
-    const cIds = new Set([...c.previousEvidenceIds, ...c.currentEvidenceIds]);
-    return isSubset(itemKeys, cKeys) && isSubset(itemIds, cIds) && itemKeys.size > 0;
-  });
 }
 
 function locate(draft: BriefDraft): Located[] {
@@ -367,7 +402,4 @@ function locate(draft: BriefDraft): Located[] {
 
 function setsEqual(a: Set<string>, b: Set<string>): boolean {
   return a.size === b.size && [...a].every((x) => b.has(x));
-}
-function isSubset(a: Set<string>, b: Set<string>): boolean {
-  return [...a].every((x) => b.has(x));
 }

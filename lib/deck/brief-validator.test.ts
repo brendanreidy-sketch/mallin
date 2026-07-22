@@ -4,8 +4,10 @@ import { buildCover } from "./brief-agent";
 import { FACTUAL_CONTENT_TYPES, type BriefDraft } from "./brief-model";
 import {
   changeSet,
+  fromItems,
   makeValidDraft,
   noPriorChangeSet,
+  one,
   packet,
   request,
   factKeyOf,
@@ -229,5 +231,69 @@ describe("validateBriefDraft — typed fact bindings & 2A semantics", () => {
     const d = makeValidDraft();
     d.actionPlan.mallinRecommendations[0].assertionMode = "sourced_fact";
     expect(codes(d)).toContain("assertion_mode_invalid");
+  });
+});
+
+describe("validateBriefDraft — 2B customer-commitment evidence chain", () => {
+  it("rejects a customer commitment backed by Mallín inference alone (typed party is not enough)", () => {
+    const d = makeValidDraft();
+    // c_pilot is party:customer but has NO supporting evidence chain.
+    d.actionPlan.customerCommitments = [
+      fromItems("cc_pilot", "customer_commitment", "action_plan", [one("commit:c_pilot")], "The customer committed to a paid pilot.", "sourced_fact"),
+    ];
+    expect(codes(d)).toContain("customer_commitment_unsupported");
+  });
+
+  it("rejects a customer commitment whose supporting chain exists but is not cited", () => {
+    const d = makeValidDraft();
+    // Cite only the typed commitment record, not its buyer-stated supporting segment.
+    d.actionPlan.customerCommitments = [
+      fromItems("cc_uncited", "customer_commitment", "action_plan", [one("commit:c_voldata")], "Dana Ruiz committed to provide peak-season volume data.", "sourced_fact"),
+    ];
+    expect(codes(d)).toContain("customer_commitment_unsupported");
+  });
+
+  it("accepts a commitment backed by an explicit buyer-stated segment", () => {
+    const ac1 = makeValidDraft().actionPlan.customerCommitments[0];
+    expect(ac1.provenance).toContain("customer_stated");
+    expect(codes(makeValidDraft())).not.toContain("customer_commitment_unsupported");
+  });
+
+  it("accepts a seller-recorded customer commitment and retains seller provenance", () => {
+    const ac2 = makeValidDraft().actionPlan.customerCommitments[1];
+    expect(ac2.provenance).toContain("seller_provided");
+    expect(validateBriefDraft(makeValidDraft(), ctx).valid).toBe(true);
+  });
+
+  it("rejects an unsupported owner or deadline in a customer commitment", () => {
+    const d = makeValidDraft();
+    d.actionPlan.customerCommitments[0].text = "Jordan Vance committed to deliver by 2026-09-30.";
+    expect(codes(d)).toContain("unbound_fact");
+  });
+
+  it("keeps inferred possible commitments visibly distinct from confirmed ones", () => {
+    const d = makeValidDraft();
+    // Putting an inferred possible commitment into the confirmed bucket collapses categories.
+    d.actionPlan.customerCommitments.push({ ...makeValidDraft().actionPlan.inferredCustomerCommitments[0], id: "ic_moved" });
+    expect(codes(d)).toContain("action_category_mismatch");
+  });
+
+  it("validates that commitment supporting evidence ids resolve to real EvidenceItems", () => {
+    // Positive: the real chain resolves.
+    const voldata = packet.items.find((i) => i.logicalKey === "commit:c_voldata")!;
+    expect(voldata.payload.kind === "commitment" && (voldata.payload.supportingEvidenceIds ?? []).length).toBeTruthy();
+
+    // Negative: a commitment payload carrying a bogus supporting id is rejected.
+    const tampered = {
+      ...packet,
+      items: packet.items.map((i) =>
+        i.logicalKey === "commit:c_voldata" && i.payload.kind === "commitment"
+          ? { ...i, payload: { ...i.payload, supportingEvidenceIds: ["ev:bogus"] } }
+          : i,
+      ),
+    };
+    const d = makeValidDraft();
+    const res = validateBriefDraft(d, { packet: tampered, changeSet, cover: buildCover(request) });
+    expect(res.errors.map((e) => e.code)).toContain("commitment_support_invalid");
   });
 });

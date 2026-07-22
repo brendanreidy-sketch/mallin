@@ -92,6 +92,12 @@ export type EvidencePayload =
       party?: "customer" | "seller";
       /** Named owner/speaker on the committing side, when known. */
       owner?: string;
+      /** Evidence ids (in this same packet) that underlie the commitment —
+       *  e.g. a buyer-side transcript segment, or a seller-recorded note. A
+       *  party:"customer" commitment is NOT a confirmed customer commitment
+       *  unless at least one of these resolves to customer_stated or
+       *  seller_provided evidence. */
+      supportingEvidenceIds?: string[];
       stateEvidence?: CommitmentStateEvidence;
     }
   | { kind: "deal_posture"; posture: DealPosture }
@@ -245,6 +251,9 @@ export interface PrepCommitmentInput {
   party?: "customer" | "seller";
   /** Named owner/speaker on the committing side. */
   owner?: string;
+  /** References to underlying evidence that proves this commitment, resolved
+   *  against the packet at build time into payload.supportingEvidenceIds. */
+  supportingRefs?: Array<{ transcriptId: string; segmentId: string } | { sourceFactKey: string }>;
   /** Proof of the done/missed state (activity record, confirmation). When
    *  present, a completion/miss is observed rather than merely inferred. */
   stateEvidence?: CommitmentStateEvidence;
@@ -305,10 +314,12 @@ export function normalizeConfidence(c?: Confidence | null): EvidenceConfidence {
 
 /** Length-prefixed (netstring-style) packing: each component is emitted as
  *  `<byteLen>:<value>`, so a delimiter or ":" inside a value can never forge a
- *  component boundary. Deterministic; no randomness or time. */
-function packKey(parts: string[]): string {
+ *  component boundary. Deterministic; no randomness or time. Shared by the
+ *  evidence ids AND the ChangeSet changeIds. */
+export function packComponents(parts: string[]): string {
   return parts.map((p) => `${p.length}:${p}`).join("");
 }
+const packKey = packComponents;
 
 export interface EvidenceCoordinates {
   tenantId: string;
@@ -537,6 +548,18 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
       }
     }
     for (const c of prep.commitments) {
+      // Resolve supporting refs against evidence already built (transcripts and
+      // intelligence are added before prep). Unresolved refs are dropped, which
+      // keeps an under-supported commitment from qualifying as confirmed.
+      const supportingEvidenceIds = (c.supportingRefs ?? [])
+        .map((ref) =>
+          "sourceFactKey" in ref
+            ? items.find((i) => i.sourceFactKey === ref.sourceFactKey)?.evidenceId
+            : items.find(
+                (i) => i.payload.kind === "transcript_statement" && i.payload.transcriptId === ref.transcriptId && i.payload.segmentId === ref.segmentId,
+              )?.evidenceId,
+        )
+        .filter((x): x is string => !!x);
       add({
         logicalKey: `commit:${c.id}`, fieldPath: `commitment/${c.id}`, factRecordId: "prep",
         claim: `${c.label} — ${c.state}${c.expectedBy ? ` (expected by ${c.expectedBy})` : ""}`,
@@ -548,6 +571,7 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
           label: c.label,
           ...(c.party ? { party: c.party } : {}),
           ...(c.owner ? { owner: c.owner } : {}),
+          ...(supportingEvidenceIds.length ? { supportingEvidenceIds } : {}),
           ...(c.stateEvidence ? { stateEvidence: c.stateEvidence } : {}),
         },
       });

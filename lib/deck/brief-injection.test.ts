@@ -48,7 +48,7 @@ function emptyDraft(): BriefDraft {
     stakeholders: [],
     decisionProcess: [],
     risks: [],
-    actionPlan: { customerCommitments: [], sellerActions: [], mallinRecommendations: [], unresolvedActions: [] },
+    actionPlan: { customerCommitments: [], inferredCustomerCommitments: [], sellerActions: [], mallinRecommendations: [], unresolvedActions: [] },
     appendix: [],
   };
 }

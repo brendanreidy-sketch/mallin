@@ -33,6 +33,7 @@ export type BriefContentType =
   | "decision_process"
   | "risk"
   | "customer_commitment"
+  | "inferred_customer_commitment"
   | "seller_action"
   | "mallin_recommendation"
   | "unresolved_action"
@@ -49,6 +50,7 @@ export const FACTUAL_CONTENT_TYPES: ReadonlySet<BriefContentType> = new Set<Brie
   "decision_process",
   "risk",
   "customer_commitment",
+  "inferred_customer_commitment",
   "seller_action",
   "mallin_recommendation",
   "unresolved_action",
@@ -160,7 +162,12 @@ export interface CoverMetadata {
 }
 
 export interface ActionPlan {
+  /** Confirmed/recorded customer commitments — explicit customer or seller
+   *  evidence. */
   customerCommitments: BriefContentItem[];
+  /** Mallín-INFERRED possible customer commitments — labeled inferred, never
+   *  presented as agreed. Kept distinct so the categories cannot collapse. */
+  inferredCustomerCommitments: BriefContentItem[];
   sellerActions: BriefContentItem[];
   mallinRecommendations: BriefContentItem[];
   unresolvedActions: BriefContentItem[];
@@ -310,12 +317,13 @@ function capActionPlan(
   // Keep in priority order; once the total budget is spent, the rest overflow.
   const order: Array<keyof ActionPlan> = [
     "customerCommitments",
+    "inferredCustomerCommitments",
     "sellerActions",
     "mallinRecommendations",
     "unresolvedActions",
   ];
   let remaining = max;
-  const out: ActionPlan = { customerCommitments: [], sellerActions: [], mallinRecommendations: [], unresolvedActions: [] };
+  const out: ActionPlan = { customerCommitments: [], inferredCustomerCommitments: [], sellerActions: [], mallinRecommendations: [], unresolvedActions: [] };
   for (const bucket of order) {
     for (const item of plan[bucket]) {
       if (remaining > 0) {

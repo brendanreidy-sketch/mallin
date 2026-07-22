@@ -59,11 +59,13 @@ function bindingsFor(item: EvidenceItem, changeId?: string): FactBinding[] {
   });
 }
 
-const one = (lk: string): EvidenceItem => packet.items.find((i) => i.logicalKey === lk)!;
+export const one = (lk: string): EvidenceItem => packet.items.find((i) => i.logicalKey === lk)!;
 const all = (lk: string): EvidenceItem[] => packet.items.filter((i) => i.logicalKey === lk);
 export const factKeyOf = (lk: string): string => one(lk).sourceFactKey;
+export const seg = (transcriptId: string, segmentId: string): EvidenceItem =>
+  packet.items.find((i) => i.payload.kind === "transcript_statement" && i.payload.transcriptId === transcriptId && i.payload.segmentId === segmentId)!;
 
-function fromItems(
+export function fromItems(
   id: string,
   contentType: BriefContentType,
   section: BriefSection,
@@ -164,7 +166,14 @@ export function makeValidDraft(): BriefDraft {
     ],
     actionPlan: {
       customerCommitments: [
-        packetItem("ac1", "customer_commitment", "action_plan", ["commit:c_voldata"], "Dana Ruiz committed to provide peak-season volume data.", "sourced_fact"),
+        // CONFIRMED via an explicit buyer-stated segment (chain cited).
+        fromItems("ac1", "customer_commitment", "action_plan", [one("commit:c_voldata"), seg("call_nw_1", "1")], "Dana Ruiz committed to provide peak-season volume data.", "sourced_fact"),
+        // CONFIRMED via a seller-recorded customer commitment (retains seller provenance).
+        fromItems("ac2", "customer_commitment", "action_plan", [one("commit:c_sponsor"), seg("call_nw_1", "2")], "Dana Ruiz agreed to sponsor the internal review, per the rep's note.", "sourced_fact"),
+      ],
+      inferredCustomerCommitments: [
+        // INFERRED possible commitment — labeled, never presented as agreed.
+        packetItem("ic1", "inferred_customer_commitment", "action_plan", ["commit:c_pilot"], "A paid pilot is a possible customer commitment — inferred, not yet agreed.", "supported_synthesis"),
       ],
       sellerActions: [
         packetItem("as1", "seller_action", "action_plan", ["commit:c_security"], "Security review packet completed and signed off.", "sourced_fact", {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildEvidencePacket, type DealSnapshot } from "./brief-evidence";
-import { detectChanges, type BriefChangeType } from "./brief-change-detection";
+import { detectChanges, changeIdFor, type BriefChangeType } from "./brief-change-detection";
 import { currentSnapshot, previousSnapshot } from "./fixtures/brief-test-deal";
 
 const current = buildEvidencePacket(currentSnapshot);
@@ -147,6 +147,35 @@ describe("detectChanges — full fixture diff", () => {
 
   it("is deterministic — same packets yield a deeply-equal ChangeSet", () => {
     expect(detectChanges(current, previous)).toEqual(cs);
+  });
+});
+
+describe("changeIdFor — collision-safe & reorder invariant", () => {
+  it("is deterministic, well-formed, and unique across every change", () => {
+    const cs = detectChanges(current, previous);
+    const again = detectChanges(buildEvidencePacket(currentSnapshot), buildEvidencePacket(previousSnapshot));
+    for (const c of cs.changes) expect(c.changeId).toMatch(/^chg:/);
+    // Recomputing yields identical change ids (no clock/randomness).
+    expect(again.changes.map((c) => c.changeId)).toEqual(cs.changes.map((c) => c.changeId));
+    // Every change id is unique.
+    const ids = cs.changes.map((c) => c.changeId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("is invariant to fact-key ordering", () => {
+    const a = changeIdFor("t", "d", "deal:nextAction", ["sf:a", "sf:b"], ["sf:x", "sf:y"]);
+    const b = changeIdFor("t", "d", "deal:nextAction", ["sf:b", "sf:a"], ["sf:y", "sf:x"]);
+    expect(a).toBe(b);
+  });
+
+  it("does not collide when delimiter characters appear inside values", () => {
+    // Naive concatenation would map these two to the same string.
+    const a = changeIdFor("t", "d", "k:1", ["sf:a"], ["sf:b|c"]);
+    const b = changeIdFor("t", "d", "k:1", ["sf:a", "sf:b"], ["sf:c"]);
+    expect(a).not.toBe(b);
+    const c = changeIdFor("t", "d", "a", [], ["b"]);
+    const dd = changeIdFor("t", "d", "a|b", [], []); // different coordinates, must differ
+    expect(c).not.toBe(dd);
   });
 });
 

@@ -218,10 +218,15 @@ export const currentSnapshot: DealSnapshot = {
       },
       // Explicitly missed state (no external confirmation) → inferred miss.
       { id: "c_pricing", label: "Send tiered pricing proposal", state: "missed", expectedBy: "2026-07-01" },
-      // A typed CUSTOMER-party commitment (structured record + named owner) —
-      // this is what a real customer commitment requires, distinct from a
-      // generic buyer statement of preference.
-      { id: "c_voldata", label: "Provide peak-season volume data", state: "open", party: "customer", owner: "Dana Ruiz", expectedBy: "2026-07-25" },
+      // CONFIRMED customer commitment: a typed customer-party record whose
+      // supportingRefs resolve to an explicit BUYER-STATED transcript segment.
+      { id: "c_voldata", label: "Provide peak-season volume data", state: "open", party: "customer", owner: "Dana Ruiz", expectedBy: "2026-07-25", supportingRefs: [{ transcriptId: "call_nw_1", segmentId: "1" }] },
+      // CONFIRMED via a SELLER-RECORDED customer commitment (seller_provided
+      // supporting segment) — accepted, but the chain retains seller provenance.
+      { id: "c_sponsor", label: "Sponsor the internal review", state: "open", party: "customer", owner: "Dana Ruiz", supportingRefs: [{ transcriptId: "call_nw_1", segmentId: "2" }] },
+      // INFERRED-ONLY: a customer-party record with NO supporting evidence.
+      // Mallín inference alone → must NOT be a confirmed customer commitment.
+      { id: "c_pilot", label: "Commit to a paid pilot", state: "open", party: "customer" },
       // c_legal (redlined MSA) simply DISAPPEARS this cycle → commitment_removed,
       // assurance unresolved. Its absence is NOT proof it was completed.
     ],
@@ -234,6 +239,22 @@ export const currentSnapshot: DealSnapshot = {
       speaker: "Dana Ruiz",
       speakerSide: "buyer",
       text: "We can't risk migrating off the legacy dispatch board mid-peak-season — that's the whole concern.",
+    },
+    {
+      transcriptId: "call_nw_1",
+      segmentId: "1", // buyer-STATED commitment language (supports c_voldata)
+      callDate: "2026-06-12",
+      speaker: "Dana Ruiz",
+      speakerSide: "buyer",
+      text: "I'll get you our peak-season volume numbers so you can size this properly.",
+    },
+    {
+      transcriptId: "call_nw_1",
+      segmentId: "2", // seller-RECORDED customer commitment (supports c_sponsor)
+      callDate: "2026-06-12",
+      speaker: "Alex Rep",
+      speakerSide: "seller",
+      text: "Noted that Dana agreed to sponsor the internal review on their side.",
     },
     {
       transcriptId: "call_nw_2", // NEW transcript this cycle

@@ -33,6 +33,7 @@
 
 import {
   comparableValue,
+  packComponents,
   type EvidenceItem,
   type EvidencePacket,
   type EvidencePayload,
@@ -95,6 +96,22 @@ export interface DetectChangesOptions {
 
 const SEVERITY_RANK: Record<string, number> = { medium: 1, high: 2, blocking: 3 };
 
+/** Deterministic, collision-safe change id from immutable change coordinates.
+ *  Fact-key groups are sorted (reorder-invariant) and length-prefix packed
+ *  (delimiter-safe); it never depends on display prose. The prev-group length
+ *  is packed too, so the prev/current boundary is unambiguous. */
+export function changeIdFor(
+  tenantId: string,
+  dealId: string,
+  logicalKey: string,
+  previousFactKeys: string[],
+  currentFactKeys: string[],
+): string {
+  const prev = [...new Set(previousFactKeys)].sort(cmp);
+  const cur = [...new Set(currentFactKeys)].sort(cmp);
+  return "chg:" + packComponents([tenantId, dealId, logicalKey, String(prev.length), ...prev, ...cur]);
+}
+
 export function resolveOrdering(
   current: EvidencePacket,
   previous: EvidencePacket | null,
@@ -150,7 +167,7 @@ export function detectChanges(
     const curVal = representativeValue(cur);
     const prevVal = representativeValue(prev);
 
-    const change = classify(key, cur, prev, curVal, prevVal, options.asOf, current.capturedAt);
+    const change = classify(key, cur, prev, curVal, prevVal, options.asOf, current.capturedAt, current.tenantId, current.dealId);
     if (!change) continue;
     changes.push(change);
     if (prev.length && curVal.value !== prevVal.value) {
@@ -167,7 +184,7 @@ export function detectChanges(
   for (const txnId of [...newTxnIds].sort(cmp)) {
     const backing = current.items.filter((i) => i.sourceType === "transcript" && i.sourceRecordId === txnId);
     changes.push({
-      changeId: `chg:txn:${txnId}`,
+      changeId: changeIdFor(current.tenantId, current.dealId, `txn:${txnId}`, [], backing.map((b) => b.sourceFactKey)),
       type: "new_transcript_evidence",
       logicalKey: `txn:${txnId}`,
       sourceFactKeys: uniq(backing.map((b) => b.sourceFactKey)),
@@ -221,9 +238,11 @@ function classify(
   prevVal: RepValue,
   asOf: string | undefined,
   capturedAt: string,
+  tenantId: string,
+  dealId: string,
 ): BriefChange | null {
   const base = {
-    changeId: `chg:${key}`,
+    changeId: changeIdFor(tenantId, dealId, key, prevVal.factKeys, curVal.factKeys),
     logicalKey: key,
     sourceFactKeys: uniq([...prevVal.factKeys, ...curVal.factKeys]),
     previousValue: prevVal.value,

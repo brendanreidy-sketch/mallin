@@ -61,6 +61,9 @@ export type ValidationErrorCode =
   | "conflict_unlabeled"
   | "assurance_mismatch"
   | "customer_commitment_not_typed"
+  | "customer_commitment_unsupported"
+  | "commitment_support_invalid"
+  | "action_category_mismatch"
   | "completed_commitment_without_evidence"
   | "unsupported_next_action"
   | "what_changed_not_in_changeset"
@@ -86,10 +89,27 @@ export interface ValidatorContext {
   cover: CoverMetadata;
 }
 
+type ActionBucket =
+  | "customerCommitments"
+  | "inferredCustomerCommitments"
+  | "sellerActions"
+  | "mallinRecommendations"
+  | "unresolvedActions";
+
+/** The single content type allowed in each action bucket — categories may not
+ *  collapse into one another. */
+const BUCKET_CONTENT_TYPE: Record<ActionBucket, string> = {
+  customerCommitments: "customer_commitment",
+  inferredCustomerCommitments: "inferred_customer_commitment",
+  sellerActions: "seller_action",
+  mallinRecommendations: "mallin_recommendation",
+  unresolvedActions: "unresolved_action",
+};
+
 interface Located {
   item: BriefContentItem;
   section: BriefSection;
-  bucket?: "customerCommitments" | "sellerActions" | "mallinRecommendations" | "unresolvedActions";
+  bucket?: ActionBucket;
   isWhatChanged: boolean;
 }
 
@@ -159,6 +179,14 @@ function validateItem(loc: Located, maps: Maps, errors: ValidationError[]): void
   }
   if (bucket === "customerCommitments" && isRec) {
     push("recommendation_as_commitment", "A mallin_recommendation cannot be a customer commitment.");
+  }
+  // Each action bucket admits exactly one content type — categories can't collapse.
+  if (bucket && item.contentType !== BUCKET_CONTENT_TYPE[bucket]) {
+    push("action_category_mismatch", `Bucket "${bucket}" requires contentType "${BUCKET_CONTENT_TYPE[bucket]}", got "${item.contentType}".`);
+  }
+  // An inferred possible commitment must never be presented as an agreed fact.
+  if (item.contentType === "inferred_customer_commitment" && item.assertionMode === "sourced_fact") {
+    push("assertion_mode_invalid", "An inferred_customer_commitment cannot be a sourced_fact.");
   }
   if (item.assertionMode === "sourced_fact" && item.factBindings.length === 0) {
     push("assertion_mode_invalid", "A sourced_fact must carry at least one typed fact binding.");
@@ -316,11 +344,34 @@ function checkTypeRules(loc: Located, cited: EvidenceItem[], maps: Maps, errors:
   const { item, section } = loc;
   const push = (code: ValidationErrorCode, message: string) => errors.push({ code, itemId: item.id, section, message });
 
-  if (item.contentType === "customer_commitment") {
-    // A generic customer_stated transcript is NOT a commitment: require a typed
-    // commitment record on the customer side.
-    const typed = cited.some((c) => c.payload.kind === "commitment" && c.payload.party === "customer");
-    if (!typed) push("customer_commitment_not_typed", "Customer commitment requires a typed customer-party commitment record.");
+  if (item.contentType === "customer_commitment" || item.contentType === "inferred_customer_commitment") {
+    // Both require a typed customer-party commitment record in the cited chain.
+    const commit = cited.find((c) => c.payload.kind === "commitment" && c.payload.party === "customer");
+    if (!commit || commit.payload.kind !== "commitment") {
+      push("customer_commitment_not_typed", "Requires a typed customer-party commitment record.");
+    } else {
+      const supportIds = commit.payload.supportingEvidenceIds ?? [];
+      const supportItems: EvidenceItem[] = [];
+      for (const sid of supportIds) {
+        const s = maps.evidenceById.get(sid);
+        if (!s) push("commitment_support_invalid", `Commitment support id "${sid}" does not resolve to a real EvidenceItem.`);
+        else if (s.tenantId !== commit.tenantId || s.dealId !== commit.dealId) push("commitment_support_invalid", `Commitment support "${sid}" is from a different tenant/deal.`);
+        else supportItems.push(s);
+      }
+      // Explicit-origin proof: a buyer-stated OR seller-recorded source.
+      const qualifying = supportItems.filter((s) => s.provenance === "customer_stated" || s.provenance === "seller_provided");
+
+      if (item.contentType === "customer_commitment") {
+        // A CONFIRMED commitment cannot rest on Mallín inference alone: it needs
+        // an explicit-origin supporting source that the item also cites (so the
+        // source's provenance is inherited).
+        if (qualifying.length === 0) {
+          push("customer_commitment_unsupported", "A confirmed customer commitment needs explicit buyer-stated or seller-recorded evidence, not Mallín inference alone.");
+        } else if (!qualifying.some((q) => item.evidenceIds.includes(q.evidenceId))) {
+          push("customer_commitment_unsupported", "The item must cite the explicit-origin supporting evidence so its provenance is inherited.");
+        }
+      }
+    }
   }
 
   const claim = item.commitmentClaim;
@@ -393,6 +444,7 @@ function locate(draft: BriefDraft): Located[] {
   add(draft.decisionProcess, "decision_process");
   add(draft.risks, "risks");
   add(draft.actionPlan.customerCommitments, "action_plan", false, "customerCommitments");
+  add(draft.actionPlan.inferredCustomerCommitments, "action_plan", false, "inferredCustomerCommitments");
   add(draft.actionPlan.sellerActions, "action_plan", false, "sellerActions");
   add(draft.actionPlan.mallinRecommendations, "action_plan", false, "mallinRecommendations");
   add(draft.actionPlan.unresolvedActions, "action_plan", false, "unresolvedActions");

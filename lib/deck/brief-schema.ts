@@ -46,6 +46,7 @@ const contentTypeSchema = z.enum([
   "decision_process",
   "risk",
   "customer_commitment",
+  "inferred_customer_commitment",
   "seller_action",
   "mallin_recommendation",
   "unresolved_action",
@@ -103,6 +104,7 @@ const APPENDIX_CAP = 300;
 
 const actionPlanSchema = z.strictObject({
   customerCommitments: z.array(contentItemSchema).max(SECTION_CAP),
+  inferredCustomerCommitments: z.array(contentItemSchema).max(SECTION_CAP),
   sellerActions: z.array(contentItemSchema).max(SECTION_CAP),
   mallinRecommendations: z.array(contentItemSchema).max(SECTION_CAP),
   unresolvedActions: z.array(contentItemSchema).max(SECTION_CAP),
@@ -124,7 +126,7 @@ export const BriefDraftSchema = z
     for (const key of ["executiveSummary", "whatChanged", "customerPriorities", "stakeholders", "decisionProcess", "risks", "appendix"] as const) {
       for (const item of draft[key]) ids.push(item.id);
     }
-    for (const bucket of ["customerCommitments", "sellerActions", "mallinRecommendations", "unresolvedActions"] as const) {
+    for (const bucket of ["customerCommitments", "inferredCustomerCommitments", "sellerActions", "mallinRecommendations", "unresolvedActions"] as const) {
       for (const item of draft.actionPlan[bucket]) ids.push(item.id);
     }
     const seen = new Set<string>();

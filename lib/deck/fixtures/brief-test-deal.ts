@@ -26,6 +26,8 @@ const OPP = "opp_nw_dispatch";
 export const previousSnapshot: DealSnapshot = {
   tenantId: TENANT,
   dealId: DEAL,
+  snapshotId: "snap_nw_v1",
+  sequence: 1,
   capturedAt: "2026-06-15T00:00:00.000Z",
   opportunity: {
     recordId: OPP,
@@ -106,10 +108,11 @@ export const previousSnapshot: DealSnapshot = {
   transcripts: [
     {
       transcriptId: "call_nw_1",
+      segmentId: "0",
       callDate: "2026-06-12",
       speaker: "Dana Ruiz",
       speakerSide: "buyer",
-      excerpt: "We can't risk migrating off the legacy dispatch board mid-peak-season — that's the whole concern.",
+      text: "We can't risk migrating off the legacy dispatch board mid-peak-season — that's the whole concern.",
     },
   ],
 };
@@ -117,6 +120,8 @@ export const previousSnapshot: DealSnapshot = {
 export const currentSnapshot: DealSnapshot = {
   tenantId: TENANT,
   dealId: DEAL,
+  snapshotId: "snap_nw_v2",
+  sequence: 2,
   capturedAt: "2026-07-18T00:00:00.000Z",
   opportunity: {
     recordId: OPP,
@@ -209,17 +214,19 @@ export const currentSnapshot: DealSnapshot = {
   transcripts: [
     {
       transcriptId: "call_nw_1",
+      segmentId: "0",
       callDate: "2026-06-12",
       speaker: "Dana Ruiz",
       speakerSide: "buyer",
-      excerpt: "We can't risk migrating off the legacy dispatch board mid-peak-season — that's the whole concern.",
+      text: "We can't risk migrating off the legacy dispatch board mid-peak-season — that's the whole concern.",
     },
     {
       transcriptId: "call_nw_2", // NEW transcript this cycle
+      segmentId: "0",
       callDate: "2026-07-15",
       speaker: "Dana Ruiz",
       speakerSide: "buyer",
-      excerpt: "If we phase the cutover after peak, I'm comfortable moving forward — I'll back this internally.",
+      text: "If we phase the cutover after peak, I'm comfortable moving forward — I'll back this internally.",
     },
   ],
 };

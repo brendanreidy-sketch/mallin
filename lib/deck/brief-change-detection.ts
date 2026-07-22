@@ -1,30 +1,41 @@
 /**
  * brief-change-detection — deterministic "what changed since last time" for the
- * INTERNAL executive deal brief (Commit 1 foundation).
+ * INTERNAL executive deal brief (Commit 1 foundation, hardened in Commit 1A).
  *
  * Pure TypeScript. No LLM. It diffs two `EvidencePacket`s (current vs the
- * immediately-prior snapshot) by LOGICAL KEY and emits a typed `ChangeSet`.
- * It never compares narrative summaries — only sourced, keyed evidence.
+ * immediately-prior snapshot) by LOGICAL KEY using the items' TYPED payloads
+ * (never claim prose) and emits a typed `ChangeSet`.
  *
- * Canonical ordering rules (how "current" and "previous" are established):
- *   1. The caller passes the two most-recent snapshots, current = newest.
- *   2. This function verifies `previous.capturedAt < current.capturedAt`
- *      (strictly earlier). If previous is null, equal-timestamped, or somehow
- *      newer/mis-ordered, there is NO reliable prior state → it returns an
- *      empty ChangeSet rather than inventing a change.
- *   3. Superseded evidence is retained, not deleted: for every changed logical
- *      key, the prior packet's item(s) are returned in `superseded` with
- *      status "superseded" so the brief can show "was → now" without treating
- *      the old value as current.
- *   4. Conflicting sources are never silently resolved: when a key carries more
- *      than one differing value on a side, the value is rendered as a
- *      "CONFLICT: a | b" string and any resulting change is assurance
- *      "conflicting".
- *   5. Missing source dates never block a value comparison; `effectiveDate`
- *      falls back to the current snapshot's `capturedAt`, or null.
+ * ── Change ASSURANCE is a separate axis from provenance ────────────────────
+ *   observed    — a recorded observation moved (seller/system/customer record).
+ *                 A seller-entered or system-recorded change is observed, NOT
+ *                 "customer confirmed".
+ *   inferred    — a Mallín conclusion moved (posture, risk, disposition…).
+ *   conflicting — sources disagree on the value (kept visibly conflicting).
+ *   unresolved  — the value is missing / Not-confirmed / unsupported.
+ *
+ * ── Ordering ───────────────────────────────────────────────────────────────
+ * "current" must be provably newer than "previous":
+ *   1. capturedAt strictly greater  → resolved by "timestamp".
+ *   2. equal capturedAt, both carry an immutable ledger `sequence` that
+ *      differs → resolved by "sequence".
+ *   3. otherwise (no prior, equal timestamps without a tie-breaker, or a
+ *      mis-ordered pair) → UNRESOLVED. The ChangeSet carries an explicit
+ *      `ordering` diagnostic and empty changes — a consumer must check
+ *      `ordering.resolved`; it must NOT read empty changes as "nothing
+ *      changed".
+ *
+ * Superseded prior evidence is retained (status "superseded"), never dropped
+ * and never treated as current. Conflicts are surfaced, never auto-resolved.
  */
 
-import type { EvidenceItem, EvidencePacket, Provenance } from "@/lib/deck/brief-evidence";
+import {
+  comparableValue,
+  type EvidenceItem,
+  type EvidencePacket,
+  type EvidencePayload,
+  type Provenance,
+} from "@/lib/deck/brief-evidence";
 
 export type BriefChangeType =
   | "new_transcript_evidence"
@@ -41,8 +52,7 @@ export type BriefChangeType =
   | "commitment_completed"
   | "commitment_missed";
 
-/** How much we trust the change itself. */
-export type ChangeAssurance = "confirmed" | "inferred" | "conflicting" | "unresolved";
+export type ChangeAssurance = "observed" | "inferred" | "conflicting" | "unresolved";
 
 export interface BriefChange {
   type: BriefChangeType;
@@ -51,41 +61,77 @@ export interface BriefChange {
   currentValue: string | null;
   previousEvidenceIds: string[];
   currentEvidenceIds: string[];
-  /** ISO date the change took effect, or null when genuinely unknowable. */
   effectiveDate: string | null;
   assurance: ChangeAssurance;
+}
+
+export interface OrderingDiagnostic {
+  /** True only when current is provably newer than previous. */
+  resolved: boolean;
+  basis: "timestamp" | "sequence" | "none";
+  detail: string;
 }
 
 export interface ChangeSet {
   tenantId: string;
   dealId: string;
-  /** False when there was no reliable prior snapshot (first brief, mis-order,
-   *  or duplicate timestamp) — in which case `changes` is empty by design. */
+  /** Explicit ordering result — consult before interpreting `changes`. */
+  ordering: OrderingDiagnostic;
+  /** True iff a prior snapshot exists AND ordering resolved. */
   hasPriorState: boolean;
   changes: BriefChange[];
-  /** Prior-snapshot items whose logical key changed — retained, marked
-   *  superseded, never treated as current. */
   superseded: EvidenceItem[];
 }
 
 const SEVERITY_RANK: Record<string, number> = { medium: 1, high: 2, blocking: 3 };
 
-/** Detect deterministic changes between the current and previous packets. */
-export function detectChanges(
+/** Establish whether `current` is provably newer than `previous`. */
+export function resolveOrdering(
   current: EvidencePacket,
   previous: EvidencePacket | null,
-): ChangeSet {
-  const empty: ChangeSet = {
+): OrderingDiagnostic {
+  if (!previous) {
+    return { resolved: false, basis: "none", detail: "No prior snapshot on record." };
+  }
+  if (previous.capturedAt < current.capturedAt) {
+    return { resolved: true, basis: "timestamp", detail: `previous ${previous.capturedAt} < current ${current.capturedAt}` };
+  }
+  if (previous.capturedAt > current.capturedAt) {
+    return {
+      resolved: false,
+      basis: "none",
+      detail: `Provided 'previous' (${previous.capturedAt}) is newer than 'current' (${current.capturedAt}); ordering unresolved.`,
+    };
+  }
+  // Equal timestamps — require an immutable tie-breaker.
+  if (previous.sequence != null && current.sequence != null && previous.sequence !== current.sequence) {
+    if (previous.sequence < current.sequence) {
+      return { resolved: true, basis: "sequence", detail: `equal capturedAt; sequence ${previous.sequence} < ${current.sequence}` };
+    }
+    return {
+      resolved: false,
+      basis: "none",
+      detail: `Equal capturedAt; 'previous' sequence (${previous.sequence}) is newer than 'current' (${current.sequence}); ordering unresolved.`,
+    };
+  }
+  return {
+    resolved: false,
+    basis: "none",
+    detail: `Equal capturedAt (${current.capturedAt}) with no immutable tie-breaker; ordering unresolved.`,
+  };
+}
+
+export function detectChanges(current: EvidencePacket, previous: EvidencePacket | null): ChangeSet {
+  const ordering = resolveOrdering(current, previous);
+  const shell: ChangeSet = {
     tenantId: current.tenantId,
     dealId: current.dealId,
-    hasPriorState: false,
+    ordering,
+    hasPriorState: ordering.resolved,
     changes: [],
     superseded: [],
   };
-
-  // Rule 2: no reliable prior state → no invented changes.
-  if (!previous) return empty;
-  if (!(previous.capturedAt < current.capturedAt)) return empty;
+  if (!ordering.resolved || !previous) return shell;
 
   const curByKey = groupByKey(current.items);
   const prevByKey = groupByKey(previous.items);
@@ -95,11 +141,9 @@ export function detectChanges(
   const superseded: EvidenceItem[] = [];
 
   for (const key of [...keys].sort(cmp)) {
+    if (key.startsWith("txn:")) continue; // transcript statements handled below
     const cur = curByKey.get(key) ?? [];
     const prev = prevByKey.get(key) ?? [];
-
-    // Transcript excerpts are point-in-time; handle them in a dedicated pass.
-    if (key.startsWith("txn:")) continue;
 
     const curVal = representativeValue(cur);
     const prevVal = representativeValue(prev);
@@ -108,7 +152,6 @@ export function detectChanges(
     if (!change) continue;
 
     changes.push(change);
-    // Rule 3: retain the prior item(s) as superseded when a value actually moved.
     if (prev.length && curVal.value !== prevVal.value) {
       for (const p of prev) superseded.push({ ...p, status: "superseded" });
     }
@@ -123,9 +166,7 @@ export function detectChanges(
     if (i.sourceType === "transcript" && !prevTxn.has(i.sourceRecordId)) newTxnIds.add(i.sourceRecordId);
   }
   for (const txnId of [...newTxnIds].sort(cmp)) {
-    const backing = current.items.filter(
-      (i) => i.sourceType === "transcript" && i.sourceRecordId === txnId,
-    );
+    const backing = current.items.filter((i) => i.sourceType === "transcript" && i.sourceRecordId === txnId);
     changes.push({
       type: "new_transcript_evidence",
       logicalKey: `txn:${txnId}`,
@@ -141,7 +182,7 @@ export function detectChanges(
   changes.sort((a, b) => (a.type === b.type ? cmp(a.logicalKey, b.logicalKey) : cmp(a.type, b.type)));
   superseded.sort((a, b) => cmp(a.id, b.id));
 
-  return { tenantId: current.tenantId, dealId: current.dealId, hasPriorState: true, changes, superseded };
+  return { ...shell, changes, superseded };
 }
 
 // ── classification ──────────────────────────────────────────────────────────
@@ -155,7 +196,7 @@ interface RepValue {
 
 function representativeValue(items: EvidenceItem[]): RepValue {
   if (items.length === 0) return { value: null, ids: [], provenances: [], conflicting: false };
-  const distinct = [...new Set(items.map((i) => normValue(i)))].sort(cmp);
+  const distinct = [...new Set(items.map((i) => comparableValue(i.payload)))].sort(cmp);
   const ids = items.map((i) => i.id).sort(cmp);
   const provenances = [...new Set(items.map((i) => i.provenance))];
   if (distinct.length > 1) {
@@ -164,13 +205,8 @@ function representativeValue(items: EvidenceItem[]): RepValue {
   return { value: distinct[0], ids, provenances, conflicting: false };
 }
 
-/** The comparable value of an item: prefer structured meta/support value,
- *  fall back to the normalized claim. */
-function normValue(i: EvidenceItem): string {
-  if (i.meta?.severity) return i.meta.severity;
-  if (i.meta?.state) return i.meta.state;
-  if (i.support.value != null) return i.support.value;
-  return i.claim;
+function payloadKind(cur: EvidenceItem[], prev: EvidenceItem[]): EvidencePayload["kind"] | null {
+  return cur[0]?.payload.kind ?? prev[0]?.payload.kind ?? null;
 }
 
 function classify(
@@ -188,44 +224,40 @@ function classify(
     previousEvidenceIds: prevVal.ids,
     currentEvidenceIds: curVal.ids,
     effectiveDate: effectiveDate(cur, capturedAt),
-    assurance: assurance(curVal, prevVal),
+    assurance: assurance(curVal),
   };
+  const kind = payloadKind(cur, prev);
 
-  // Risks: presence + severity movement.
-  if (key.startsWith("risk:")) {
+  // Risks — presence + severity movement (typed).
+  if (kind === "risk") {
     if (cur.length && !prev.length) return { ...base, type: "risk_new" };
     if (!cur.length && prev.length) return { ...base, type: "risk_resolved" };
     const curRank = SEVERITY_RANK[curVal.value ?? ""] ?? 0;
     const prevRank = SEVERITY_RANK[prevVal.value ?? ""] ?? 0;
     if (curRank > prevRank) return { ...base, type: "risk_worsened" };
-    return null; // unchanged or de-escalated (not in the required set)
+    return null;
   }
 
-  // Commitments: derive completed / missed from raw state + expected date.
-  if (key.startsWith("commit:")) {
-    const prevState = prev[0]?.meta?.state;
-    const curItem = cur[0];
-    const curState = curItem?.meta?.state;
-    if (prevState === "open" && curState === "done") {
-      return { ...base, type: "commitment_completed" };
-    }
+  // Commitments — completed (explicit done OR removed) / missed (typed).
+  if (kind === "commitment") {
+    const prevP = prev[0]?.payload;
+    const curP = cur[0]?.payload;
+    const prevState = prevP?.kind === "commitment" ? prevP.state : undefined;
+    const curState = curP?.kind === "commitment" ? curP.state : undefined;
+    // Completed: explicit open → done, or the deliverable left the "waiting on" list.
+    if (prevState === "open" && curState === "done") return { ...base, type: "commitment_completed" };
+    if (prev.length && !cur.length) return { ...base, type: "commitment_completed" };
+    // Missed: still open past its expected date (only when a date exists).
     if (prevState === "open" && curState === "open") {
-      const expectedBy = curItem?.meta?.expectedBy;
+      const expectedBy = curP?.kind === "commitment" ? curP.expectedBy : null;
       if (expectedBy && expectedBy < capturedAt) return { ...base, type: "commitment_missed" };
     }
     return null;
   }
 
-  // Everything else is a value diff; skip when unchanged or key vanished.
+  // Everything else — a typed value diff.
   if (!cur.length) return null;
   if (curVal.value === prevVal.value) return null;
-  if (!prev.length) {
-    // A newly-appearing non-risk key (e.g. first-ever posture) — only surface
-    // the categories the brief cares about; otherwise stay silent.
-    const t = typeForKey(key);
-    return t ? { ...base, type: t } : null;
-  }
-
   const t = typeForKey(key);
   return t ? { ...base, type: t } : null;
 }
@@ -241,20 +273,19 @@ function typeForKey(key: string): BriefChangeType | null {
   return null;
 }
 
-/** Assurance from the change's evidence (Rule 4 for conflicts). */
-function assurance(curVal: RepValue, prevVal: RepValue): ChangeAssurance {
-  if (curVal.conflicting || prevVal.conflicting) return "conflicting";
+/** Assurance for a value change — the current side decides. */
+function assurance(curVal: RepValue): ChangeAssurance {
+  if (curVal.conflicting) return "conflicting";
   if (curVal.provenances.includes("open_question") || curVal.value == null) return "unresolved";
-  if (curVal.provenances.length === 1 && curVal.provenances[0] === "mallin_inference") return "inferred";
-  if (curVal.provenances.every((p) => p === "mallin_inference")) return "inferred";
-  return "confirmed";
+  if (curVal.provenances.length > 0 && curVal.provenances.every((p) => p === "mallin_inference")) return "inferred";
+  return "observed";
 }
 
 function assuranceForItems(items: EvidenceItem[]): ChangeAssurance {
   const provs = [...new Set(items.map((i) => i.provenance))];
   if (provs.includes("open_question")) return "unresolved";
-  if (provs.length === 1 && provs[0] === "mallin_inference") return "inferred";
-  return "confirmed";
+  if (provs.length > 0 && provs.every((p) => p === "mallin_inference")) return "inferred";
+  return "observed";
 }
 
 function effectiveDate(cur: EvidenceItem[], capturedAt: string): string | null {

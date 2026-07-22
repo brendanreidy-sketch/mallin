@@ -79,7 +79,7 @@ export default function AskPanel({ starters }: { starters: string[] }) {
       {turns.length === 0 ? (
         <div className={s.chips} style={{ marginBottom: 24 }}>
           {starters.map((q) => (
-            <button key={q} className={s.chip2} onClick={() => ask(q)} type="button">
+            <button key={q} className={s.askStarter} onClick={() => ask(q)} type="button">
               {q} ↗
             </button>
           ))}
@@ -134,8 +134,7 @@ export default function AskPanel({ starters }: { starters: string[] }) {
         <button
           type="submit"
           disabled={streaming}
-          className={s.chip2}
-          style={{ borderRadius: 8 }}
+          className={s.askSubmit}
         >
           {streaming ? "…" : "Ask"}
         </button>

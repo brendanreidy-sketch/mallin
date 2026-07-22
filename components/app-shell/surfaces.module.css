@@ -100,6 +100,21 @@
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip2 { font-size: 12.5px; padding: 7px 12px; border: 0.5px solid var(--ck-rule-2); border-radius: 20px; color: var(--ck-ink-2); }
 
+/* Ask Mallín controls — dedicated classes (NOT .chip2) so Deals/Team/Knowledge
+   are unaffected. The starter chips and Ask button were <button>s with no themed
+   background, so in dark mode they fell to the browser-default light fill with
+   light text (unreadable). These give an explicit --ck- background + inherited
+   font, readable in both cream and dark, with a clear enabled/disabled Ask CTA. */
+.askStarter { font: inherit; font-size: 12.5px; padding: 8px 13px; border-radius: 20px;
+  border: 0.5px solid var(--ck-rule-2); background: var(--ck-surface-2); color: var(--ck-ink);
+  cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
+.askStarter:hover { border-color: var(--ck-ink-3); color: var(--ck-ink); }
+.askSubmit { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px;
+  border: none; background: var(--ck-good); color: var(--ck-action-ink); cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease; }
+.askSubmit:hover:not(:disabled) { opacity: 0.9; }
+.askSubmit:disabled { background: var(--ck-surface-2); color: var(--ck-ink-4); cursor: default; }
+
 /* team */
 .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0 0 28px; }
 .tile { background: var(--ck-surface-2); border-radius: 10px; padding: 15px 16px; }

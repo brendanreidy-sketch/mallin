@@ -7,6 +7,46 @@ records the live deployment and its immediate rollback target. Baseline: the
 commit `50da444`. Tags mark commits; deployments are separate build artifacts —
 this ledger records the two separately per release.
 
+## 2026-07-21 — Operating-layer stabilization (Deals rows · Home-in-shell · Ask a11y · nav flash)
+
+- **Change:** Four presentational + shell-navigation fixes to the authenticated operating
+  layer, shipped as one release:
+  1. **`/deals` responsive rows** — `.drow` grid `minmax(0,1fr)` + `min-width:0` + `display:block`
+     on name/next + a ≤720px collapse, so deal name and "Next:" no longer collide and long text
+     truncates instead of overflowing the viewport.
+  2. **Home = Cockpit inside AppShell** — `/cockpit` (the canonical Home route) now renders inside
+     the operating-layer `AppShell`, so clicking the sidebar "Home" no longer drops the user out of
+     the shell. Cockpit's own header is hidden on desktop (sidebar supplies it) and returns ≤720px.
+  3. **`/ask` dark-mode control readability** — dedicated `.askStarter`/`.askSubmit` classes (not the
+     shared `.chip2`) give the starter prompts and the Ask button an explicit `--ck-` background +
+     inherited font, fixing unreadable light-on-light controls in dark mode.
+  4. **Home-nav flash fix** — deleted the obsolete `app/cockpit/loading.tsx` (a hardcoded-cream,
+     shell-less skeleton) so navigating to Home no longer flashes cream / blinks the sidebar; the
+     current shell stays visible for the ~440–930 ms `/cockpit` render, then swaps.
+- **No database, tenant, Clerk, Gmail/OAuth, or deal-intelligence changes** — presentational and
+  shell-navigation only. Deal queries, ranking, grouping, greeting, brief, `/prep` links, Ask
+  streaming/model/prompt, auth, and tenant behavior are unchanged.
+- **Application commits (four, distinct, no squash):**
+  `a35c7f9` (deals rows) · `cdfa65e` (Home-in-shell) · `cb66259` (Ask a11y) · `12eebf0` (nav-flash / loading.tsx delete).
+  Application SHA (`main`): `12eebf0`.
+- **Release tag:** `release-2026-07-21-operating-layer-stabilization` → commit `12eebf0` (annotated).
+- **Live deployment:** **`dpl_Ghf6pjmJ24xuHUVfbmdBTw82Pjm8`** (`revops-autopilot-ge5lcpirg`), built from
+  `12eebf0`. Provenance: Vercel commit status success + GitHub Deployment `5549212800` (env Production,
+  ref `12eebf0`). Verified the exact deployment serves `mallin.io` (served assets `?dpl=dpl_Ghf6…`).
+- **Immediate rollback:** **`dpl_ArGMWz56tRZQ8bknCK2CHsUePY7q`** (`revops-autopilot-he4vtnu9e`), the prior
+  Prep desktop-shell release (Ready).
+  Rollback command: `vercel alias set https://revops-autopilot-he4vtnu9e-roomrefund.vercel.app mallin.io`
+- **Superseded (not promoted):** `dpl_HoW71WzhSQsXQzRpzDbnFh1VA38K` (the three-commit candidate, before the
+  nav-flash fix).
+- **Post-promotion verification (`mallin.io`, authenticated):** `/` `/sign-in` `/how-it-works` `/pilot`
+  2xx; `/cockpit` in AppShell with Home highlighted + all three deals; `/deals` no overflow + correct
+  Prep links; `/ask` streamed a real deal-grounded answer with readable controls; `/prep` (Cast & Crew)
+  renders; `/new?mode=upcoming` 200. No console errors. Two 503s appeared on initial RSC prefetches
+  (`/cockpit?_rsc`, `/new?dealId&_rsc`) — transient cold-starts, 200 on 5/5 retests, not recurring.
+  Clerk org/tenant correct ("Mallin · Brendan Reidy"). Owner accepted the flash-free Home transition
+  manually + real phone at canary.
+- **Status:** CLOSED.
+
 ## 2026-07-21 — Prep desktop shell: flush full-width workspace + mobile header wrap
 
 - **Change:** Presentational redesign of the `/prep` **shell only**. Desktop (≥1001px):

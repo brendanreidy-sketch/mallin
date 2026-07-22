@@ -23,7 +23,7 @@ import {
   type BriefSection,
   type FactBinding,
 } from "@/lib/deck/brief-model";
-import type { BriefRequest } from "@/lib/deck/brief-agent";
+import { generateExecutiveBrief, type BriefRequest, type ValidatedExecutiveBrief } from "@/lib/deck/brief-agent";
 
 export const packet = buildEvidencePacket(currentSnapshot);
 export const previousPacket = buildEvidencePacket(previousSnapshot);
@@ -33,8 +33,16 @@ export const noPriorChangeSet = detectChanges(packet, null);
 export const request: BriefRequest = {
   packet,
   changeSet,
-  cover: { dealName: "Northwind Freight — Dispatch Automation Rollout", preparedFor: "RVP", asOf: "2026-07-18" },
+  cover: { dealName: "Northwind Freight — Dispatch Automation Rollout", companyName: "Northwind Freight", preparedFor: "RVP", asOf: "2026-07-18" },
 };
+
+/** The branded, validated+assembled Northwind brief — the ONLY input the
+ *  renderer accepts. Produced through the real generateExecutiveBrief path. */
+export async function renderableBrief(): Promise<ValidatedExecutiveBrief> {
+  const res = await generateExecutiveBrief(request, async () => makeValidDraft());
+  if (!res.ok) throw new Error(`renderableBrief: fixture failed validation — ${res.errors.map((e) => e.code).join(", ")}`);
+  return res.brief;
+}
 
 // ── binding generation ────────────────────────────────────────────────────
 

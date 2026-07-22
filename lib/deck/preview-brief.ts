@@ -13,14 +13,12 @@
 import { writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
-import { assembleBrief } from "@/lib/deck/brief-model";
-import { buildCover } from "@/lib/deck/brief-agent";
-import { makeValidDraft, request } from "@/lib/deck/fixtures/brief-mock-drafts";
+import { renderableBrief } from "@/lib/deck/fixtures/brief-mock-drafts";
 import { buildBriefPptx } from "@/lib/deck/build-brief-pptx";
 
 async function main(): Promise<void> {
   const outDir = process.argv[2] ?? ".";
-  const { brief } = assembleBrief(makeValidDraft(), buildCover(request));
+  const brief = await renderableBrief();
   const { buffer, diagnostics, report } = await buildBriefPptx(brief);
 
   const pptxPath = join(outDir, "northwind-brief.pptx");

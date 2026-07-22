@@ -19,6 +19,7 @@
 
 import pptxgen from "pptxgenjs";
 import type { ExecutiveBrief, BriefContentItem } from "@/lib/deck/brief-model";
+import { isValidatedBrief, type ValidatedExecutiveBrief } from "@/lib/deck/brief-agent";
 import * as L from "@/lib/deck/brief-layout";
 
 export interface RenderedElement {
@@ -54,34 +55,32 @@ interface SlidePlan {
   notes?: string;
 }
 
-/** Reject anything that is not a validated, assembled brief. A raw BriefDraft
- *  has no `cover`, so it cannot slip through. */
-function assertAssembledBrief(b: unknown): asserts b is ExecutiveBrief {
+/** Defense-in-depth shape check. This is NOT proof of prior validation — the
+ *  authoritative gate is the branded `ValidatedExecutiveBrief` produced only by
+ *  generateExecutiveBrief. This merely rejects grossly malformed input. */
+function assertAssembledShape(b: unknown): void {
   const x = b as Partial<ExecutiveBrief> | undefined;
   const ok =
     !!x &&
     typeof x === "object" &&
     !!x.cover &&
     typeof x.cover.dealName === "string" &&
-    typeof x.cover.classification === "string" &&
     Array.isArray(x.executiveSummary) &&
-    Array.isArray(x.customerPriorities) &&
-    Array.isArray(x.stakeholders) &&
-    Array.isArray(x.decisionProcess) &&
     Array.isArray(x.risks) &&
     !!x.actionPlan &&
-    Array.isArray(x.actionPlan.customerCommitments) &&
     Array.isArray(x.actionPlan.inferredCustomerCommitments) &&
     Array.isArray(x.appendix);
-  if (!ok) {
-    throw new Error("buildBriefPptx requires a validated, assembled ExecutiveBrief. Raw BriefDraft / JSON / EvidencePacket / transcripts are not accepted.");
-  }
+  if (!ok) throw new Error("buildBriefPptx received a structurally invalid brief.");
 }
 
 const RISK_MAX_ROWS = 5;
 
-export async function buildBriefPptx(brief: ExecutiveBrief): Promise<BriefRenderResult> {
-  assertAssembledBrief(brief);
+export async function buildBriefPptx(brief: ValidatedExecutiveBrief): Promise<BriefRenderResult> {
+  // Authoritative gate: only the validated+assembled path can produce this brand.
+  if (!isValidatedBrief(brief)) {
+    throw new Error("buildBriefPptx accepts only a ValidatedExecutiveBrief from generateExecutiveBrief. Raw BriefDraft / JSON / EvidencePacket / lookalike objects are rejected.");
+  }
+  assertAssembledShape(brief); // defense in depth
 
   const diagnostics: RenderDiagnostic[] = [];
   const plans: SlidePlan[] = [];
@@ -103,11 +102,8 @@ export async function buildBriefPptx(brief: ExecutiveBrief): Promise<BriefRender
   indexAll(brief.actionPlan.unresolvedActions);
   indexAll(brief.appendix);
 
-  // ── Cover ──
-  plans.push({
-    kind: "cover",
-    ops: L.coverOps({ dealName: brief.cover.dealName, asOf: brief.cover.asOf, classification: brief.cover.classification, snapshotId: brief.cover.snapshotId }, {}),
-  });
+  // ── Cover (with supported, evidence-backed facts) ──
+  plans.push({ kind: "cover", ops: L.coverOps(brief.cover) });
 
   // Pack a list of blocks top-down; anything that doesn't fit overflows.
   const packBlocks = (blocks: L.Block[]): { placed: Array<{ block: L.Block; y: number }>; overflow: L.Block[] } => {
@@ -266,6 +262,7 @@ function recordOp(slideIndex: number, op: L.DrawOp): RenderedElement {
   const base = { slide: slideIndex, kind: op.kind, x: op.x, y: op.y, w: op.w };
   if (op.op === "text") return { ...base, h: op.h, fontSize: op.fontSize, text: op.text };
   if (op.op === "line") return { ...base, h: 0 };
+  if (op.op === "table") return { ...base, h: op.h, fontSize: op.fontSize, text: op.rows.map((r) => r.join(" ")).join("  ") };
   return { ...base, h: op.h };
 }
 

@@ -149,16 +149,34 @@ export interface BriefContentItem {
   nextActionClaim?: boolean;
 }
 
+/** An evidence-backed cover value. Retains its full provenance chain so the
+ *  validator can verify it before assembly and the renderer never invents it. */
+export interface CoverFact {
+  value: string;
+  evidenceId: string;
+  sourceFactKey: string;
+  provenance: Provenance;
+  confidence: EvidenceConfidence;
+  assurance: BriefAssurance;
+}
+
 export interface CoverMetadata {
-  /** Trusted deterministic metadata from the opportunity record — NOT a model
-   *  claim, so not subject to per-item evidence checks. */
+  /** Trusted deterministic identifiers from the opportunity record — NOT model
+   *  claims, so not subject to per-item evidence checks. */
   dealName: string;
+  companyName?: string;
   preparedFor?: string;
   asOf: string;
   classification: string;
   tenantId: string;
   dealId: string;
   snapshotId: string;
+  /** Optional evidence-backed facts. Omitted when unsupported (see buildCover):
+   *  amount is omitted when missing/conflicting/unresolved; stage when
+   *  unsupported; latestCallDate only from explicit transcript metadata. */
+  stage?: CoverFact;
+  amount?: CoverFact;
+  latestCallDate?: CoverFact;
 }
 
 export interface ActionPlan {

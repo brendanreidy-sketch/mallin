@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { assembleBrief, type BriefContentItem, type ExecutiveBrief } from "./brief-model";
-import { buildCover } from "./brief-agent";
-import { makeValidDraft, request } from "./fixtures/brief-mock-drafts";
+import type { BriefContentItem } from "./brief-model";
+import type { ValidatedExecutiveBrief } from "./brief-agent";
+import { renderableBrief } from "./fixtures/brief-mock-drafts";
 import { buildBriefPptx, type BriefRenderResult } from "./build-brief-pptx";
 import * as L from "./brief-layout";
 
@@ -25,9 +25,9 @@ function mk(text: string, provenance: BriefContentItem["provenance"] = ["mallin_
 }
 
 let res: BriefRenderResult;
-let brief: ExecutiveBrief;
+let brief: ValidatedExecutiveBrief;
 beforeAll(async () => {
-  brief = assembleBrief(makeValidDraft(), buildCover(request)).brief;
+  brief = await renderableBrief();
   res = await buildBriefPptx(brief);
 });
 

@@ -15,13 +15,16 @@
  * A partially-trusted brief is never returned.
  */
 
-import { comparableValue, type EvidencePacket } from "@/lib/deck/brief-evidence";
+import { comparableValue, type EvidenceItem, type EvidencePacket } from "@/lib/deck/brief-evidence";
 import type { ChangeSet, OrderingDiagnostic } from "@/lib/deck/brief-change-detection";
 import {
   assembleBrief,
+  deriveAssurance,
+  selectTypedValue,
   DEFAULT_BUDGETS,
   type BriefBudgets,
   type BriefDraft,
+  type CoverFact,
   type CoverMetadata,
   type ExecutiveBrief,
 } from "@/lib/deck/brief-model";
@@ -31,8 +34,25 @@ export interface BriefRequest {
   packet: EvidencePacket;
   changeSet: ChangeSet;
   /** Trusted deterministic cover metadata from the opportunity record. */
-  cover: { dealName: string; preparedFor?: string; asOf: string; classification?: string };
+  cover: { dealName: string; companyName?: string; preparedFor?: string; asOf: string; classification?: string };
   budgets?: Partial<BriefBudgets>;
+}
+
+// ── Branded, only-through-the-path validated brief type ─────────────────────
+
+declare const validatedBrand: unique symbol;
+/** An ExecutiveBrief that has passed validation AND assembly. Constructible
+ *  ONLY via generateExecutiveBrief — there is no exported brander. */
+export type ValidatedExecutiveBrief = ExecutiveBrief & { readonly [validatedBrand]: true };
+
+const VALIDATED_MARK = Symbol("brief.validated");
+function markValidated(brief: ExecutiveBrief): ValidatedExecutiveBrief {
+  Object.defineProperty(brief, VALIDATED_MARK, { value: true, enumerable: false, configurable: false, writable: false });
+  return brief as ValidatedExecutiveBrief;
+}
+/** Runtime check that a value came through the validation+assembly path. */
+export function isValidatedBrief(x: unknown): x is ValidatedExecutiveBrief {
+  return !!x && typeof x === "object" && (x as Record<PropertyKey, unknown>)[VALIDATED_MARK] === true;
 }
 
 /** Compact, model-facing view of the ONLY facts the model may use. */
@@ -74,7 +94,7 @@ export interface RepairContext {
 export type BriefModelClient = (input: BriefAgentInput, repair?: RepairContext) => Promise<BriefDraft>;
 
 export type GenerateResult =
-  | { ok: true; brief: ExecutiveBrief; validation: ValidationResult; movedToAppendix: string[]; attempts: number }
+  | { ok: true; brief: ValidatedExecutiveBrief; validation: ValidationResult; movedToAppendix: string[]; attempts: number }
   | { ok: false; errors: ValidationError[]; attempts: number; rejectedDraft: BriefDraft };
 
 const RULES: string[] = [
@@ -91,16 +111,88 @@ const RULES: string[] = [
   "When the next action is Not confirmed or conflicting, do not present a confirmed next action; use an unresolved action or a labeled mallin_recommendation with no invented owner or deadline.",
 ];
 
+/** Build cover metadata, deriving evidence-backed cover FACTS deterministically
+ *  from the packet (never from the model). Applies the omission rules and
+ *  verifies each fact before returning it. */
 export function buildCover(request: BriefRequest): CoverMetadata {
-  return {
+  const packet = request.packet;
+  const cover: CoverMetadata = {
     dealName: request.cover.dealName,
+    companyName: request.cover.companyName,
     preparedFor: request.cover.preparedFor,
     asOf: request.cover.asOf,
     classification: request.cover.classification ?? "INTERNAL & CONFIDENTIAL",
-    tenantId: request.packet.tenantId,
-    dealId: request.packet.dealId,
-    snapshotId: request.packet.snapshotId,
+    tenantId: packet.tenantId,
+    dealId: packet.dealId,
+    snapshotId: packet.snapshotId,
   };
+
+  // Stage — supported seller/system value only (omit when Not confirmed).
+  const stage = packet.items.find((i) => i.logicalKey === "opp:stage");
+  if (stage && stage.provenance !== "open_question" && stage.payload.kind === "opportunity_value") {
+    cover.stage = factFromTyped(stage, "value");
+  }
+
+  // Amount — omit when missing / Not confirmed / conflicting / unresolved.
+  const amount = packet.items.find((i) => i.logicalKey === "opp:amount");
+  if (amount && amount.provenance !== "open_question" && amount.payload.kind === "opportunity_value") {
+    const f = factFromTyped(amount, "value");
+    if (f.assurance !== "conflicting" && f.assurance !== "unresolved") cover.amount = f;
+  }
+
+  // Latest incorporated call date — explicit transcript metadata ONLY. Never
+  // substitute the generated date.
+  const callDate = packet.version.latestCallDate;
+  const txnId = packet.version.latestTranscriptId;
+  if (callDate && txnId) {
+    const txn = packet.items.find((i) => i.sourceType === "transcript" && i.sourceRecordId === txnId && i.sourceDate === callDate);
+    if (txn) {
+      cover.latestCallDate = { value: callDate, evidenceId: txn.evidenceId, sourceFactKey: txn.sourceFactKey, provenance: txn.provenance, confidence: txn.confidence, assurance: deriveAssurance([txn]) };
+    }
+  }
+
+  if (!validateCoverFacts(cover, packet)) {
+    throw new Error("buildCover produced an unverifiable cover fact.");
+  }
+  return cover;
+}
+
+function factFromTyped(item: EvidenceItem, fieldPath: string): CoverFact {
+  return {
+    value: selectTypedValue(item.payload, fieldPath) ?? "",
+    evidenceId: item.evidenceId,
+    sourceFactKey: item.sourceFactKey,
+    provenance: item.provenance,
+    confidence: item.confidence,
+    assurance: deriveAssurance([item]),
+  };
+}
+
+/** The validator for cover facts — verifies every present factual cover value
+ *  against the packet before assembly. */
+export function validateCoverFacts(cover: CoverMetadata, packet: EvidencePacket): boolean {
+  const byId = new Map(packet.items.map((i) => [i.evidenceId, i]));
+  const okCommon = (f: CoverFact): EvidenceItem | null => {
+    const item = byId.get(f.evidenceId);
+    if (!item) return null;
+    if (item.sourceFactKey !== f.sourceFactKey) return null;
+    if (item.provenance !== f.provenance) return null;
+    if (item.confidence !== f.confidence) return null;
+    if (deriveAssurance([item]) !== f.assurance) return null;
+    return item;
+  };
+  const typedOk = (f?: CoverFact): boolean => {
+    if (!f) return true;
+    const item = okCommon(f);
+    return !!item && selectTypedValue(item.payload, "value") === f.value;
+  };
+  const dateOk = (f?: CoverFact): boolean => {
+    if (!f) return true;
+    const item = okCommon(f);
+    return !!item && item.sourceType === "transcript" && item.sourceDate === f.value;
+  };
+  if (cover.amount && (cover.amount.provenance === "open_question" || cover.amount.assurance === "conflicting" || cover.amount.assurance === "unresolved")) return false;
+  return typedOk(cover.stage) && typedOk(cover.amount) && dateOk(cover.latestCallDate);
 }
 
 export function buildBriefAgentInput(request: BriefRequest, cover: CoverMetadata, budgets: BriefBudgets): BriefAgentInput {
@@ -181,7 +273,7 @@ export async function generateExecutiveBrief(request: BriefRequest, client: Brie
   }
 
   const { brief, movedToAppendix } = assembleBrief(draft, cover, budgets);
-  return { ok: true, attempts, brief, validation: result, movedToAppendix };
+  return { ok: true, attempts, brief: markValidated(brief), validation: result, movedToAppendix };
 }
 
 /** Wrap a raw text-completion function as a BriefModelClient. The future route

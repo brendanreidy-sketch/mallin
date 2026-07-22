@@ -97,6 +97,42 @@ export const ASSURANCE_BADGE: Record<BriefAssurance, BadgeSpec> = {
   unresolved: { label: "Unresolved", fg: COLOR.ink3, bg: COLOR.surface2 },
 };
 
+// ── Renderer-owned human display mappings (the model never writes these) ────
+
+/** Raw enum / typed value → human display form. */
+const DISPLAY: Record<string, string> = {
+  at_risk: "at risk",
+  advancing: "advancing",
+  stalled: "stalled",
+  indeterminate: "indeterminate",
+  customer_stated: "customer stated",
+  seller_provided: "seller recorded",
+  system_recorded: "system recorded",
+  mallin_inference: "Mallín inference",
+  open_question: "open question",
+  customer_commitment: "customer commitment",
+  inferred_customer_commitment: "Mallín-inferred possible commitment",
+  seller_action: "seller action",
+  mallin_recommendation: "Mallín recommendation",
+  unresolved_action: "unresolved action",
+  next_action: "next action",
+  deal_posture: "deal posture",
+};
+
+export const SEVERITY_DISPLAY: Record<string, string> = { blocking: "Blocking", high: "High", medium: "Medium" };
+
+/** Replace any raw underscore-style enum token in prose with its human form.
+ *  Whole-word, no-digit tokens only, so evidence ids / version strings (which
+ *  carry digits) are never touched. Underlying typed values are unchanged. */
+export function humanize(text: string): string {
+  return text.replace(/\b[a-z]+(?:_[a-z]+)+\b/g, (m) => DISPLAY[m] ?? m.replace(/_/g, " "));
+}
+
+export function formatUsd(raw: string): string {
+  const n = Number(raw);
+  return Number.isFinite(n) ? `$${n.toLocaleString("en-US")}` : raw;
+}
+
 // ── Neutral draw ops (executed by the renderer; recorded for geometry tests) ─
 
 export type DrawOp =
@@ -178,7 +214,7 @@ function badgeOps(x: number, y: number, badges: BadgeSpec[]): { ops: DrawOp[]; h
 export function cardBlock(item: BriefContentItem, opts: { textSize: number; accent: string; kind: string; prefix?: string }): Block {
   const w = PAGE.CW;
   const textW = w - ACCENT_W - PAD * 2;
-  const text = opts.prefix ? `${opts.prefix}${item.text}` : item.text;
+  const text = humanize(opts.prefix ? `${opts.prefix}${item.text}` : item.text);
   const textH = estimateTextHeight(text, textW, opts.textSize);
   const height = PAD + textH + 0.12 + BADGE_H + PAD;
   return {
@@ -219,7 +255,7 @@ export function appendixEntryBlock(item: BriefContentItem): Block {
   const w = PAGE.CW;
   const refs = item.evidenceIds.map(shortEvId).join(", ");
   const marker = item.provenance.map((p) => PROVENANCE_BADGE[p].label).join(" · ");
-  const line1 = item.text;
+  const line1 = humanize(item.text);
   const line2 = `${marker}  ·  ${refs || "—"}`;
   const h1 = estimateTextHeight(line1, w - PAD * 2, TYPO.label);
   const h2 = estimateTextHeight(line2, w - PAD * 2, TYPO.footer);
@@ -242,8 +278,9 @@ export function riskTableBlock(items: BriefContentItem[]): Block {
   const header = ["Severity", "Risk", "Assurance", "Evidence"];
   const rows: string[][] = [header];
   for (const it of items) {
-    const sev = it.factBindings.find((b) => b.payloadKind === "risk" && b.fieldPath === "severity")?.value ?? "—";
-    rows.push([sev, it.text, ASSURANCE_BADGE[it.assurance].label, it.provenance.map((p) => PROVENANCE_BADGE[p].label).join(", ")]);
+    const sevRaw = it.factBindings.find((b) => b.payloadKind === "risk" && b.fieldPath === "severity")?.value ?? "—";
+    const sev = SEVERITY_DISPLAY[sevRaw] ?? sevRaw;
+    rows.push([sev, humanize(it.text), ASSURANCE_BADGE[it.assurance].label, it.provenance.map((p) => PROVENANCE_BADGE[p].label).join(", ")]);
   }
   const rowH = 0.46;
   const height = rowH * rows.length;
@@ -280,18 +317,35 @@ export function footerOps(ctx: FooterCtx): DrawOp[] {
   ];
 }
 
-export interface CoverExtras {
-  latestCallDate?: string;
+export interface CoverModel {
+  dealName: string;
+  companyName?: string;
+  asOf: string;
+  classification: string;
+  snapshotId: string;
+  stage?: { value: string };
+  amount?: { value: string };
+  latestCallDate?: { value: string };
 }
-export function coverOps(cover: { dealName: string; asOf: string; classification: string; snapshotId: string }, extras: CoverExtras = {}): DrawOp[] {
+export function coverOps(cover: CoverModel): DrawOp[] {
   const ops: DrawOp[] = [];
   ops.push({ op: "box", x: 0, y: 0, w: PAGE.W, h: PAGE.H, fill: COLOR.navy, kind: "cover-bg" });
   ops.push({ op: "text", x: PAGE.MX, y: 0.9, w: PAGE.CW, h: 0.4, text: "INTERNAL EXECUTIVE DEAL BRIEF", fontSize: TYPO.label, color: COLOR.blue, bold: true, valign: "middle", kind: "cover-kicker" });
-  ops.push({ op: "text", x: PAGE.MX, y: 1.7, w: PAGE.CW, h: 1.7, text: cover.dealName, fontSize: TYPO.title + 4, color: COLOR.onNavy, bold: true, valign: "top", kind: "cover-title" });
-  ops.push({ op: "line", x: PAGE.MX, y: 3.7, w: 3.2, color: COLOR.blue, weight: 2, kind: "cover-rule" });
-  const meta: string[] = [`Generated ${cover.asOf}`, `Artifact version ${cover.snapshotId}`];
-  if (extras.latestCallDate) meta.splice(1, 0, `Latest incorporated call ${extras.latestCallDate}`);
-  ops.push({ op: "text", x: PAGE.MX, y: 4.0, w: PAGE.CW, h: 1.4, text: meta.join("\n"), fontSize: TYPO.body, color: COLOR.onNavySoft, valign: "top", kind: "cover-meta" });
+  ops.push({ op: "text", x: PAGE.MX, y: 1.7, w: PAGE.CW, h: 1.5, text: cover.dealName, fontSize: TYPO.title + 4, color: COLOR.onNavy, bold: true, valign: "top", kind: "cover-title" });
+  if (cover.companyName) {
+    ops.push({ op: "text", x: PAGE.MX, y: 3.15, w: PAGE.CW, h: 0.4, text: cover.companyName, fontSize: TYPO.body, color: COLOR.onNavySoft, valign: "middle", kind: "cover-company" });
+  }
+  ops.push({ op: "line", x: PAGE.MX, y: 3.75, w: 3.2, color: COLOR.blue, weight: 2, kind: "cover-rule" });
+
+  // Supported cover facts + provenance metadata (omitted when unsupported).
+  const meta: string[] = [];
+  if (cover.stage) meta.push(`Stage: ${humanize(cover.stage.value)}`);
+  if (cover.amount) meta.push(`Amount: ${formatUsd(cover.amount.value)}`);
+  if (cover.latestCallDate) meta.push(`Latest incorporated call: ${cover.latestCallDate.value}`);
+  meta.push(`Generated ${cover.asOf}`);
+  meta.push(`Artifact version ${cover.snapshotId}`);
+  ops.push({ op: "text", x: PAGE.MX, y: 4.05, w: PAGE.CW, h: 2.0, text: meta.join("\n"), fontSize: TYPO.body, color: COLOR.onNavySoft, valign: "top", kind: "cover-meta" });
+
   ops.push({ op: "box", x: PAGE.MX, y: PAGE.H - 0.95, w: 3.4, h: 0.42, fill: COLOR.red, radius: 0.05, kind: "cover-class-bg" });
   ops.push({ op: "text", x: PAGE.MX, y: PAGE.H - 0.95, w: 3.4, h: 0.42, text: cover.classification, fontSize: TYPO.label, color: COLOR.onNavy, bold: true, align: "center", valign: "middle", kind: "cover-class" });
   return ops;
@@ -331,7 +385,7 @@ export function actionCategoryBlock(cat: ActionCategory): Block {
   const markerW = 2.6;
   const lineW = w - PAD * 2 - markerW - 0.2;
   const lines = cat.items.map((it) => {
-    const text = `•  ${it.text}`;
+    const text = `•  ${humanize(it.text)}`;
     const h = Math.max(0.3, estimateTextHeight(text, lineW, TYPO.body) + 0.06);
     return { it, text, h };
   });

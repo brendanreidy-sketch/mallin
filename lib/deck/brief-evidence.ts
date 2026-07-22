@@ -192,7 +192,16 @@ export interface TranscriptExcerpt {
   segmentId: string;
   callDate: string | null; // ISO
   speaker: string | null;
+  /** The ONLY thing that earns customer_stated — an explicit buyer speaker,
+   *  AND only when the statement is a directly-traceable transcript segment. */
   speakerSide?: SpeakerSide;
+  /** Provenance of the statement's SOURCE. A "transcript_segment" is a directly
+   *  traceable segment (buyer side ⇒ customer_stated). A "meeting_quote" was
+   *  extracted into a GENERATED intelligence artifact with no immutable segment
+   *  reference, so it can NEVER be independently customer_stated — it is
+   *  recorded as system_recorded regardless of speaker side. Default:
+   *  "transcript_segment". */
+  sourceKind?: "transcript_segment" | "meeting_quote";
   text: string;
   topicKey?: string;
 }
@@ -468,11 +477,15 @@ export function buildEvidencePacket(snapshot: DealSnapshot): EvidencePacket {
   // ── Transcript statements ──
   for (const t of snapshot.transcripts) {
     const side: SpeakerSide = t.speakerSide ?? "unknown";
+    // A meeting_quote passed through a GENERATED artifact with no immutable
+    // segment reference → never independently customer_stated. Only a directly
+    // traceable transcript_segment can earn customer_stated (buyer side).
+    const provenance: Provenance = t.sourceKind === "meeting_quote" ? "system_recorded" : transcriptSideToProvenance(side);
     add({
       logicalKey: t.topicKey ?? `txn:${t.transcriptId}:${t.segmentId}`,
       fieldPath: `segment/${t.segmentId}`, claim: t.text,
       sourceType: "transcript", sourceRecordId: t.transcriptId, sourceDate: t.callDate,
-      origin: t.speaker, support: { excerpt: t.text }, provenance: transcriptSideToProvenance(side),
+      origin: t.speaker, support: { excerpt: t.text }, provenance,
       confidence: "none",
       payload: { kind: "transcript_statement", transcriptId: t.transcriptId, segmentId: t.segmentId, side, text: t.text },
     });

@@ -71,6 +71,9 @@ export interface AdapterTranscriptStatement {
   speaker: string | null;
   /** Explicit side when known; otherwise resolved from `attendees`. */
   side?: SpeakerSide;
+  /** Whether this is a directly-traceable transcript segment or a generated
+   *  meeting quote (no immutable segment ref → never customer_stated). */
+  sourceKind?: "transcript_segment" | "meeting_quote";
   text: string;
 }
 
@@ -233,6 +236,7 @@ function mapTranscript(t: AdapterTranscript): TranscriptExcerpt[] {
     callDate: t.callDate ?? null,
     speaker: s.speaker,
     speakerSide: s.side ?? resolveSide(s.speaker, t.attendees),
+    sourceKind: s.sourceKind,
     text: s.text,
   }));
 }

@@ -25,10 +25,11 @@ import { toDealSnapshot, type AdapterTranscript, type BriefSourceRecords } from 
 import { createJsonBriefClient, generateExecutiveBrief, type BriefModelClient } from "@/lib/deck/brief-agent";
 import { buildBriefPptx, type RenderDiagnostic } from "@/lib/deck/build-brief-pptx";
 import type { MeetingBlock } from "@/lib/intelligence/types";
+import { SONNET_MODEL } from "@/lib/agents/model-config";
 import type { BundleCoordinates, InternalBriefSources } from "@/lib/deck/load-internal-brief-sources";
 
-/** Centrally-configured default model tier (agent-config pattern, not env). */
-export const DEFAULT_BRIEF_MODEL = "claude-sonnet-4-5";
+/** Default model tier — the SHARED config, not a brief-specific constant. */
+export const DEFAULT_BRIEF_MODEL = SONNET_MODEL;
 
 export type InternalBriefResult =
   | { ok: true; buffer: Buffer; filename: string; bundleVersion: string; modelId: string; diagnostics: RenderDiagnostic[] }
@@ -78,7 +79,9 @@ function meetingToTranscript(meeting: MeetingBlock): AdapterTranscript {
     transcriptId: `meeting:${meeting.deck_copy_source_at ?? meeting.date ?? "unknown"}`,
     callDate: meeting.date ?? null,
     attendees: meeting.attendees,
-    statements: (meeting.quotes ?? []).map((q) => ({ segmentId: segmentId(q.text), speaker: q.speaker, text: q.text })),
+    // Meeting quotes are extracted into a GENERATED artifact with no immutable
+    // segment reference → sourceKind "meeting_quote" (never customer_stated).
+    statements: (meeting.quotes ?? []).map((q) => ({ segmentId: segmentId(q.text), speaker: q.speaker, sourceKind: "meeting_quote" as const, text: q.text })),
   };
 }
 

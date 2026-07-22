@@ -105,6 +105,7 @@ describe("POST /api/internal-brief — access & isolation", () => {
 describe("POST /api/internal-brief — failure mapping (safe, private)", () => {
   const cases: Array<[string, unknown, number, string]> = [
     ["required_artifact_missing", { ok: false, code: "required_artifact_missing" }, 409, "required_artifact_missing"],
+    ["current_artifact_conflict", { ok: false, code: "current_artifact_conflict" }, 409, "current_artifact_conflict"],
     ["deal_not_found from loader", { ok: false, code: "deal_not_found" }, 404, "deal_not_found"],
   ];
   for (const [name, loadResult, status, error] of cases) {
@@ -149,17 +150,55 @@ describe("POST /api/internal-brief — success", () => {
   });
 });
 
-describe("POST /api/internal-brief — narrow concurrency guard", () => {
-  it("rejects a duplicate in-flight generation for the same tenant+user+deal", async () => {
+describe("POST /api/internal-brief — narrow concurrency guard (per-instance)", () => {
+  const OTHER = "22222222-2222-4222-8222-222222222222";
+  const OK = { ok: true as const, buffer: Buffer.from("PK\x03\x04"), filename: "f.pptx", bundleVersion: "v", modelId: "claude-sonnet-4-6", diagnostics: [] };
+  const tick = () => new Promise((r) => setTimeout(r, 15));
+
+  it("returns 429 generation_in_progress with private headers, and makes NO second model call", async () => {
     let release!: () => void;
     const pending = new Promise<void>((r) => { release = r; });
-    m.generateInternalBrief.mockReturnValue(
-      pending.then(() => ({ ok: true, buffer: Buffer.from("PK\x03\x04"), filename: "f.pptx", bundleVersion: "v", modelId: "claude-sonnet-4-5", diagnostics: [] })),
-    );
+    m.generateInternalBrief.mockReturnValueOnce(pending.then(() => OK)).mockResolvedValue(OK);
+
     const p1 = postDeal(VALID);
-    await new Promise((r) => setTimeout(r, 15)); // let p1 reach the in-flight generate
+    await tick();
     const r2 = await postDeal(VALID);
     expect(r2.status).toBe(429);
+    expect((await json(r2)).error).toBe("generation_in_progress");
+    expect(r2.headers.get("Cache-Control")).toBe("private, no-store, max-age=0");
+    expect(m.generateInternalBrief).toHaveBeenCalledTimes(1); // duplicate never reached the model
+
+    release();
+    expect((await p1).status).toBe(200);
+  });
+
+  it("allows a new request after the first SUCCEEDS (finally released the key)", async () => {
+    expect((await postDeal(VALID)).status).toBe(200);
+    expect((await postDeal(VALID)).status).toBe(200);
+  });
+
+  it("allows a new request after the first FAILS (result) — key not permanently blocked", async () => {
+    m.generateInternalBrief.mockResolvedValueOnce({ ok: false, code: "brief_render_failed" });
+    expect((await postDeal(VALID)).status).toBe(500);
+    expect((await postDeal(VALID)).status).toBe(200); // retry allowed
+  });
+
+  it("allows a new request after the first THROWS (finally runs on the catch path)", async () => {
+    m.loadInternalBriefSources.mockRejectedValueOnce(new Error("db down"));
+    expect((await postDeal(VALID)).status).toBe(500);
+    expect((await postDeal(VALID)).status).toBe(200);
+  });
+
+  it("does not block a different deal while one is in flight", async () => {
+    let release!: () => void;
+    const pending = new Promise<void>((r) => { release = r; });
+    m.generateInternalBrief.mockReturnValueOnce(pending.then(() => OK)).mockResolvedValue(OK);
+
+    const p1 = postDeal(VALID); // deal A pending
+    await tick();
+    const r2 = await postDeal(OTHER); // deal B concurrent → not blocked
+    expect(r2.status).toBe(200);
+
     release();
     expect((await p1).status).toBe(200);
   });

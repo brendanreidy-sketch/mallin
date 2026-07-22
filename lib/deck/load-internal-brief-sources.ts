@@ -52,7 +52,17 @@ export interface InternalBriefSources {
 
 export type LoadSourcesResult =
   | { ok: true; sources: InternalBriefSources }
-  | { ok: false; code: "deal_not_found" | "required_artifact_missing" };
+  | { ok: false; code: "deal_not_found" | "required_artifact_missing" | "current_artifact_conflict" };
+
+/** Distinguish zero / exactly-one / multiple current rows. We never silently
+ *  pick the newest when more than one is_current row exists — that would be an
+ *  undocumented recovery rule; instead we fail closed. */
+function pickCurrent<T>(rows: T[] | null | undefined): { state: "none" } | { state: "one"; row: T } | { state: "conflict" } {
+  const list = rows ?? [];
+  if (list.length === 0) return { state: "none" };
+  if (list.length > 1) return { state: "conflict" };
+  return { state: "one", row: list[0] };
+}
 
 /** Load the tenant-scoped current source bundle for an already-authorized deal. */
 export async function loadInternalBriefSources(dealId: string, tenantId: string): Promise<LoadSourcesResult> {
@@ -64,23 +74,27 @@ export async function loadInternalBriefSources(dealId: string, tenantId: string)
     .maybeSingle();
   if (!opp) return { ok: false, code: "deal_not_found" };
 
-  const { data: intel } = await supabaseAdmin
+  const { data: intelRows } = await supabaseAdmin
     .from("account_intelligence_artifacts")
     .select("id, artifact")
     .eq("opportunity_id", dealId)
     .eq("tenant_id", tenantId)
-    .eq("is_current", true)
-    .maybeSingle();
-  if (!intel) return { ok: false, code: "required_artifact_missing" };
+    .eq("is_current", true);
+  const intelPick = pickCurrent(intelRows as Array<{ id: string; artifact: unknown }> | null);
+  if (intelPick.state === "none") return { ok: false, code: "required_artifact_missing" };
+  if (intelPick.state === "conflict") return { ok: false, code: "current_artifact_conflict" };
+  const intel = intelPick.row;
 
-  const { data: exec } = await supabaseAdmin
+  const { data: execRows } = await supabaseAdmin
     .from("execution_artifacts")
     .select("id, artifact, generated_at")
     .eq("opportunity_id", dealId)
     .eq("tenant_id", tenantId)
-    .eq("is_current", true)
-    .maybeSingle();
-  if (!exec) return { ok: false, code: "required_artifact_missing" };
+    .eq("is_current", true);
+  const execPick = pickCurrent(execRows as Array<{ id: string; artifact: unknown; generated_at: string }> | null);
+  if (execPick.state === "none") return { ok: false, code: "required_artifact_missing" };
+  if (execPick.state === "conflict") return { ok: false, code: "current_artifact_conflict" };
+  const exec = execPick.row;
 
   const intelArtifact = intel.artifact as AccountIntelligenceArtifact;
   const meeting = intelArtifact.meeting ?? null;

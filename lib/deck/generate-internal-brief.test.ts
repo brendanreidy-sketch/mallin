@@ -102,13 +102,15 @@ describe("computeBundleVersion", () => {
 // ── source mapping / provenance ─────────────────────────────────────────────
 
 describe("mapSourcesToRecords + evidence", () => {
-  it("attributes a buyer-side quote as customer_stated and an ambiguous speaker as system_recorded", () => {
+  it("classifies MeetingBlock quotes as system_recorded (generated artifact, no immutable segment ref)", () => {
     const packet = packetFor(sources());
     const items = packet.items.filter((i) => i.sourceType === "transcript");
     const jordan = items.find((i) => i.claim.includes("unplanned downtime"))!;
     const crosstalk = items.find((i) => i.claim.includes("crosstalk"))!;
-    expect(jordan.provenance).toBe("customer_stated"); // Jordan = explicit buyer attendee
-    expect(crosstalk.provenance).toBe("system_recorded"); // "Unidentified" matches no attendee
+    // Even the buyer-attendee quote is NOT customer_stated — it is a meeting quote.
+    expect(jordan.provenance).toBe("system_recorded");
+    expect(crosstalk.provenance).toBe("system_recorded");
+    expect(items.every((i) => i.provenance === "system_recorded")).toBe(true);
   });
 
   it("omits an unsupported amount from the cover (Not confirmed)", async () => {
@@ -164,7 +166,7 @@ describe("generateInternalBrief — outcomes", () => {
     expect(res.filename).toBe(`cedar-dynamics-predictive-maintenance-internal-brief-${res.bundleVersion}.pptx`);
     expect(res.filename).not.toContain("intel_row_1");
     expect(res.filename).not.toContain("exec_row_1");
-    expect(res.modelId).toBe("claude-sonnet-4-5");
+    expect(res.modelId).toBe("claude-sonnet-4-6"); // shared Sonnet default
   });
 
   it("returns model_generation_failed when the model client throws", async () => {

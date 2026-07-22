@@ -100,16 +100,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return access.reason === "wrong_tenant" ? errorResponse("forbidden", 403) : errorResponse("deal_not_found", 404);
   }
 
-  // Cost/concurrency guard (narrow, per-instance).
+  // Cost/concurrency guard (narrow, per-instance — see inFlight note).
   const guardKey = `${tenantId}:${userId}:${dealId}`;
-  if (inFlight.has(guardKey)) return errorResponse("duplicate_in_flight", 429);
+  if (inFlight.has(guardKey)) return errorResponse("generation_in_progress", 429);
   inFlight.add(guardKey);
 
   try {
     // 5. Tenant-scoped source loading (only after authorization).
     const loaded = await loadInternalBriefSources(dealId, tenantId);
     if (!loaded.ok) {
-      return loaded.code === "deal_not_found" ? errorResponse("deal_not_found", 404) : errorResponse("required_artifact_missing", 409);
+      if (loaded.code === "deal_not_found") return errorResponse("deal_not_found", 404);
+      if (loaded.code === "current_artifact_conflict") return errorResponse("current_artifact_conflict", 409);
+      return errorResponse("required_artifact_missing", 409);
     }
 
     // 6. Orchestrate generation.

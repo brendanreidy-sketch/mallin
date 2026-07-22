@@ -75,6 +75,10 @@
 @media (min-width: 1001px) {
   .page {
     padding-top: calc(12px * var(--density-scale, 1));
+    /* Trim the full-width cream tail below a finished brief on desktop
+       (base is 120px). Top + horizontal padding are unchanged; mobile and
+       tablet (<=1000px) keep the base bottom padding. */
+    padding-bottom: 40px;
   }
   .shell {
     max-width: min(1760px, 98vw);

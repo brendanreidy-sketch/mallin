@@ -249,8 +249,8 @@ export function buildBriefPrompt(input: BriefAgentInput, repair?: RepairContext)
     "- Max items per section: executiveSummary 4, whatChanged 3, customerPriorities 4, stakeholders 5, decisionProcess 4, risks 4.",
     "- actionPlan: at most 8 items TOTAL across all buckets, and at most 3 in any single bucket.",
     "- appendix: empty — produce NONE.",
-    "- Per item: text ≤ 250 characters (one concise sentence); at most 3 evidenceIds, 3 sourceFactKeys, 2 factBindings, 3 provenance.",
-    "- Select only the MOST material items and the strongest 1–2 evidence bindings per item. Never restate a fact already covered in another section — keep each fact in its single most relevant section.",
+    "- Per item: text ≤ 400 characters (1–2 concise sentences); at most 5 evidenceIds, 5 sourceFactKeys, 4 factBindings, 5 provenance. Bind EVERY concrete value your text states.",
+    "- Select only the MOST material items. Prefer the fewest, strongest evidence bindings that still cover every concrete value. Never restate a fact already covered in another section — keep each fact in its single most relevant section.",
     "RULES:",
     ...input.rules.map((r, n) => `${n + 1}. ${r}`),
   ].join("\n");

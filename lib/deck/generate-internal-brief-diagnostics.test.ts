@@ -124,7 +124,9 @@ describe("generateInternalBrief — sanitized diagnostics", () => {
   it("logs stage brief_validation + codes-only counts (split by attempt) and returns brief_failed_validation", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const bad = validDraft();
-    bad.whatChanged = [{ id: "wc", contentType: "what_changed", text: "x", section: "what_changed", assertionMode: "unresolved", evidenceIds: [], sourceFactKeys: [], factBindings: [], provenance: [], confidence: "none", assurance: "unresolved", appendixEligible: true }];
+    // A bad enum survives conformance + governance → stays schema-invalid on
+    // every attempt, so the brief_validation diagnostic is emitted.
+    bad.executiveSummary = [{ id: "es", contentType: "not_a_real_type" as never, text: "x", section: "executive_summary", assertionMode: "unresolved", evidenceIds: [], sourceFactKeys: [], factBindings: [], provenance: [], confidence: "none", assurance: "unresolved", appendixEligible: true }];
     const res = await generateInternalBrief({ sources: sources(), cover: { dealName: "Cedar", asOf: "2026-06-16" }, modelClient: async () => bad });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.code).toBe("brief_failed_validation");

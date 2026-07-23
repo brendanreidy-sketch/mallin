@@ -396,6 +396,7 @@ function checkEntityCoverage(loc: Located, maps: Maps, errors: ValidationError[]
     maps.cover.dealName,
     maps.cover.preparedFor ?? "",
     maps.cover.classification,
+    maps.cover.asOf, // trusted deterministic cover metadata (the generation date)
   ]
     .join(" \n ")
     .toLowerCase();

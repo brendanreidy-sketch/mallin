@@ -146,12 +146,15 @@ describe("generateInternalBrief — Phase 1 prior state", () => {
     expect(report.slides.map((s) => s.title)).not.toContain("What changed");
   });
 
-  it("rejects a draft that tries to include a What changed item (no prior state)", async () => {
+  it("drops a stray What changed item when there is no prior state, and still renders", async () => {
+    // Deterministic governance omits whatChanged when hasPriorState is false —
+    // a stray item is dropped (the section is meant to be empty) rather than
+    // failing the whole brief.
     const draft = emptyDraft();
     draft.whatChanged = [{ id: "wc", contentType: "what_changed", text: "x", section: "what_changed", assertionMode: "unresolved", evidenceIds: [], sourceFactKeys: [], factBindings: [], provenance: [], confidence: "none", assurance: "unresolved", appendixEligible: true }];
     const res = await generateInternalBrief({ sources: sources(), cover: { dealName: "Cedar", asOf: "2026-06-16" }, modelClient: async () => draft });
-    expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.code).toBe("brief_failed_validation");
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.buffer.subarray(0, 2).toString("latin1")).toBe("PK");
   });
 });
 

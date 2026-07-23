@@ -32,6 +32,7 @@ import {
 } from "@/lib/deck/brief-model";
 import { validateBriefDraft, type ValidationError, type ValidationErrorCode, type ValidationResult } from "@/lib/deck/brief-validator";
 import { BRIEF_CAPS } from "@/lib/deck/brief-schema";
+import { deriveGovernance } from "@/lib/deck/brief-govern";
 
 export interface BriefRequest {
   packet: EvidencePacket;
@@ -370,7 +371,10 @@ export async function generateExecutiveBrief(request: BriefRequest, client: Brie
     const repair: RepairContext | undefined = draft && result && !result.valid ? { previousDraft: draft, errors: result.errors } : undefined;
     let candidate: BriefDraft;
     try {
-      candidate = normalizeDraftCounts(await client(input, repair));
+      // conform shapes + trim counts, then deterministically fill governance
+      // metadata (provenance/confidence/assurance + corrected bindings) so the
+      // model only has to author judgment, not match the derivations.
+      candidate = deriveGovernance(normalizeDraftCounts(await client(input, repair)), request.packet, request.changeSet);
     } catch (e) {
       lastThrow = e; // truncated / refused / unparseable — count it and retry within budget
       codesByAttempt.push(["model_response_unparseable" as ValidationErrorCode]);

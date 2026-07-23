@@ -11,7 +11,9 @@ const clientReturning = (...drafts: BriefDraft[]): BriefModelClient => {
 
 function invalidDraft(): BriefDraft {
   const d = makeValidDraft();
-  d.executiveSummary[0].confidence = "high"; // raised confidence → rejected
+  // A bad enum survives conformance AND deterministic governance (which now
+  // corrects derivable fields like confidence) — so it stays schema-invalid.
+  (d.executiveSummary[0] as unknown as Record<string, unknown>).contentType = "not_a_real_type";
   return d;
 }
 
@@ -87,7 +89,7 @@ describe("generateExecutiveBrief", () => {
     if (res.ok) return;
     expect(res.attempts).toBe(4); // 1 initial + 3 repairs, then fail closed
     expect(res.errors.length).toBeGreaterThan(0);
-    expect(res.errors.map((e) => e.code)).toContain("confidence_raised");
+    expect(res.errors.map((e) => e.code)).toContain("schema_invalid");
     expect("brief" in res).toBe(false);
   });
 
@@ -96,8 +98,8 @@ describe("generateExecutiveBrief", () => {
     expect(res.ok).toBe(false);
     if (res.ok) return;
     expect(res.codesByAttempt.length).toBe(4); // one code list per attempt
-    expect(res.codesByAttempt[0]).toContain("confidence_raised"); // initial draft
-    expect(res.codesByAttempt.at(-1)).toContain("confidence_raised"); // last repair repeated it
+    expect(res.codesByAttempt[0]).toContain("schema_invalid"); // initial draft
+    expect(res.codesByAttempt.at(-1)).toContain("schema_invalid"); // last repair repeated it
   });
 
   it("parses the repair response through the same strict schema", async () => {

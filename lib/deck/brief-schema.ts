@@ -100,10 +100,14 @@ export const BRIEF_CAPS = {
   // and run 1–2 sentences, without inviting runaway output — section counts stay
   // tight, so total tokens remain bounded well under the 16k ceiling.
   itemText: 400,
-  evidenceIds: 3,
-  sourceFactKeys: 3,
-  factBindings: 3,
-  provenance: 3,
+  // evidenceIds / sourceFactKeys / factBindings / provenance are finalized by
+  // deriveGovernance (it adds evidence-backed coverage bindings + citations and
+  // derives the provenance union), so these are coverage ceilings, not
+  // model-output budgets. The prompt still asks the model for few (≤3).
+  evidenceIds: 8,
+  sourceFactKeys: 8,
+  factBindings: 8,
+  provenance: 5,
 } as const;
 
 const contentItemSchema = z.strictObject({

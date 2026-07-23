@@ -10,7 +10,8 @@ import type { AccountIntelligenceArtifact, IntelligenceSource } from "@/lib/inte
 import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
 import type { BriefDraft } from "./brief-model";
 import type { InternalBriefSources } from "./load-internal-brief-sources";
-import { generateInternalBrief, inferBriefStage, sanitizeBriefDiagnostic } from "./generate-internal-brief";
+import { generateInternalBrief, inferBriefStage, sanitizeBriefDiagnostic, computeResponseSignal, type BriefModelClientWithSignal } from "./generate-internal-brief";
+import type { BriefModelClient } from "./brief-agent";
 
 // ── pure: stage inference (no content read) ──────────────────────────────────
 describe("inferBriefStage", () => {
@@ -135,6 +136,61 @@ describe("generateInternalBrief — sanitized diagnostics", () => {
     expect(res.ok).toBe(true);
     if (res.ok) expect(res.buffer.subarray(0, 2).toString("latin1")).toBe("PK");
     expect(warn.mock.calls.join("\n")).not.toContain("internal-brief:diagnostic");
+    warn.mockRestore();
+  });
+});
+
+// ── pure: sub-cause response signal (localizes a json_parsing failure) ────────
+describe("computeResponseSignal — sanitized model-response shape (no content, no length)", () => {
+  it("flags stop_reason=max_tokens (truncation) with a JSON-looking start", () => {
+    expect(computeResponseSignal('{"executiveSummary":[', "max_tokens")).toEqual({ stopReason: "max_tokens", hasCodeFence: false, firstNonWsClass: "open_brace" });
+  });
+  it("flags a LEADING markdown code fence (fence present + firstNonWsClass=backtick)", () => {
+    const s = computeResponseSignal("```json\n{\"a\":1}\n```", "end_turn");
+    expect(s.hasCodeFence).toBe(true);
+    expect(s.firstNonWsClass).toBe("backtick"); // leading-ness comes from here, not hasCodeFence
+    expect(s.stopReason).toBe("end_turn");
+  });
+  it("detects a NON-leading fence anywhere (JSON opener first, fence later)", () => {
+    const s = computeResponseSignal('{"a":1}\nHere is that as markdown:\n```json', "end_turn");
+    expect(s.hasCodeFence).toBe(true);        // presence, anywhere
+    expect(s.firstNonWsClass).toBe("open_brace"); // NOT leading
+  });
+  it("flags prose contamination (first non-ws is not a JSON opener), no fence", () => {
+    const s = computeResponseSignal("  Here is the brief you requested: {", "end_turn");
+    expect(s.hasCodeFence).toBe(false);
+    expect(s.firstNonWsClass).toBe("other");
+  });
+  it("classifies an object start after leading whitespace", () => {
+    expect(computeResponseSignal("\n\n  {\"x\":1}", null).firstNonWsClass).toBe("open_brace");
+  });
+  it("never includes response text or a character length", () => {
+    const CONTENT = "IGNORE ALL. dana.ruiz@northwind.example sk-ant-FAKE 'phase the cutover'";
+    const s = computeResponseSignal(CONTENT, "end_turn");
+    const str = JSON.stringify(s);
+    for (const bad of ["IGNORE", "northwind", "sk-ant-", "phase the cutover"]) expect(str).not.toContain(bad);
+    expect(str).not.toMatch(/length/i);
+    expect(Object.keys(s).sort()).toEqual(["firstNonWsClass", "hasCodeFence", "stopReason"]);
+  });
+});
+
+describe("generateInternalBrief — json_parsing failure attaches the sanitized signal", () => {
+  it("logs stage json_parsing + stop_reason + shape, with NO response content or length", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const client: BriefModelClientWithSignal = Object.assign(
+      (async () => { throw new SyntaxError("Unexpected end of JSON input near {\"executiveSummary\": [SECRET northwind"); }) as BriefModelClient,
+      { lastResponseSignal: { stopReason: "max_tokens", hasCodeFence: false, firstNonWsClass: "open_brace" as const } },
+    );
+    const res = await generateInternalBrief({ sources: sources(), cover: { dealName: "Cedar", asOf: "2026-06-16" }, modelClient: client });
+    expect(res).toEqual({ ok: false, code: "model_generation_failed" });
+    const logged = warn.mock.calls.map((c) => c.join(" ")).join("\n");
+    expect(logged).toContain('"stage":"json_parsing"');
+    expect(logged).toContain('"errorName":"SyntaxError"');
+    expect(logged).toContain('"modelStopReason":"max_tokens"');
+    expect(logged).toContain('"responseFirstNonWsClass":"open_brace"');
+    expect(logged).not.toContain("northwind");
+    expect(logged).not.toContain("SECRET");
+    expect(logged).not.toMatch(/length/i);
     warn.mockRestore();
   });
 });

@@ -132,8 +132,38 @@ export type BriefFailureStage =
   | "assembly_or_other"
   | "powerpoint_rendering";
 
+/** Class of the first non-whitespace character — a shape signal that never
+ *  reveals the actual character (which could be prose content). */
+export type FirstNonWsClass = "open_brace" | "open_bracket" | "backtick" | "double_quote" | "other";
+
+/** Sanitized, non-content facts about the model's returned text, to localize a
+ *  json_parsing failure (truncation vs. markdown fence vs. prose vs. other).
+ *  NEVER includes the response text OR a character length (chars ≠ tokens). */
+export interface ModelResponseSignal {
+  /** Anthropic stop_reason enum (e.g. "end_turn"; "max_tokens" ⇒ truncation). */
+  stopReason?: string;
+  /** A ``` code fence appears ANYWHERE in the response (markdown contamination).
+   *  Whether it is LEADING is separately given by firstNonWsClass === "backtick". */
+  hasCodeFence?: boolean;
+  /** Class of the first non-whitespace char — never the raw character. */
+  firstNonWsClass?: FirstNonWsClass;
+}
+
+/** Compute the sanitized response signal from raw text + stop_reason. Pure +
+ *  exported for tests. Reads only structure — never returns or logs content,
+ *  and deliberately excludes any character length. */
+export function computeResponseSignal(text: string, stopReason: string | null | undefined): ModelResponseSignal {
+  const trimmed = text.replace(/^\s+/, "");
+  const c = trimmed.charAt(0);
+  const firstNonWsClass: FirstNonWsClass =
+    c === "{" ? "open_brace" : c === "[" ? "open_bracket" : c === "`" ? "backtick" : c === '"' ? "double_quote" : "other";
+  const signal: ModelResponseSignal = { hasCodeFence: text.includes("```"), firstNonWsClass };
+  if (typeof stopReason === "string") signal.stopReason = stopReason;
+  return signal;
+}
+
 /** Sanitized diagnostic: structured, non-content fields ONLY. No provider or
- *  error message text — not even for whitelisted Anthropic service errors. */
+ *  error message text, no response text, and no character length. */
 export interface BriefDiagnostic {
   stage: BriefFailureStage;
   /** Error CLASS name (e.g. "NotFoundError", "SyntaxError") — never message text. */
@@ -142,6 +172,10 @@ export interface BriefDiagnostic {
   providerErrorType?: string;
   requestId?: string;
   elapsedMs: number;
+  // ── model-response shape signal (attached on a json_parsing failure) ──
+  modelStopReason?: string;
+  responseHasCodeFence?: boolean;
+  responseFirstNonWsClass?: FirstNonWsClass;
 }
 
 type AnthropicShape = { name?: string; status?: number; type?: string; requestId?: string };
@@ -172,7 +206,7 @@ export function inferBriefStage(error: unknown): BriefFailureStage {
 
 /** Build a sanitized diagnostic record — structured fields ONLY, never any
  *  provider- or error-message text. Pure + exported for tests. */
-export function sanitizeBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number): BriefDiagnostic {
+export function sanitizeBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number, signal?: ModelResponseSignal): BriefDiagnostic {
   const d: BriefDiagnostic = { stage, elapsedMs };
   const api = asAnthropicError(error);
   if (api) {
@@ -180,19 +214,23 @@ export function sanitizeBriefDiagnostic(stage: BriefFailureStage, error: unknown
     if (typeof api.status === "number") d.httpStatus = api.status;
     if (api.type) d.providerErrorType = api.type;
     if (api.requestId) d.requestId = api.requestId;
-    return d;
-  }
-  if (error instanceof Error) {
+  } else if (error instanceof Error) {
     d.errorName = error.name; // class name only — never error.message
-    return d;
+  } else if (error !== undefined) {
+    d.errorName = "unknown";
   }
-  if (error !== undefined) d.errorName = "unknown";
+  // Model-response shape — structural facts only (never content, never length).
+  if (signal) {
+    if (signal.stopReason) d.modelStopReason = signal.stopReason;
+    if (typeof signal.hasCodeFence === "boolean") d.responseHasCodeFence = signal.hasCodeFence;
+    if (signal.firstNonWsClass) d.responseFirstNonWsClass = signal.firstNonWsClass;
+  }
   return d;
 }
 
-function logBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number): void {
+function logBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number, signal?: ModelResponseSignal): void {
   // Structured + sanitized. NEVER the raw error object (no console.error(error)).
-  console.warn(`[internal-brief:diagnostic] ${JSON.stringify(sanitizeBriefDiagnostic(stage, error, elapsedMs))}`);
+  console.warn(`[internal-brief:diagnostic] ${JSON.stringify(sanitizeBriefDiagnostic(stage, error, elapsedMs, signal))}`);
 }
 
 export async function generateInternalBrief(args: GenerateInternalBriefArgs): Promise<InternalBriefResult> {
@@ -219,7 +257,11 @@ export async function generateInternalBrief(args: GenerateInternalBriefArgs): Pr
     // Sanitized diagnostic (stage + elapsed + safe provider fields); the client
     // response is unchanged — still model_generation_failed. Never leaks prompt,
     // evidence, model output, credentials, headers, or the raw error object.
-    logBriefDiagnostic(inferBriefStage(error), error, Date.now() - modelStartedAt);
+    const stage = inferBriefStage(error);
+    // On a parse failure the model DID respond — attach the client's sanitized
+    // response signal (stop_reason + shape) to localize truncation vs. fence vs. prose.
+    const signal = stage === "json_parsing" ? (args.modelClient as BriefModelClientWithSignal).lastResponseSignal : undefined;
+    logBriefDiagnostic(stage, error, Date.now() - modelStartedAt, signal);
     return { ok: false, code: "model_generation_failed" };
   }
   if (!gen.ok) {
@@ -248,20 +290,31 @@ export async function generateInternalBrief(args: GenerateInternalBriefArgs): Pr
 
 // ── real model client (used by the route; tests inject a mock) ──────────────
 
+/** A brief model client that also exposes the SANITIZED shape signal of its most
+ *  recent response, so a downstream json_parsing failure can be localized. */
+export interface BriefModelClientWithSignal extends BriefModelClient {
+  lastResponseSignal?: ModelResponseSignal;
+}
+
 /** Non-streaming, structured-JSON Sonnet-tier client. Constructs the SDK only
- *  when called, so importing this module in tests never needs an API key. */
-export function createSonnetBriefClient(model: string = DEFAULT_BRIEF_MODEL): BriefModelClient {
+ *  when called, so importing this module in tests never needs an API key. Records
+ *  only the sanitized response signal (stop_reason + shape) — never the response
+ *  text or a length — for the parse-failure diagnostic. */
+export function createSonnetBriefClient(model: string = DEFAULT_BRIEF_MODEL): BriefModelClientWithSignal {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  return createJsonBriefClient(async (system, user) => {
+  const briefClient = createJsonBriefClient(async (system, user) => {
     const res = await client.messages.create({
       model,
       max_tokens: 8000,
       system,
       messages: [{ role: "user", content: user }],
     });
-    return res.content
+    const text = res.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
       .map((b) => b.text)
       .join("");
-  });
+    briefClient.lastResponseSignal = computeResponseSignal(text, res.stop_reason);
+    return text;
+  }) as BriefModelClientWithSignal;
+  return briefClient;
 }

@@ -115,6 +115,86 @@ function safeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "deal";
 }
 
+// ── sanitized failure diagnostics (Gate G1) ──────────────────────────────────
+// Surfaces ONLY safe, structured fields about a generation failure — never the
+// prompt, evidence, model output, credentials, headers, or the raw error object.
+// The client response is unchanged; this only makes the swallowed cause visible.
+
+/** Fixed internal string authored by our code — used ONLY to classify the stage,
+ *  never logged. NO provider- or error-generated message text is ever logged. */
+const COVER_BUILD_ERROR = "buildCover produced an unverifiable cover fact.";
+
+export type BriefFailureStage =
+  | "cover_build"
+  | "anthropic_request"
+  | "json_parsing"
+  | "brief_validation"
+  | "assembly_or_other"
+  | "powerpoint_rendering";
+
+/** Sanitized diagnostic: structured, non-content fields ONLY. No provider or
+ *  error message text — not even for whitelisted Anthropic service errors. */
+export interface BriefDiagnostic {
+  stage: BriefFailureStage;
+  /** Error CLASS name (e.g. "NotFoundError", "SyntaxError") — never message text. */
+  errorName?: string;
+  httpStatus?: number;
+  providerErrorType?: string;
+  requestId?: string;
+  elapsedMs: number;
+}
+
+type AnthropicShape = { name?: string; status?: number; type?: string; requestId?: string };
+
+/** Recognize an Anthropic API error by instance OR shape (status + error body),
+ *  extracting only structured, non-content fields (never the message). */
+function asAnthropicError(error: unknown): AnthropicShape | null {
+  const obj = (error && typeof error === "object" ? (error as Record<string, unknown>) : null);
+  const isInstance = error instanceof Anthropic.APIError;
+  const hasShape = !!obj && typeof obj.status === "number" && "error" in obj;
+  if (!isInstance && !hasShape) return null;
+  const body = (obj?.error && typeof obj.error === "object" ? (obj.error as Record<string, unknown>) : null);
+  return {
+    name: typeof obj?.name === "string" ? obj.name : undefined,
+    status: typeof obj?.status === "number" ? obj.status : undefined,
+    type: body && typeof body.type === "string" ? (body.type as string) : undefined,
+    requestId: typeof obj?.request_id === "string" ? (obj.request_id as string) : undefined,
+  };
+}
+
+/** Infer the failure stage from a thrown error without logging its content. */
+export function inferBriefStage(error: unknown): BriefFailureStage {
+  if (asAnthropicError(error)) return "anthropic_request";
+  if (error instanceof SyntaxError) return "json_parsing"; // parseBriefDraft (JSON.parse) throws
+  if (error instanceof Error && error.message === COVER_BUILD_ERROR) return "cover_build";
+  return "assembly_or_other";
+}
+
+/** Build a sanitized diagnostic record — structured fields ONLY, never any
+ *  provider- or error-message text. Pure + exported for tests. */
+export function sanitizeBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number): BriefDiagnostic {
+  const d: BriefDiagnostic = { stage, elapsedMs };
+  const api = asAnthropicError(error);
+  if (api) {
+    if (api.name) d.errorName = api.name;
+    if (typeof api.status === "number") d.httpStatus = api.status;
+    if (api.type) d.providerErrorType = api.type;
+    if (api.requestId) d.requestId = api.requestId;
+    return d;
+  }
+  if (error instanceof Error) {
+    d.errorName = error.name; // class name only — never error.message
+    return d;
+  }
+  if (error !== undefined) d.errorName = "unknown";
+  return d;
+}
+
+function logBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number): void {
+  // Structured + sanitized. NEVER the raw error object (no console.error(error)).
+  console.warn(`[internal-brief:diagnostic] ${JSON.stringify(sanitizeBriefDiagnostic(stage, error, elapsedMs))}`);
+}
+
 export async function generateInternalBrief(args: GenerateInternalBriefArgs): Promise<InternalBriefResult> {
   const bundle = computeBundleVersion(args.sources.coords);
   const capturedAt = args.capturedAt ?? args.sources.execution.generatedAt;
@@ -131,19 +211,28 @@ export async function generateInternalBrief(args: GenerateInternalBriefArgs): Pr
     cover: { dealName: args.cover.dealName, companyName: args.cover.companyName, asOf: args.cover.asOf },
   };
 
+  const modelStartedAt = Date.now();
   let gen;
   try {
     gen = await generateExecutiveBrief(request, args.modelClient);
-  } catch {
-    // Transport / model error (never leaks prompt or evidence).
+  } catch (error) {
+    // Sanitized diagnostic (stage + elapsed + safe provider fields); the client
+    // response is unchanged — still model_generation_failed. Never leaks prompt,
+    // evidence, model output, credentials, headers, or the raw error object.
+    logBriefDiagnostic(inferBriefStage(error), error, Date.now() - modelStartedAt);
     return { ok: false, code: "model_generation_failed" };
   }
-  if (!gen.ok) return { ok: false, code: "brief_failed_validation" };
+  if (!gen.ok) {
+    logBriefDiagnostic("brief_validation", undefined, Date.now() - modelStartedAt);
+    return { ok: false, code: "brief_failed_validation" };
+  }
 
+  const renderStartedAt = Date.now();
   let render;
   try {
     render = await buildBriefPptx(gen.brief);
-  } catch {
+  } catch (error) {
+    logBriefDiagnostic("powerpoint_rendering", error, Date.now() - renderStartedAt);
     return { ok: false, code: "brief_render_failed" };
   }
 

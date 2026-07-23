@@ -26,7 +26,6 @@ import { createJsonBriefClient, generateExecutiveBrief, type BriefModelClient } 
 import { buildBriefPptx, type RenderDiagnostic } from "@/lib/deck/build-brief-pptx";
 import type { MeetingBlock } from "@/lib/intelligence/types";
 import { SONNET_MODEL } from "@/lib/agents/model-config";
-import { BriefDraftJsonSchema } from "@/lib/deck/brief-schema";
 import type { BundleCoordinates, InternalBriefSources } from "@/lib/deck/load-internal-brief-sources";
 
 /** Default model tier — the SHARED config, not a brief-specific constant. */
@@ -226,6 +225,31 @@ export function assertParseableResponse(stopReason: string | null | undefined): 
   if (stopReason !== "end_turn") throw new BriefUnparseableResponseError(stopReason ?? null);
 }
 
+/** Remove an EXACT outer markdown code-fence that wraps the ENTIRE response
+ *  (```json … ``` or ``` … ```), and nothing else. Only leading/trailing
+ *  whitespace around the wrapper is ignored (trimmed first); any language tag
+ *  is accepted, case-insensitively (```json, ```JSON, ```Json, …). It never
+ *  searches for or strips internal backticks, never extracts JSON out of
+ *  surrounding prose, and never accepts a missing closing fence — any of those
+ *  return the input unchanged so the strict parser/validator rejects them
+ *  downstream. Pure. */
+export function stripOuterCodeFence(text: string): string {
+  const t = text.trim(); // ignore only leading/trailing whitespace around the wrapper
+  // Opening fence must be the very start: ``` + optional language tag + newline.
+  const open = t.match(/^```[^\n`]*\n/);
+  if (!open) return text;          // not fully wrapped (raw JSON, prose, …) → unchanged
+  if (!t.endsWith("```")) return text; // no closing wrapper → reject (unchanged)
+  return t.slice(open[0].length, t.length - 3).trim();
+}
+
+/** Client-side finalization: enforce end_turn FIRST (non-end_turn throws before
+ *  any normalization or parsing), then strip an exact outer code-fence wrapper.
+ *  Pure + exported for tests. */
+export function prepareModelText(text: string, stopReason: string | null | undefined): string {
+  assertParseableResponse(stopReason); // non-end_turn → throws here; never normalized/parsed
+  return stripOuterCodeFence(text);
+}
+
 /** Infer the failure stage from a thrown error without logging its content. */
 export function inferBriefStage(error: unknown): BriefFailureStage {
   if (asAnthropicError(error)) return "anthropic_request";
@@ -352,20 +376,18 @@ export function createSonnetBriefClient(model: string = DEFAULT_BRIEF_MODEL): Br
       max_tokens: BRIEF_MAX_TOKENS,
       system,
       messages: [{ role: "user", content: user }],
-      // Structured Outputs: constrain the model to a fence-free JSON object of the
-      // brief shape (removes the ```json wrapper that broke JSON.parse).
-      output_config: { format: { type: "json_schema", schema: BriefDraftJsonSchema } },
     });
     const text = res.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
       .map((b) => b.text)
       .join("");
+    // Diagnostic signal from the RAW response (records the code-fence shape).
     briefClient.lastResponseSignal = computeResponseSignal(text, res.stop_reason);
-    // Parse ONLY after a normal end_turn. Truncated (max_tokens), refused, or
-    // otherwise incomplete responses are partial/non-schema even under Structured
-    // Outputs — fail here so parseBriefDraft/JSON.parse is never reached.
-    assertParseableResponse(res.stop_reason);
-    return text;
+    // Enforce end_turn FIRST (truncated/refused/other → throw before parsing),
+    // then normalize by removing an exact outer markdown code-fence wrapper so
+    // parseBriefDraft/JSON.parse sees clean JSON. The strict zod validator
+    // (validateBriefDraft) remains the authoritative post-parse gate.
+    return prepareModelText(text, res.stop_reason);
   }) as BriefModelClientWithSignal;
   return briefClient;
 }

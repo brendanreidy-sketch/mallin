@@ -10,8 +10,10 @@ import type { AccountIntelligenceArtifact, IntelligenceSource } from "@/lib/inte
 import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
 import type { BriefDraft } from "./brief-model";
 import type { InternalBriefSources } from "./load-internal-brief-sources";
-import { generateInternalBrief, inferBriefStage, sanitizeBriefDiagnostic, computeResponseSignal, assertParseableResponse, BriefUnparseableResponseError, type BriefModelClientWithSignal } from "./generate-internal-brief";
+import { generateInternalBrief, inferBriefStage, sanitizeBriefDiagnostic, computeResponseSignal, assertParseableResponse, BriefUnparseableResponseError, stripOuterCodeFence, prepareModelText, type BriefModelClientWithSignal } from "./generate-internal-brief";
 import type { BriefModelClient } from "./brief-agent";
+import { parseBriefDraftStrict } from "./brief-schema";
+import { makeValidDraft } from "./fixtures/brief-mock-drafts";
 
 // ── pure: stage inference (no content read) ──────────────────────────────────
 describe("inferBriefStage", () => {
@@ -255,5 +257,75 @@ describe("generateInternalBrief — non-end_turn responses fail safely (public c
     const logged = warn.mock.calls.map((c) => c.join(" ")).join("\n");
     expect(logged).toContain('"stage":"model_refusal"');
     warn.mockRestore();
+  });
+});
+
+// ── pure: exact OUTER code-fence normalizer (no prose extraction, no internals) ─
+describe("stripOuterCodeFence — removes only a complete outer wrapper", () => {
+  const OBJ = '{"a":1,"b":"x"}';
+  it("leaves raw JSON unchanged", () => {
+    expect(stripOuterCodeFence(OBJ)).toBe(OBJ);
+  });
+  it("removes a complete ```json fence", () => {
+    expect(stripOuterCodeFence("```json\n" + OBJ + "\n```")).toBe(OBJ);
+  });
+  it("removes a complete fence with no language tag", () => {
+    expect(stripOuterCodeFence("```\n" + OBJ + "\n```")).toBe(OBJ);
+  });
+  it("leaves INTERNAL code fences untouched (raw, and inside a wrapper)", () => {
+    const withInternal = '{"t":"see ```code``` here"}';
+    expect(stripOuterCodeFence(withInternal)).toBe(withInternal); // no outer fence → unchanged
+    expect(stripOuterCodeFence("```json\n" + withInternal + "\n```")).toBe(withInternal); // outer only
+  });
+  it("does NOT extract JSON from surrounding prose (returns it unchanged)", () => {
+    const prose = "Here is the brief you asked for: " + OBJ;
+    expect(stripOuterCodeFence(prose)).toBe(prose);
+    const trailing = "```json\n" + OBJ + "\n```\nHope that helps!"; // text after the fence
+    expect(stripOuterCodeFence(trailing)).toBe(trailing);
+  });
+  it("rejects an incomplete fence with no closing (returns it unchanged)", () => {
+    const noClose = "```json\n" + OBJ;
+    expect(stripOuterCodeFence(noClose)).toBe(noClose);
+  });
+  it("ignores leading whitespace before the opening fence", () => {
+    expect(stripOuterCodeFence("   \n\t```json\n" + OBJ + "\n```")).toBe(OBJ);
+  });
+  it("ignores trailing whitespace after the closing fence", () => {
+    expect(stripOuterCodeFence("```json\n" + OBJ + "\n```\n\t   ")).toBe(OBJ);
+  });
+  it("ignores both leading and trailing whitespace", () => {
+    expect(stripOuterCodeFence("  \n```json\n" + OBJ + "\n```\n  ")).toBe(OBJ);
+  });
+  it("accepts an uppercase / mixed-case language tag", () => {
+    expect(stripOuterCodeFence("```JSON\n" + OBJ + "\n```")).toBe(OBJ);
+    expect(stripOuterCodeFence("```Json\n" + OBJ + "\n```")).toBe(OBJ);
+  });
+});
+
+describe("prepareModelText — guard runs BEFORE normalization/parsing; zod runs after", () => {
+  it("non-end_turn throws before any normalization or parse", () => {
+    // A fenced (would-be-strippable) body must NEVER be normalized/parsed when
+    // the stop reason is not end_turn.
+    for (const sr of ["max_tokens", "refusal", "stop_sequence", null]) {
+      expect(() => prepareModelText("```json\n{\"leaked\":true}\n```", sr as string | null)).toThrow(BriefUnparseableResponseError);
+    }
+  });
+  it("end_turn normalizes, then strict zod validation still runs afterward", () => {
+    const fenced = "```json\n" + JSON.stringify(makeValidDraft()) + "\n```";
+    const normalized = prepareModelText(fenced, "end_turn");
+    const parsed = JSON.parse(normalized); // clean JSON after fence removal
+    expect(parseBriefDraftStrict(parsed).ok).toBe(true); // authoritative gate runs
+  });
+  it("logs nothing (no response content or error messages)", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    stripOuterCodeFence("```json\n{\"secret\":\"x\"}\n```");
+    prepareModelText("```json\n{\"a\":1}\n```", "end_turn");
+    try { prepareModelText("{\"a\":1}", "max_tokens"); } catch { /* expected */ }
+    expect(warn).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled();
+    warn.mockRestore(); error.mockRestore(); log.mockRestore();
   });
 });

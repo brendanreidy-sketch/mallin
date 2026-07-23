@@ -53,6 +53,7 @@ import PrimaryDecisionFocus, {
 import CockpitInstrumentation from "./CockpitInstrumentation";
 import AccountIntelligence from "./AccountIntelligence";
 import GenerateDeckButton from "./GenerateDeckButton";
+import InternalBriefButton from "./InternalBriefButton";
 import LiveCoach from "./LiveCoach";
 import PrepGreeting from "./PrepGreeting";
 import ArtifactVersionPicker from "./ArtifactVersionPicker";
@@ -434,6 +435,7 @@ export default async function PrepPage({
             {intel && (
               <div style={{ padding: "10px 36px 2px" }}>
                 <GenerateDeckButton dealId={safeDealId} />
+                <InternalBriefButton dealId={safeDealId} />
               </div>
             )}
             {/* Live coach — real-time in-call advisor. Available
@@ -841,12 +843,15 @@ export default async function PrepPage({
                 sanitized /deck/[token] view + .pptx export. Non-lite only; needs
                 the stable deal UUID. */}
             {!liteMode && coachDealId && (
-              <GenerateDeckButton
-                dealId={coachDealId}
-                gmailConnected={gmailConnected}
-                recipients={deckRecipients}
-                repEmails={repEmails}
-              />
+              <>
+                <GenerateDeckButton
+                  dealId={coachDealId}
+                  gmailConnected={gmailConnected}
+                  recipients={deckRecipients}
+                  repEmails={repEmails}
+                />
+                <InternalBriefButton dealId={coachDealId} />
+              </>
             )}
             <ArtifactVersionPicker
               versions={artifactVersions}

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { generateExecutiveBrief, type BriefModelClient } from "./brief-agent";
+import { generateExecutiveBrief, normalizeDraftCounts, type BriefModelClient } from "./brief-agent";
+import { parseBriefDraftStrict } from "./brief-schema";
 import type { BriefDraft } from "./brief-model";
 import { makeOverBudgetDraft, makeValidDraft, noPriorChangeSet, request } from "./fixtures/brief-mock-drafts";
 
@@ -13,6 +14,36 @@ function invalidDraft(): BriefDraft {
   d.executiveSummary[0].confidence = "high"; // raised confidence → rejected
   return d;
 }
+
+describe("normalizeDraftCounts — deterministic schema conformance", () => {
+  it("strips unknown keys, drops a malformed commitmentClaim, and truncates over-cap text so the strict schema passes", () => {
+    const d = makeValidDraft();
+    const item = d.executiveSummary[0] as unknown as Record<string, unknown>;
+    item.bogusTopKey = { anything: 1 }; // unknown item key
+    item.commitmentClaim = { state: "open", description: "x", source: "y" }; // malformed shape
+    (item.factBindings as Record<string, unknown>[])[0].bogusBindingKey = "z"; // unknown binding key
+    item.text = "A".repeat(500); // over the 400-char cap
+    // Precondition: raw draft is schema-INVALID.
+    expect(parseBriefDraftStrict(d).ok).toBe(false);
+    // After conformance it is schema-VALID, with the noise removed.
+    const clean = normalizeDraftCounts(d);
+    const parsed = parseBriefDraftStrict(clean);
+    expect(parsed.ok).toBe(true);
+    const cleanItem = clean.executiveSummary[0] as unknown as Record<string, unknown>;
+    expect("bogusTopKey" in cleanItem).toBe(false);
+    expect("commitmentClaim" in cleanItem).toBe(false);
+    expect((cleanItem.text as string).length).toBeLessThanOrEqual(400);
+    expect("bogusBindingKey" in (cleanItem.factBindings as Record<string, unknown>[])[0]).toBe(false);
+  });
+
+  it("keeps a well-formed commitmentClaim untouched", () => {
+    const d = makeValidDraft();
+    const withClaim = d.actionPlan.sellerActions.find((i) => i.commitmentClaim);
+    expect(withClaim?.commitmentClaim).toBeDefined();
+    const clean = normalizeDraftCounts(d);
+    expect(clean.actionPlan.sellerActions.find((i) => i.id === withClaim!.id)?.commitmentClaim).toEqual(withClaim!.commitmentClaim);
+  });
+});
 
 describe("generateExecutiveBrief", () => {
   it("produces a validated brief on a clean first attempt", async () => {
@@ -70,19 +101,21 @@ describe("generateExecutiveBrief", () => {
   });
 
   it("parses the repair response through the same strict schema", async () => {
-    const schemaBad = makeValidDraft() as unknown as Record<string, unknown>;
-    (schemaBad.executiveSummary as Record<string, unknown>[])[0].bogusField = true; // schema-invalid
-    const res = await generateExecutiveBrief(request, clientReturning(schemaBad as unknown as BriefDraft, makeValidDraft()));
+    // A BAD ENUM value survives conformance (which only strips unknown keys /
+    // malformed optionals), so the strict schema still rejects the initial draft
+    // → a repair runs and succeeds.
+    const schemaBad = makeValidDraft();
+    (schemaBad.executiveSummary[0] as unknown as Record<string, unknown>).contentType = "not_a_real_type";
+    const res = await generateExecutiveBrief(request, clientReturning(schemaBad, makeValidDraft()));
     expect(res.ok).toBe(true);
     if (!res.ok) return;
     expect(res.attempts).toBe(2);
   });
 
-  it("fails closed when a schema-invalid repair is returned", async () => {
-    // A NESTED unknown field survives count-normalization (which only trims
-    // arrays), so the strict schema still rejects it on both attempts.
+  it("fails closed when every output stays schema-invalid", async () => {
+    // A bad enum can't be conformed away → rejected on every attempt.
     const schemaBad = makeValidDraft();
-    (schemaBad.executiveSummary[0] as unknown as Record<string, unknown>).unexpectedNested = 1;
+    (schemaBad.executiveSummary[0] as unknown as Record<string, unknown>).contentType = "not_a_real_type";
     const res = await generateExecutiveBrief(request, clientReturning(schemaBad, schemaBad));
     expect(res.ok).toBe(false);
     if (res.ok) return;

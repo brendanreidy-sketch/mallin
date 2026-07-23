@@ -280,25 +280,48 @@ export function buildBriefPrompt(input: BriefAgentInput, repair?: RepairContext)
  *  status assertion; dropping a malformed one is governance-neutral (the item
  *  simply asserts no commitment status) and keeps the draft schema-valid. Pure. */
 const COMMITMENT_STATUSES = new Set(["completed", "missed", "open", "removed"]);
+// Allowed keys per object level — mirrors the strict schema (brief-schema.ts).
+// Deterministically stripping anything else is governance-neutral (unknown keys
+// carry no evidence) and eliminates the recurring "Unrecognized keys" schema
+// rejections the model produces (e.g. an invented commitmentClaim shape).
+const ITEM_KEYS = new Set(["id", "contentType", "text", "section", "assertionMode", "evidenceIds", "sourceFactKeys", "factBindings", "provenance", "confidence", "assurance", "appendixEligible", "commitmentClaim", "nextActionClaim"]);
+const BINDING_KEYS = new Set(["evidenceId", "sourceFactKey", "payloadKind", "fieldPath", "value", "entityId", "changeId"]);
 
-function sanitizeItem(item: BriefContentItem): BriefContentItem {
-  const cc = item.commitmentClaim as { sourceFactKey?: unknown; status?: unknown } | undefined;
-  if (!cc) return item;
-  const keys = Object.keys(cc);
-  const wellFormed =
-    keys.length === 2 &&
-    typeof cc.sourceFactKey === "string" && cc.sourceFactKey.startsWith("sf:") &&
-    typeof cc.status === "string" && COMMITMENT_STATUSES.has(cc.status);
-  if (wellFormed) return item;
-  const { commitmentClaim: _drop, ...rest } = item; // drop the malformed claim
-  return rest as BriefContentItem;
+function pickKeys<T extends Record<string, unknown>>(obj: T, allowed: Set<string>): T {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) if (allowed.has(k)) out[k] = v;
+  return out as T;
+}
+
+/** Conform a model content item to the strict schema WITHOUT touching governed
+ *  content: strip unrecognized keys (item + nested factBindings), drop a
+ *  malformed optional commitmentClaim / non-boolean nextActionClaim, and truncate
+ *  over-cap text at a word boundary. Never clamps evidence/binding COUNTS (that
+ *  could sever a statement from its support → governance error) — genuine count
+ *  or enum or missing-field errors are left for the constrained repair. */
+function conformItem(item: BriefContentItem): BriefContentItem {
+  const it = pickKeys(item as unknown as Record<string, unknown>, ITEM_KEYS);
+  if (Array.isArray(it.factBindings)) {
+    it.factBindings = it.factBindings.map((b) => (b && typeof b === "object" ? pickKeys(b as Record<string, unknown>, BINDING_KEYS) : b));
+  }
+  const cc = it.commitmentClaim as { sourceFactKey?: unknown; status?: unknown } | undefined;
+  if (cc) {
+    const keys = Object.keys(cc);
+    const wellFormed = keys.length === 2 && typeof cc.sourceFactKey === "string" && cc.sourceFactKey.startsWith("sf:") && typeof cc.status === "string" && COMMITMENT_STATUSES.has(cc.status);
+    if (!wellFormed) delete it.commitmentClaim;
+  }
+  if ("nextActionClaim" in it && typeof it.nextActionClaim !== "boolean") delete it.nextActionClaim;
+  if (typeof it.text === "string" && it.text.length > BRIEF_CAPS.itemText) {
+    it.text = it.text.slice(0, BRIEF_CAPS.itemText).replace(/\s+\S*$/, "");
+  }
+  return it as unknown as BriefContentItem;
 }
 
 export function normalizeDraftCounts(draft: BriefDraft): BriefDraft {
   const order: Array<keyof ActionPlan> = [
     "customerCommitments", "inferredCustomerCommitments", "sellerActions", "mallinRecommendations", "unresolvedActions",
   ];
-  const sect = (items: BriefContentItem[], cap: number): BriefContentItem[] => items.slice(0, cap).map(sanitizeItem);
+  const sect = (items: BriefContentItem[], cap: number): BriefContentItem[] => items.slice(0, cap).map(conformItem);
   const actionPlan: ActionPlan = { customerCommitments: [], inferredCustomerCommitments: [], sellerActions: [], mallinRecommendations: [], unresolvedActions: [] };
   let remaining = BRIEF_CAPS.actionTotal;
   for (const bucket of order) {

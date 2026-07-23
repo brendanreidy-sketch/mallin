@@ -1,24 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 
+// The route is now an ENQUEUE endpoint: authenticate → validate → authorize →
+// fast-fail on missing artifacts → enqueue a brief_jobs row → 202 { jobId }.
+// The model pipeline runs in the cron worker (tested via lib/deck/brief-jobs).
 const m = vi.hoisted(() => ({
   auth: vi.fn(),
   getCurrentTenantId: vi.fn(),
   checkOpportunityAccess: vi.fn(),
   loadInternalBriefSources: vi.fn(),
-  generateInternalBrief: vi.fn(),
-  createSonnetBriefClient: vi.fn(() => ({})),
+  enqueueBriefJob: vi.fn(),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: m.auth }));
 vi.mock("@/lib/auth/tenant-context", () => ({ getCurrentTenantId: m.getCurrentTenantId }));
 vi.mock("@/lib/auth/opportunity-access", () => ({ checkOpportunityAccess: m.checkOpportunityAccess }));
 vi.mock("@/lib/deck/load-internal-brief-sources", () => ({ loadInternalBriefSources: m.loadInternalBriefSources }));
-vi.mock("@/lib/deck/generate-internal-brief", () => ({
-  generateInternalBrief: m.generateInternalBrief,
-  createSonnetBriefClient: m.createSonnetBriefClient,
-  DEFAULT_BRIEF_MODEL: "claude-sonnet-4-5",
-}));
+vi.mock("@/lib/deck/brief-jobs", () => ({ enqueueBriefJob: m.enqueueBriefJob }));
 
 import * as route from "./route";
 
@@ -32,11 +30,11 @@ beforeEach(() => {
   m.getCurrentTenantId.mockResolvedValue("tenantA");
   m.checkOpportunityAccess.mockResolvedValue({ ok: true, opportunityId: "deal", tenantId: "tenantA" });
   m.loadInternalBriefSources.mockResolvedValue({ ok: true, sources: { opportunity: { name: "Deal" }, companyName: "Co" } });
-  m.generateInternalBrief.mockResolvedValue({ ok: true, buffer: Buffer.from("PK\x03\x04fake"), filename: "deal-internal-brief-abc123def456.pptx", bundleVersion: "abc123def456", modelId: "claude-sonnet-4-5", diagnostics: [] });
+  m.enqueueBriefJob.mockResolvedValue({ jobId: "11111111-1111-4111-8111-aaaaaaaaaaaa", status: "queued", reused: false });
 });
 
-async function json(res: Response): Promise<{ ok: boolean; error?: string }> {
-  return (await res.json()) as { ok: boolean; error?: string };
+async function json(res: Response): Promise<{ ok: boolean; error?: string; jobId?: string; status?: string }> {
+  return (await res.json()) as { ok: boolean; error?: string; jobId?: string; status?: string };
 }
 
 describe("POST /api/internal-brief — method & validation", () => {
@@ -50,6 +48,7 @@ describe("POST /api/internal-brief — method & validation", () => {
     expect((await json(res)).error).toBe("invalid_request");
     expect(m.checkOpportunityAccess).not.toHaveBeenCalled();
     expect(m.loadInternalBriefSources).not.toHaveBeenCalled();
+    expect(m.enqueueBriefJob).not.toHaveBeenCalled();
   });
 
   it("rejects a malformed UUID with 400 and no DB access (no character stripping)", async () => {
@@ -57,30 +56,32 @@ describe("POST /api/internal-brief — method & validation", () => {
     expect(res.status).toBe(400);
     expect((await json(res)).error).toBe("invalid_deal_id");
     expect(m.auth).not.toHaveBeenCalled();
-    expect(m.checkOpportunityAccess).not.toHaveBeenCalled();
-    expect(m.loadInternalBriefSources).not.toHaveBeenCalled();
+    expect(m.enqueueBriefJob).not.toHaveBeenCalled();
   });
 });
 
 describe("POST /api/internal-brief — access & isolation", () => {
-  it("returns 401 when unauthenticated", async () => {
+  it("returns 401 when unauthenticated and never enqueues", async () => {
     m.auth.mockResolvedValue({ userId: null });
     const res = await postDeal(VALID);
     expect(res.status).toBe(401);
     expect(m.loadInternalBriefSources).not.toHaveBeenCalled();
+    expect(m.enqueueBriefJob).not.toHaveBeenCalled();
   });
 
   it("returns 401 when no tenant resolves", async () => {
     m.getCurrentTenantId.mockRejectedValue(new Error("no org"));
     expect((await postDeal(VALID)).status).toBe(401);
+    expect(m.enqueueBriefJob).not.toHaveBeenCalled();
   });
 
-  it("returns 403 on cross-tenant access — and never loads sources", async () => {
+  it("returns 403 on cross-tenant access — and never loads sources or enqueues", async () => {
     m.checkOpportunityAccess.mockResolvedValue({ ok: false, reason: "wrong_tenant" });
     const res = await postDeal(VALID);
     expect(res.status).toBe(403);
     expect((await json(res)).error).toBe("forbidden");
     expect(m.loadInternalBriefSources).not.toHaveBeenCalled();
+    expect(m.enqueueBriefJob).not.toHaveBeenCalled();
   });
 
   it("returns 404 for an unknown authorized deal", async () => {
@@ -94,112 +95,54 @@ describe("POST /api/internal-brief — access & isolation", () => {
     expect(res.status).toBe(401); // token is ignored entirely
     expect(m.checkOpportunityAccess).not.toHaveBeenCalled();
   });
-
-  it("loads sources only after successful authorization, and passes tenant + deal", async () => {
-    await postDeal(VALID);
-    expect(m.checkOpportunityAccess).toHaveBeenCalledWith(VALID, "tenantA");
-    expect(m.loadInternalBriefSources).toHaveBeenCalledWith(VALID, "tenantA");
-  });
 });
 
-describe("POST /api/internal-brief — failure mapping (safe, private)", () => {
+describe("POST /api/internal-brief — fast-fail preflight (before enqueue)", () => {
   const cases: Array<[string, unknown, number, string]> = [
     ["required_artifact_missing", { ok: false, code: "required_artifact_missing" }, 409, "required_artifact_missing"],
     ["current_artifact_conflict", { ok: false, code: "current_artifact_conflict" }, 409, "current_artifact_conflict"],
     ["deal_not_found from loader", { ok: false, code: "deal_not_found" }, 404, "deal_not_found"],
   ];
   for (const [name, loadResult, status, error] of cases) {
-    it(`maps loader ${name} → ${status}`, async () => {
+    it(`maps loader ${name} → ${status} and does NOT enqueue`, async () => {
       m.loadInternalBriefSources.mockResolvedValue(loadResult);
       const res = await postDeal(VALID);
       expect(res.status).toBe(status);
       expect((await json(res)).error).toBe(error);
-    });
-  }
-
-  const genCases: Array<[string, number]> = [
-    ["brief_failed_validation", 422],
-    ["model_generation_failed", 502],
-    ["brief_render_failed", 500],
-  ];
-  for (const [code, status] of genCases) {
-    it(`maps generation ${code} → ${status} with no evidence in the body`, async () => {
-      m.generateInternalBrief.mockResolvedValue({ ok: false, code });
-      const res = await postDeal(VALID);
-      expect(res.status).toBe(status);
-      const body = await json(res);
-      expect(body).toEqual({ ok: false, error: code }); // nothing else leaks
-      expect(res.headers.get("Cache-Control")).toBe("private, no-store, max-age=0");
+      expect(m.enqueueBriefJob).not.toHaveBeenCalled();
     });
   }
 });
 
-describe("POST /api/internal-brief — success", () => {
-  it("streams a private, no-store attachment with a bundle-versioned filename", async () => {
+describe("POST /api/internal-brief — enqueue", () => {
+  it("enqueues after authorization + preflight and returns 202 { jobId } with private headers", async () => {
     const res = await postDeal(VALID);
-    expect(res.status).toBe(200);
-    expect(res.headers.get("Content-Type")).toBe("application/vnd.openxmlformats-officedocument.presentationml.presentation");
-    const cd = res.headers.get("Content-Disposition") ?? "";
-    expect(cd).toContain('attachment; filename="deal-internal-brief-abc123def456.pptx"');
-    expect(cd).toContain("filename*=UTF-8''");
+    expect(res.status).toBe(202);
+    const body = await json(res);
+    expect(body.ok).toBe(true);
+    expect(body.jobId).toBe("11111111-1111-4111-8111-aaaaaaaaaaaa");
+    expect(body.status).toBe("queued");
+    expect(m.checkOpportunityAccess).toHaveBeenCalledWith(VALID, "tenantA");
+    expect(m.loadInternalBriefSources).toHaveBeenCalledWith(VALID, "tenantA");
+    expect(m.enqueueBriefJob).toHaveBeenCalledWith({ tenantId: "tenantA", dealId: VALID, userId: "user_1" });
     expect(res.headers.get("Cache-Control")).toBe("private, no-store, max-age=0");
-    expect(res.headers.get("Pragma")).toBe("no-cache");
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
-    const buf = Buffer.from(await res.arrayBuffer());
-    expect(buf.subarray(0, 2).toString("latin1")).toBe("PK");
-  });
-});
-
-describe("POST /api/internal-brief — narrow concurrency guard (per-instance)", () => {
-  const OTHER = "22222222-2222-4222-8222-222222222222";
-  const OK = { ok: true as const, buffer: Buffer.from("PK\x03\x04"), filename: "f.pptx", bundleVersion: "v", modelId: "claude-sonnet-4-6", diagnostics: [] };
-  const tick = () => new Promise((r) => setTimeout(r, 15));
-
-  it("returns 429 generation_in_progress with private headers, and makes NO second model call", async () => {
-    let release!: () => void;
-    const pending = new Promise<void>((r) => { release = r; });
-    m.generateInternalBrief.mockReturnValueOnce(pending.then(() => OK)).mockResolvedValue(OK);
-
-    const p1 = postDeal(VALID);
-    await tick();
-    const r2 = await postDeal(VALID);
-    expect(r2.status).toBe(429);
-    expect((await json(r2)).error).toBe("generation_in_progress");
-    expect(r2.headers.get("Cache-Control")).toBe("private, no-store, max-age=0");
-    expect(m.generateInternalBrief).toHaveBeenCalledTimes(1); // duplicate never reached the model
-
-    release();
-    expect((await p1).status).toBe(200);
   });
 
-  it("allows a new request after the first SUCCEEDS (finally released the key)", async () => {
-    expect((await postDeal(VALID)).status).toBe(200);
-    expect((await postDeal(VALID)).status).toBe(200);
+  it("returns the in-flight job (reused) — also 202, no duplicate", async () => {
+    m.enqueueBriefJob.mockResolvedValue({ jobId: "22222222-2222-4222-8222-bbbbbbbbbbbb", status: "running", reused: true });
+    const res = await postDeal(VALID);
+    expect(res.status).toBe(202);
+    const body = await json(res);
+    expect(body.jobId).toBe("22222222-2222-4222-8222-bbbbbbbbbbbb");
+    expect(body.status).toBe("running");
   });
 
-  it("allows a new request after the first FAILS (result) — key not permanently blocked", async () => {
-    m.generateInternalBrief.mockResolvedValueOnce({ ok: false, code: "brief_render_failed" });
-    expect((await postDeal(VALID)).status).toBe(500);
-    expect((await postDeal(VALID)).status).toBe(200); // retry allowed
-  });
-
-  it("allows a new request after the first THROWS (finally runs on the catch path)", async () => {
-    m.loadInternalBriefSources.mockRejectedValueOnce(new Error("db down"));
-    expect((await postDeal(VALID)).status).toBe(500);
-    expect((await postDeal(VALID)).status).toBe(200);
-  });
-
-  it("does not block a different deal while one is in flight", async () => {
-    let release!: () => void;
-    const pending = new Promise<void>((r) => { release = r; });
-    m.generateInternalBrief.mockReturnValueOnce(pending.then(() => OK)).mockResolvedValue(OK);
-
-    const p1 = postDeal(VALID); // deal A pending
-    await tick();
-    const r2 = await postDeal(OTHER); // deal B concurrent → not blocked
-    expect(r2.status).toBe(200);
-
-    release();
-    expect((await p1).status).toBe(200);
+  it("maps an enqueue failure → 500 enqueue_failed with private headers, no leak", async () => {
+    m.enqueueBriefJob.mockRejectedValue(new Error("db down"));
+    const res = await postDeal(VALID);
+    expect(res.status).toBe(500);
+    expect(await json(res)).toEqual({ ok: false, error: "enqueue_failed" });
+    expect(res.headers.get("Cache-Control")).toBe("private, no-store, max-age=0");
   });
 });

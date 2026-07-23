@@ -245,11 +245,12 @@ export function buildBriefPrompt(input: BriefAgentInput, repair?: RepairContext)
     "You produce an INTERNAL executive deal brief as STRUCTURED JSON (a BriefDraft), never free-form prose.",
     "Sections: executiveSummary, whatChanged, customerPriorities, stakeholders, decisionProcess, risks, actionPlan{customerCommitments,inferredCustomerCommitments,sellerActions,mallinRecommendations,unresolvedActions}. Do NOT emit an appendix.",
     "Each content item: {id, contentType, text, section, evidenceIds, sourceFactKeys, provenance[], confidence, assurance, appendixEligible, commitmentClaim?, nextActionClaim?}.",
+    "commitmentClaim is OPTIONAL and has EXACTLY this shape: { sourceFactKey: \"sf:…\", status: \"completed\"|\"missed\"|\"open\"|\"removed\" } — no other keys. Include it ONLY when an item asserts a specific commitment's status; OMIT it entirely otherwise (e.g. on inferred commitments). Never invent other keys.",
     "HARD OUTPUT LIMITS — a response exceeding ANY of these is REJECTED, so stay within them:",
     "- Max items per section: executiveSummary 4, whatChanged 3, customerPriorities 4, stakeholders 5, decisionProcess 4, risks 4.",
     "- actionPlan: at most 8 items TOTAL across all buckets, and at most 3 in any single bucket.",
     "- appendix: empty — produce NONE.",
-    "- Per item: text ≤ 400 characters (1–2 concise sentences); at most 5 evidenceIds, 5 sourceFactKeys, 4 factBindings, 5 provenance. Bind EVERY concrete value your text states.",
+    "- Per item: text ≤ 400 characters (1–2 concise sentences); at most 3 evidenceIds, 3 sourceFactKeys, 3 factBindings, 3 provenance. Bind EVERY concrete value your text states.",
     "- Select only the MOST material items. Prefer the fewest, strongest evidence bindings that still cover every concrete value. Never restate a fact already covered in another section — keep each fact in its single most relevant section.",
     "RULES:",
     ...input.rules.map((r, n) => `${n + 1}. ${r}`),
@@ -274,29 +275,52 @@ export function buildBriefPrompt(input: BriefAgentInput, repair?: RepairContext)
  *  (sections; action buckets ≤3 and combined ≤8 in priority order; no appendix)
  *  so a draft that over-selects is coerced into a rendering deck rather than
  *  rejected by the strict schema. Keeps the most-material items in order; leaves
- *  every per-item field untouched (per-item caps stay schema-enforced). Pure. */
+ *  every per-item field untouched EXCEPT a malformed optional commitmentClaim
+ *  (which the model sometimes invents with the wrong keys). commitmentClaim is a
+ *  status assertion; dropping a malformed one is governance-neutral (the item
+ *  simply asserts no commitment status) and keeps the draft schema-valid. Pure. */
+const COMMITMENT_STATUSES = new Set(["completed", "missed", "open", "removed"]);
+
+function sanitizeItem(item: BriefContentItem): BriefContentItem {
+  const cc = item.commitmentClaim as { sourceFactKey?: unknown; status?: unknown } | undefined;
+  if (!cc) return item;
+  const keys = Object.keys(cc);
+  const wellFormed =
+    keys.length === 2 &&
+    typeof cc.sourceFactKey === "string" && cc.sourceFactKey.startsWith("sf:") &&
+    typeof cc.status === "string" && COMMITMENT_STATUSES.has(cc.status);
+  if (wellFormed) return item;
+  const { commitmentClaim: _drop, ...rest } = item; // drop the malformed claim
+  return rest as BriefContentItem;
+}
+
 export function normalizeDraftCounts(draft: BriefDraft): BriefDraft {
   const order: Array<keyof ActionPlan> = [
     "customerCommitments", "inferredCustomerCommitments", "sellerActions", "mallinRecommendations", "unresolvedActions",
   ];
+  const sect = (items: BriefContentItem[], cap: number): BriefContentItem[] => items.slice(0, cap).map(sanitizeItem);
   const actionPlan: ActionPlan = { customerCommitments: [], inferredCustomerCommitments: [], sellerActions: [], mallinRecommendations: [], unresolvedActions: [] };
   let remaining = BRIEF_CAPS.actionTotal;
   for (const bucket of order) {
-    const kept: BriefContentItem[] = draft.actionPlan[bucket].slice(0, Math.min(BRIEF_CAPS.actionBucket, Math.max(0, remaining)));
-    actionPlan[bucket] = kept;
-    remaining -= kept.length;
+    actionPlan[bucket] = sect(draft.actionPlan[bucket], Math.min(BRIEF_CAPS.actionBucket, Math.max(0, remaining)));
+    remaining -= actionPlan[bucket].length;
   }
   return {
-    executiveSummary: draft.executiveSummary.slice(0, BRIEF_CAPS.executiveSummary),
-    whatChanged: draft.whatChanged.slice(0, BRIEF_CAPS.whatChanged),
-    customerPriorities: draft.customerPriorities.slice(0, BRIEF_CAPS.customerPriorities),
-    stakeholders: draft.stakeholders.slice(0, BRIEF_CAPS.stakeholders),
-    decisionProcess: draft.decisionProcess.slice(0, BRIEF_CAPS.decisionProcess),
-    risks: draft.risks.slice(0, BRIEF_CAPS.risks),
+    executiveSummary: sect(draft.executiveSummary, BRIEF_CAPS.executiveSummary),
+    whatChanged: sect(draft.whatChanged, BRIEF_CAPS.whatChanged),
+    customerPriorities: sect(draft.customerPriorities, BRIEF_CAPS.customerPriorities),
+    stakeholders: sect(draft.stakeholders, BRIEF_CAPS.stakeholders),
+    decisionProcess: sect(draft.decisionProcess, BRIEF_CAPS.decisionProcess),
+    risks: sect(draft.risks, BRIEF_CAPS.risks),
     actionPlan,
     appendix: [], // executive deck carries no appendix
   };
 }
+
+/** Max model attempts (1 initial + up to 3 constrained repairs). Errors converge
+ *  fast; the async job affords the wall time (~4 × ~140s, within the worker's
+ *  maxDuration). */
+const MAX_BRIEF_ATTEMPTS = 4;
 
 export async function generateExecutiveBrief(request: BriefRequest, client: BriefModelClient): Promise<GenerateResult> {
   const cover = buildCover(request);
@@ -304,29 +328,46 @@ export async function generateExecutiveBrief(request: BriefRequest, client: Brie
   const input = buildBriefAgentInput(request, cover, budgets);
   const ctx = { packet: request.packet, changeSet: request.changeSet, cover };
 
-  // Deterministically trim COUNT overages to the hard caps BEFORE strict
-  // validation — the model may select slightly more than the executive deck
-  // shows, so we keep the most-material items (same policy the assembler uses
-  // for display) instead of rejecting the whole brief. Per-item caps stay
-  // enforced by the schema; token output stays bounded. This also lets the
-  // initial draft pass without a repair when only counts were over.
-  let draft = normalizeDraftCounts(await client(input));
-  let result = validateBriefDraft(draft, ctx);
-  let attempts = 1;
-  const codesByAttempt: ValidationErrorCode[][] = [result.errors.map((e) => e.code)];
+  // Each attempt: call the model, deterministically trim COUNT overages + drop
+  // malformed optional fields (normalizeDraftCounts), then validate. On a
+  // validation failure, feed the exact errors back for a constrained repair.
+  // Model output is non-deterministic, so a single pass may not clear every
+  // schema/governance error — but the errors converge fast (e.g. 22 -> 3 -> 0),
+  // and the async job affords the wall time. A single attempt that TRUCATES,
+  // refuses, or returns unparseable JSON throws from the client; we treat that
+  // as one failed attempt and try again rather than aborting the whole run.
+  let draft: BriefDraft | null = null;
+  let result: ValidationResult | null = null;
+  let attempts = 0;
+  let lastThrow: unknown;
+  const codesByAttempt: ValidationErrorCode[][] = [];
 
-  if (!result.valid) {
-    // Exactly one constrained repair attempt.
-    draft = normalizeDraftCounts(await client(input, { previousDraft: draft, errors: result.errors }));
-    attempts = 2;
-    result = validateBriefDraft(draft, ctx); // validate from scratch
-    codesByAttempt.push(result.errors.map((e) => e.code));
-    if (!result.valid) {
-      return { ok: false, attempts, errors: result.errors, rejectedDraft: draft, codesByAttempt };
+  while (attempts < MAX_BRIEF_ATTEMPTS) {
+    attempts++;
+    const repair: RepairContext | undefined = draft && result && !result.valid ? { previousDraft: draft, errors: result.errors } : undefined;
+    let candidate: BriefDraft;
+    try {
+      candidate = normalizeDraftCounts(await client(input, repair));
+    } catch (e) {
+      lastThrow = e; // truncated / refused / unparseable — count it and retry within budget
+      codesByAttempt.push(["model_response_unparseable" as ValidationErrorCode]);
+      continue;
     }
+    draft = candidate;
+    result = validateBriefDraft(draft, ctx);
+    codesByAttempt.push(result.errors.map((e) => e.code));
+    if (result.valid) break;
   }
 
-  const { brief, movedToAppendix } = assembleBrief(draft, cover, budgets);
+  if (!result || !result.valid) {
+    // Never produced a valid draft. If every attempt threw (no parseable draft),
+    // rethrow so generateInternalBrief maps it to the model-generation stage.
+    if (!draft || !result) throw lastThrow ?? new Error("brief_generation_no_valid_draft");
+    return { ok: false, attempts, errors: result.errors, rejectedDraft: draft, codesByAttempt };
+  }
+
+  // draft is non-null here: result.valid was set in the same iteration draft was.
+  const { brief, movedToAppendix } = assembleBrief(draft as BriefDraft, cover, budgets);
   return { ok: true, attempts, brief: markValidated(brief), validation: result, movedToAppendix };
 }
 

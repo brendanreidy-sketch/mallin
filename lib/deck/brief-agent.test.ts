@@ -50,23 +50,23 @@ describe("generateExecutiveBrief", () => {
     expect(res.attempts).toBe(2);
   });
 
-  it("fails closed when a second output is still invalid — no partial brief", async () => {
+  it("fails closed when every output stays invalid — no partial brief, bounded attempts", async () => {
     const res = await generateExecutiveBrief(request, clientReturning(invalidDraft(), invalidDraft()));
     expect(res.ok).toBe(false);
     if (res.ok) return;
-    expect(res.attempts).toBe(2);
+    expect(res.attempts).toBe(4); // 1 initial + 3 repairs, then fail closed
     expect(res.errors.length).toBeGreaterThan(0);
     expect(res.errors.map((e) => e.code)).toContain("confidence_raised");
     expect("brief" in res).toBe(false);
   });
 
-  it("captures validation codes per attempt (initial vs repair) on failure", async () => {
+  it("captures validation codes for every attempt on failure", async () => {
     const res = await generateExecutiveBrief(request, clientReturning(invalidDraft(), invalidDraft()));
     expect(res.ok).toBe(false);
     if (res.ok) return;
-    expect(res.codesByAttempt.length).toBe(2); // [0]=initial, [1]=repair
+    expect(res.codesByAttempt.length).toBe(4); // one code list per attempt
     expect(res.codesByAttempt[0]).toContain("confidence_raised"); // initial draft
-    expect(res.codesByAttempt[1]).toContain("confidence_raised"); // repair repeated the mistake
+    expect(res.codesByAttempt.at(-1)).toContain("confidence_raised"); // last repair repeated it
   });
 
   it("parses the repair response through the same strict schema", async () => {

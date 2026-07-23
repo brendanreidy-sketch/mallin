@@ -100,10 +100,10 @@ export const BRIEF_CAPS = {
   // and run 1–2 sentences, without inviting runaway output — section counts stay
   // tight, so total tokens remain bounded well under the 16k ceiling.
   itemText: 400,
-  evidenceIds: 5,
-  sourceFactKeys: 5,
-  factBindings: 4,
-  provenance: 5,
+  evidenceIds: 3,
+  sourceFactKeys: 3,
+  factBindings: 3,
+  provenance: 3,
 } as const;
 
 const contentItemSchema = z.strictObject({

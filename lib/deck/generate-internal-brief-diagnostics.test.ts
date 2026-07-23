@@ -130,7 +130,7 @@ describe("generateInternalBrief — sanitized diagnostics", () => {
     if (!res.ok) expect(res.code).toBe("brief_failed_validation");
     const logged = warn.mock.calls.map((c) => c.join(" ")).join("\n");
     expect(logged).toContain('"stage":"brief_validation"');
-    expect(logged).toContain('"validationAttempts":2'); // initial + repair
+    expect(logged).toContain('"validationAttempts":4'); // 1 initial + up to 3 repairs
     expect(logged).toContain('"validationInitialCodeCounts"');
     expect(logged).toContain('"validationRepairCodeCounts"');
     // codes-only: no messages, ids, values, or content leaked

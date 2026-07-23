@@ -32,13 +32,15 @@ describe("generateExecutiveBrief", () => {
     expect(a).toEqual(b);
   });
 
-  it("rejects a draft that exceeds a section cap (hard caps, not appendix overflow)", async () => {
-    // Executive-deck hard caps: an over-budget section is REJECTED by the strict
-    // schema (no overflow-to-appendix). makeOverBudgetDraft has 7 risks > cap 4.
+  it("normalizes a count-over-budget draft to the caps and succeeds (no rejection)", async () => {
+    // Executive-deck hard caps: an over-count section is deterministically TRIMMED
+    // to its cap before validation (not rejected). makeOverBudgetDraft has 7 risks;
+    // it is coerced to the cap and renders on the first attempt.
     const res = await generateExecutiveBrief(request, clientReturning(makeOverBudgetDraft()));
-    expect(res.ok).toBe(false);
-    if (res.ok) return;
-    expect(res.errors.some((e) => e.code === "schema_invalid")).toBe(true);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.attempts).toBe(1); // trimming alone made it valid — no repair needed
+    expect(res.brief.risks.length).toBeLessThanOrEqual(4); // trimmed to the risks cap
   });
 
   it("permits exactly one constrained repair, then succeeds", async () => {
@@ -77,7 +79,10 @@ describe("generateExecutiveBrief", () => {
   });
 
   it("fails closed when a schema-invalid repair is returned", async () => {
-    const schemaBad = { ...makeValidDraft(), unexpectedTopLevel: 1 } as unknown as BriefDraft;
+    // A NESTED unknown field survives count-normalization (which only trims
+    // arrays), so the strict schema still rejects it on both attempts.
+    const schemaBad = makeValidDraft();
+    (schemaBad.executiveSummary[0] as unknown as Record<string, unknown>).unexpectedNested = 1;
     const res = await generateExecutiveBrief(request, clientReturning(schemaBad, schemaBad));
     expect(res.ok).toBe(false);
     if (res.ok) return;

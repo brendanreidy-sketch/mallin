@@ -22,13 +22,16 @@ import {
   deriveAssurance,
   selectTypedValue,
   DEFAULT_BUDGETS,
+  type ActionPlan,
   type BriefBudgets,
+  type BriefContentItem,
   type BriefDraft,
   type CoverFact,
   type CoverMetadata,
   type ExecutiveBrief,
 } from "@/lib/deck/brief-model";
 import { validateBriefDraft, type ValidationError, type ValidationErrorCode, type ValidationResult } from "@/lib/deck/brief-validator";
+import { BRIEF_CAPS } from "@/lib/deck/brief-schema";
 
 export interface BriefRequest {
   packet: EvidencePacket;
@@ -267,20 +270,54 @@ export function buildBriefPrompt(input: BriefAgentInput, repair?: RepairContext)
   return { system, user };
 }
 
+/** Deterministically trim COUNT overages to the executive-deck hard caps
+ *  (sections; action buckets ≤3 and combined ≤8 in priority order; no appendix)
+ *  so a draft that over-selects is coerced into a rendering deck rather than
+ *  rejected by the strict schema. Keeps the most-material items in order; leaves
+ *  every per-item field untouched (per-item caps stay schema-enforced). Pure. */
+export function normalizeDraftCounts(draft: BriefDraft): BriefDraft {
+  const order: Array<keyof ActionPlan> = [
+    "customerCommitments", "inferredCustomerCommitments", "sellerActions", "mallinRecommendations", "unresolvedActions",
+  ];
+  const actionPlan: ActionPlan = { customerCommitments: [], inferredCustomerCommitments: [], sellerActions: [], mallinRecommendations: [], unresolvedActions: [] };
+  let remaining = BRIEF_CAPS.actionTotal;
+  for (const bucket of order) {
+    const kept: BriefContentItem[] = draft.actionPlan[bucket].slice(0, Math.min(BRIEF_CAPS.actionBucket, Math.max(0, remaining)));
+    actionPlan[bucket] = kept;
+    remaining -= kept.length;
+  }
+  return {
+    executiveSummary: draft.executiveSummary.slice(0, BRIEF_CAPS.executiveSummary),
+    whatChanged: draft.whatChanged.slice(0, BRIEF_CAPS.whatChanged),
+    customerPriorities: draft.customerPriorities.slice(0, BRIEF_CAPS.customerPriorities),
+    stakeholders: draft.stakeholders.slice(0, BRIEF_CAPS.stakeholders),
+    decisionProcess: draft.decisionProcess.slice(0, BRIEF_CAPS.decisionProcess),
+    risks: draft.risks.slice(0, BRIEF_CAPS.risks),
+    actionPlan,
+    appendix: [], // executive deck carries no appendix
+  };
+}
+
 export async function generateExecutiveBrief(request: BriefRequest, client: BriefModelClient): Promise<GenerateResult> {
   const cover = buildCover(request);
   const budgets: BriefBudgets = { ...DEFAULT_BUDGETS, ...request.budgets };
   const input = buildBriefAgentInput(request, cover, budgets);
   const ctx = { packet: request.packet, changeSet: request.changeSet, cover };
 
-  let draft = await client(input);
+  // Deterministically trim COUNT overages to the hard caps BEFORE strict
+  // validation — the model may select slightly more than the executive deck
+  // shows, so we keep the most-material items (same policy the assembler uses
+  // for display) instead of rejecting the whole brief. Per-item caps stay
+  // enforced by the schema; token output stays bounded. This also lets the
+  // initial draft pass without a repair when only counts were over.
+  let draft = normalizeDraftCounts(await client(input));
   let result = validateBriefDraft(draft, ctx);
   let attempts = 1;
   const codesByAttempt: ValidationErrorCode[][] = [result.errors.map((e) => e.code)];
 
   if (!result.valid) {
     // Exactly one constrained repair attempt.
-    draft = await client(input, { previousDraft: draft, errors: result.errors });
+    draft = normalizeDraftCounts(await client(input, { previousDraft: draft, errors: result.errors }));
     attempts = 2;
     result = validateBriefDraft(draft, ctx); // validate from scratch
     codesByAttempt.push(result.errors.map((e) => e.code));

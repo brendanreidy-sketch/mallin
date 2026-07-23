@@ -40,6 +40,34 @@ export interface BriefJob {
 
 const TABLE = "brief_jobs";
 
+// A job stuck in 'running' past this window is treated as a crashed worker and
+// reaped to 'failed' / 'worker_timeout'. Chosen conservatively: normal
+// generation is ~5 min and the cron's own maxDuration ceiling is ~13.3 min, so
+// 20 min sits comfortably above BOTH — the reaper can never fail a job whose
+// worker is still alive. Fixed safety threshold; deliberately NOT an env var.
+export const STALE_RUNNING_MS = 20 * 60 * 1000;
+
+/**
+ * Reap jobs stuck in 'running' past STALE_RUNNING_MS → 'failed' /
+ * 'worker_timeout'. Compare-and-set: matches ONLY status='running' AND
+ * started_at older than the cutoff, so it never touches queued/succeeded/failed
+ * or a still-fresh running job. Idempotent (a second pass matches nothing).
+ * Moving the row to 'failed' drops it out of the uniq_brief_jobs_active partial
+ * index, releasing the per-(tenant,user,deal) lock so a new job can enqueue.
+ * Returns the reaped job ids (for a sanitized count log only — never content).
+ */
+export async function reapStaleRunningJobs(nowMs = Date.now()): Promise<string[]> {
+  const cutoffIso = new Date(nowMs - STALE_RUNNING_MS).toISOString();
+  const r = await supabaseAdmin
+    .from(TABLE)
+    .update({ status: "failed", error_code: "worker_timeout" })
+    .eq("status", "running") // CAS: only running jobs
+    .lt("started_at", cutoffIso) // …that have exceeded the threshold
+    .select("id");
+  if (r.error) throw new Error("reap_failed"); // sanitized — no DB detail escapes
+  return (r.data ?? []).map((row) => (row as { id: string }).id);
+}
+
 /** Enqueue a job for (tenant, user, deal). If an active (queued|running) job
  *  already exists, return it instead of creating a duplicate (the partial
  *  UNIQUE index makes this race-safe). */
@@ -85,11 +113,24 @@ export async function claimNextBriefJob(): Promise<BriefJob | null> {
   return claimed.data as BriefJob;
 }
 
-/** Run a claimed ('running') job to a terminal state. Never throws. */
+/** Run a claimed ('running') job to a terminal state. Never throws.
+ *
+ *  Every terminal write is compare-and-set on (id, status='running'): only the
+ *  worker that finds the row STILL running commits its result. If the reaper (or
+ *  any other transition) already moved the row off 'running', the write matches
+ *  zero rows — a safe lost race — and we do NOT overwrite the final state. This
+ *  guarantees a reaper's 'worker_timeout' can never be clobbered back to
+ *  'succeeded'/'failed', including from the outer error handler. */
 export async function runClaimedBriefJob(job: BriefJob): Promise<BriefJobStatus> {
   const admin = supabaseAdmin;
+  // CAS failure write. Returns whether THIS write won the running→terminal race.
   const fail = async (code: string): Promise<BriefJobStatus> => {
-    await admin.from(TABLE).update({ status: "failed", error_code: code }).eq("id", job.id);
+    await admin
+      .from(TABLE)
+      .update({ status: "failed", error_code: code })
+      .eq("id", job.id)
+      .eq("status", "running") // CAS: never overwrite an already-terminal state
+      .select("id");
     return "failed";
   };
   try {
@@ -105,7 +146,7 @@ export async function runClaimedBriefJob(job: BriefJob): Promise<BriefJobStatus>
     };
     const result = await generateInternalBrief({ sources: loaded.sources, cover, modelClient: createSonnetBriefClient() });
     if (!result.ok) return await fail(result.code);
-    await admin
+    const wrote = await admin
       .from(TABLE)
       .update({
         status: "succeeded",
@@ -114,7 +155,12 @@ export async function runClaimedBriefJob(job: BriefJob): Promise<BriefJobStatus>
         model_id: result.modelId,
         pptx_base64: Buffer.from(result.buffer).toString("base64"),
       })
-      .eq("id", job.id);
+      .eq("id", job.id)
+      .eq("status", "running") // CAS: only finalize if the reaper hasn't taken it
+      .select("id");
+    // Zero rows → the reaper (or another actor) already finalized this job. Leave
+    // its terminal state intact; do not resurrect it to 'succeeded'.
+    if (!wrote.data?.length) return "failed";
     return "succeeded";
   } catch {
     return await fail("brief_render_failed");

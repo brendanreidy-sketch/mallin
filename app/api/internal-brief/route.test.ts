@@ -10,6 +10,7 @@ const m = vi.hoisted(() => ({
   checkOpportunityAccess: vi.fn(),
   loadInternalBriefSources: vi.fn(),
   enqueueBriefJob: vi.fn(),
+  isInternalBriefEnabledForTenant: vi.fn(),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: m.auth }));
@@ -17,6 +18,7 @@ vi.mock("@/lib/auth/tenant-context", () => ({ getCurrentTenantId: m.getCurrentTe
 vi.mock("@/lib/auth/opportunity-access", () => ({ checkOpportunityAccess: m.checkOpportunityAccess }));
 vi.mock("@/lib/deck/load-internal-brief-sources", () => ({ loadInternalBriefSources: m.loadInternalBriefSources }));
 vi.mock("@/lib/deck/brief-jobs", () => ({ enqueueBriefJob: m.enqueueBriefJob }));
+vi.mock("@/lib/deck/internal-brief-access", () => ({ isInternalBriefEnabledForTenant: m.isInternalBriefEnabledForTenant }));
 
 import * as route from "./route";
 
@@ -31,6 +33,7 @@ beforeEach(() => {
   m.checkOpportunityAccess.mockResolvedValue({ ok: true, opportunityId: "deal", tenantId: "tenantA" });
   m.loadInternalBriefSources.mockResolvedValue({ ok: true, sources: { opportunity: { name: "Deal" }, companyName: "Co" } });
   m.enqueueBriefJob.mockResolvedValue({ jobId: "11111111-1111-4111-8111-aaaaaaaaaaaa", status: "queued", reused: false });
+  m.isInternalBriefEnabledForTenant.mockReturnValue(true); // allowlisted by default
 });
 
 async function json(res: Response): Promise<{ ok: boolean; error?: string; jobId?: string; status?: string }> {
@@ -94,6 +97,41 @@ describe("POST /api/internal-brief — access & isolation", () => {
     const res = await post(JSON.stringify({ dealId: VALID, token: "customer-share-token" }));
     expect(res.status).toBe(401); // token is ignored entirely
     expect(m.checkOpportunityAccess).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/internal-brief — rollout gate (independent of UI)", () => {
+  it("non-allowlisted tenant → 404 feature_not_available, private headers, no downstream work", async () => {
+    m.isInternalBriefEnabledForTenant.mockReturnValue(false);
+    const res = await postDeal(VALID);
+    expect(res.status).toBe(404);
+    expect(await json(res)).toEqual({ ok: false, error: "feature_not_available" });
+    expect(res.headers.get("Cache-Control")).toBe("private, no-store, max-age=0");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    // Gate is enforced BEFORE any opportunity lookup / access / enqueue.
+    expect(m.checkOpportunityAccess).not.toHaveBeenCalled();
+    expect(m.loadInternalBriefSources).not.toHaveBeenCalled();
+    expect(m.enqueueBriefJob).not.toHaveBeenCalled();
+  });
+
+  it("evaluates the gate with the resolved tenant id", async () => {
+    await postDeal(VALID);
+    expect(m.isInternalBriefEnabledForTenant).toHaveBeenCalledWith("tenantA");
+  });
+
+  it("gate precedes access — a non-allowlisted tenant cannot distinguish a real vs missing deal", async () => {
+    m.isInternalBriefEnabledForTenant.mockReturnValue(false);
+    m.checkOpportunityAccess.mockResolvedValue({ ok: false, reason: "not_found" });
+    const res = await postDeal(VALID);
+    expect(res.status).toBe(404);
+    expect((await json(res)).error).toBe("feature_not_available"); // NOT deal_not_found
+    expect(m.checkOpportunityAccess).not.toHaveBeenCalled();
+  });
+
+  it("allowlisted tenant preserves existing enqueue behavior (gate transparent)", async () => {
+    const res = await postDeal(VALID);
+    expect(res.status).toBe(202);
+    expect(m.enqueueBriefJob).toHaveBeenCalledWith({ tenantId: "tenantA", dealId: VALID, userId: "user_1" });
   });
 });
 

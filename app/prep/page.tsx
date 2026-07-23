@@ -54,6 +54,7 @@ import CockpitInstrumentation from "./CockpitInstrumentation";
 import AccountIntelligence from "./AccountIntelligence";
 import GenerateDeckButton from "./GenerateDeckButton";
 import InternalBriefButton from "./InternalBriefButton";
+import { isInternalBriefEnabledForTenant } from "@/lib/deck/internal-brief-access";
 import LiveCoach from "./LiveCoach";
 import PrepGreeting from "./PrepGreeting";
 import ArtifactVersionPicker from "./ArtifactVersionPicker";
@@ -261,6 +262,11 @@ export default async function PrepPage({
   // Defaults to false (team) — only the dealId path can flip it true.
   let isSolo = false;
   let overLimit = false;
+  // Internal-brief rollout gate — evaluated ONCE per request from the caller's
+  // tenant (below, in the dealId path). Governs both InternalBriefButton
+  // placements; false for everyone not on the allowlist. The customer-facing
+  // deck (GenerateDeckButton) is never gated by this.
+  let internalBriefEnabled = false;
 
   // ── Path A: dealId → load from Supabase (the deployed path) ───────────────
   if (dealId) {
@@ -269,6 +275,7 @@ export default async function PrepPage({
     // Tenant-membership gate: the opportunity must belong to the
     // current user's tenant. Replaces the previous env-var allowlist.
     const userTenantId = await getCurrentTenantId().catch(() => null);
+    internalBriefEnabled = isInternalBriefEnabledForTenant(userTenantId);
     isSolo = userTenantId ? await isTenantSolo(userTenantId) : false;
     // Free-tier meter — gate the "+ Add the call" buttons up front when over.
     overLimit = userTenantId
@@ -435,7 +442,7 @@ export default async function PrepPage({
             {intel && (
               <div style={{ padding: "10px 36px 2px" }}>
                 <GenerateDeckButton dealId={safeDealId} />
-                <InternalBriefButton dealId={safeDealId} />
+                {internalBriefEnabled && <InternalBriefButton dealId={safeDealId} />}
               </div>
             )}
             {/* Live coach — real-time in-call advisor. Available
@@ -850,7 +857,7 @@ export default async function PrepPage({
                   recipients={deckRecipients}
                   repEmails={repEmails}
                 />
-                <InternalBriefButton dealId={coachDealId} />
+                {internalBriefEnabled && <InternalBriefButton dealId={coachDealId} />}
               </>
             )}
             <ArtifactVersionPicker

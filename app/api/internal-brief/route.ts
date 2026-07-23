@@ -26,6 +26,7 @@ import { getCurrentTenantId } from "@/lib/auth/tenant-context";
 import { checkOpportunityAccess } from "@/lib/auth/opportunity-access";
 import { loadInternalBriefSources } from "@/lib/deck/load-internal-brief-sources";
 import { enqueueBriefJob } from "@/lib/deck/brief-jobs";
+import { isInternalBriefEnabledForTenant } from "@/lib/deck/internal-brief-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,6 +76,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!userId) return errorResponse("unauthenticated", 401);
   const tenantId = await getCurrentTenantId().catch(() => null);
   if (!tenantId) return errorResponse("unauthenticated", 401);
+
+  // Rollout gate — enforced INDEPENDENTLY of the UI, immediately after tenant
+  // resolution and BEFORE any opportunity lookup or access check. A
+  // non-allowlisted tenant gets a uniform 404 that reveals nothing about the
+  // allowlist, rollout status, tenant identifiers, or whether the deal exists.
+  if (!isInternalBriefEnabledForTenant(tenantId)) return errorResponse("feature_not_available", 404);
 
   // Authorization (tenant ownership of the deal).
   const access = await checkOpportunityAccess(dealId, tenantId);

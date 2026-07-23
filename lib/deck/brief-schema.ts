@@ -152,3 +152,39 @@ export function parseBriefDraftStrict(
     errors: r.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
   };
 }
+
+// ── Anthropic Structured Outputs schema (single source of truth) ─────────────
+// Derived from BriefDraftSchema so the model is grammar-constrained to emit a
+// fence-free JSON object of the right shape (kills the ```json markdown wrapper
+// that broke JSON.parse). Anthropic strict Structured Outputs rejects several
+// JSON-Schema keywords and enforces complexity limits, so we:
+//   1. dedupe repeated subschemas into $defs (reused:"ref") — keeps the schema
+//      well under the ≤24 optional-parameter / ≤16 union-typed limits; and
+//   2. strip unsupported keywords (min/maxLength, maxItems, numeric bounds,
+//      format, $schema; minItems only when 0/1).
+// The stripped size/length caps stay enforced post-parse by parseBriefDraftStrict
+// + validateBriefDraft — this schema guarantees SHAPE + enums, never semantics.
+const UNSUPPORTED_SO_KEYWORDS = new Set([
+  "minLength", "maxLength", "minimum", "maximum", "exclusiveMinimum",
+  "exclusiveMaximum", "multipleOf", "maxItems", "format", "$schema",
+]);
+
+function stripUnsupportedForStructuredOutputs(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(stripUnsupportedForStructuredOutputs);
+  if (node && typeof node === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(node)) {
+      if (UNSUPPORTED_SO_KEYWORDS.has(k)) continue;
+      if (k === "minItems" && v !== 0 && v !== 1) continue; // SO allows only 0/1
+      out[k] = stripUnsupportedForStructuredOutputs(v);
+    }
+    return out;
+  }
+  return node;
+}
+
+/** JSON Schema for Anthropic `output_config.format` — derived from the strict
+ *  zod schema, deduped into $defs, sanitized to the supported keyword subset. */
+export const BriefDraftJsonSchema: Record<string, unknown> = stripUnsupportedForStructuredOutputs(
+  z.toJSONSchema(BriefDraftSchema, { unrepresentable: "any", io: "output", reused: "ref" }),
+) as Record<string, unknown>;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseBriefDraftStrict } from "./brief-schema";
+import { parseBriefDraftStrict, BriefDraftJsonSchema } from "./brief-schema";
 import { makeValidDraft } from "./fixtures/brief-mock-drafts";
 
 describe("parseBriefDraftStrict", () => {
@@ -57,5 +57,58 @@ describe("parseBriefDraftStrict", () => {
     const d = makeValidDraft();
     (d.executiveSummary[0].factBindings[0] as unknown as Record<string, unknown>).extra = 1;
     expect(parseBriefDraftStrict(d).ok).toBe(false);
+  });
+});
+
+// ── Structured-Outputs schema conforms to Anthropic's strict constraints ──────
+describe("BriefDraftJsonSchema — Anthropic strict Structured Outputs constraints", () => {
+  const schema = BriefDraftJsonSchema;
+  const json = JSON.stringify(schema);
+
+  const objectNodes: Array<Record<string, unknown>> = [];
+  (function walk(node: unknown): void {
+    if (Array.isArray(node)) return node.forEach(walk);
+    if (node && typeof node === "object") {
+      const n = node as Record<string, unknown>;
+      if (n.type === "object" && n.properties) objectNodes.push(n);
+      Object.values(n).forEach(walk);
+    }
+  })(schema);
+
+  it("contains no unsupported JSON-Schema keywords", () => {
+    for (const k of ["minLength", "maxLength", "maxItems", "minimum", "maximum", "multipleOf", "exclusiveMinimum", "exclusiveMaximum", "format", "$schema"]) {
+      expect(json).not.toContain(`"${k}"`);
+    }
+  });
+
+  it("sets additionalProperties:false on every object node", () => {
+    expect(objectNodes.length).toBeGreaterThan(0);
+    for (const n of objectNodes) expect(n.additionalProperties).toBe(false);
+  });
+
+  it("stays within complexity limits (≤24 optional params, ≤16 union-typed)", () => {
+    let optional = 0;
+    let unionTyped = 0;
+    (function walk(node: unknown): void {
+      if (Array.isArray(node)) return node.forEach(walk);
+      if (node && typeof node === "object") {
+        const n = node as Record<string, unknown>;
+        if (n.type === "object" && n.properties) {
+          const req = new Set((n.required as string[]) ?? []);
+          for (const key of Object.keys(n.properties as object)) if (!req.has(key)) optional++;
+        }
+        if (Array.isArray(n.anyOf) || Array.isArray(n.type)) unionTyped++;
+        Object.values(n).forEach(walk);
+      }
+    })(schema);
+    expect(optional).toBeLessThanOrEqual(24);
+    expect(unionTyped).toBeLessThanOrEqual(16);
+  });
+
+  it("root is an object and preserves real enums + id patterns", () => {
+    expect((schema as Record<string, unknown>).type).toBe("object");
+    expect(json).toMatch(/"enum":\[/);
+    expect(json).toContain("^ev:");
+    expect(json).toContain("^sf:");
   });
 });

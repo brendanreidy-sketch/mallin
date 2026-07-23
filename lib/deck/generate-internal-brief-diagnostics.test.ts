@@ -10,7 +10,7 @@ import type { AccountIntelligenceArtifact, IntelligenceSource } from "@/lib/inte
 import type { PrepArtifact } from "@/lib/contracts/execution-agent-output";
 import type { BriefDraft } from "./brief-model";
 import type { InternalBriefSources } from "./load-internal-brief-sources";
-import { generateInternalBrief, inferBriefStage, sanitizeBriefDiagnostic, computeResponseSignal, type BriefModelClientWithSignal } from "./generate-internal-brief";
+import { generateInternalBrief, inferBriefStage, sanitizeBriefDiagnostic, computeResponseSignal, assertParseableResponse, BriefUnparseableResponseError, type BriefModelClientWithSignal } from "./generate-internal-brief";
 import type { BriefModelClient } from "./brief-agent";
 
 // ── pure: stage inference (no content read) ──────────────────────────────────
@@ -191,6 +191,69 @@ describe("generateInternalBrief — json_parsing failure attaches the sanitized 
     expect(logged).not.toContain("northwind");
     expect(logged).not.toContain("SECRET");
     expect(logged).not.toMatch(/length/i);
+    warn.mockRestore();
+  });
+});
+
+// ── pure: parse ONLY after end_turn (max_tokens / refusal / other fail safely) ─
+describe("assertParseableResponse — parse only on a normal completion", () => {
+  it("does NOT throw for end_turn", () => {
+    expect(() => assertParseableResponse("end_turn")).not.toThrow();
+  });
+  it("throws for max_tokens, refusal, other stop reasons, and null", () => {
+    for (const sr of ["max_tokens", "refusal", "stop_sequence", "pause_turn", "tool_use", null, undefined]) {
+      expect(() => assertParseableResponse(sr as string | null | undefined)).toThrow(BriefUnparseableResponseError);
+    }
+  });
+  it("carries the (safe) stop reason for the private diagnostic", () => {
+    try { assertParseableResponse("max_tokens"); } catch (e) {
+      expect(e).toBeInstanceOf(BriefUnparseableResponseError);
+      expect((e as BriefUnparseableResponseError).stopReason).toBe("max_tokens");
+    }
+    try { assertParseableResponse(null); } catch (e) {
+      expect((e as BriefUnparseableResponseError).stopReason).toBeNull();
+    }
+  });
+});
+
+describe("inferBriefStage — non-end_turn stop reasons map to PRIVATE stages", () => {
+  it("max_tokens → model_output_truncated", () => {
+    expect(inferBriefStage(new BriefUnparseableResponseError("max_tokens"))).toBe("model_output_truncated");
+  });
+  it("refusal → model_refusal", () => {
+    expect(inferBriefStage(new BriefUnparseableResponseError("refusal"))).toBe("model_refusal");
+  });
+  it("any other stop reason → model_incomplete_response", () => {
+    expect(inferBriefStage(new BriefUnparseableResponseError("pause_turn"))).toBe("model_incomplete_response");
+    expect(inferBriefStage(new BriefUnparseableResponseError(null))).toBe("model_incomplete_response");
+  });
+});
+
+describe("generateInternalBrief — non-end_turn responses fail safely (public code stays generic)", () => {
+  // The client throws BEFORE returning any text, exactly as the real client does
+  // after assertParseableResponse — so parseBriefDraft/JSON.parse is never reached.
+  const clientThrowing = (stopReason: string | null): BriefModelClientWithSignal =>
+    Object.assign(
+      (async () => { throw new BriefUnparseableResponseError(stopReason); }) as BriefModelClient,
+      { lastResponseSignal: { stopReason: stopReason ?? undefined, hasCodeFence: false, firstNonWsClass: "open_brace" as const } },
+    );
+
+  it("max_tokens → generic model_generation_failed publicly, model_output_truncated privately", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await generateInternalBrief({ sources: sources(), cover: { dealName: "Cedar", asOf: "2026-06-16" }, modelClient: clientThrowing("max_tokens") });
+    expect(res).toEqual({ ok: false, code: "model_generation_failed" }); // public contract unchanged
+    const logged = warn.mock.calls.map((c) => c.join(" ")).join("\n");
+    expect(logged).toContain('"stage":"model_output_truncated"'); // private stage
+    expect(logged).toContain('"modelStopReason":"max_tokens"');
+    warn.mockRestore();
+  });
+
+  it("refusal → generic model_generation_failed publicly, model_refusal privately", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await generateInternalBrief({ sources: sources(), cover: { dealName: "Cedar", asOf: "2026-06-16" }, modelClient: clientThrowing("refusal") });
+    expect(res).toEqual({ ok: false, code: "model_generation_failed" });
+    const logged = warn.mock.calls.map((c) => c.join(" ")).join("\n");
+    expect(logged).toContain('"stage":"model_refusal"');
     warn.mockRestore();
   });
 });

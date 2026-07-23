@@ -26,10 +26,18 @@ import { createJsonBriefClient, generateExecutiveBrief, type BriefModelClient } 
 import { buildBriefPptx, type RenderDiagnostic } from "@/lib/deck/build-brief-pptx";
 import type { MeetingBlock } from "@/lib/intelligence/types";
 import { SONNET_MODEL } from "@/lib/agents/model-config";
+import { BriefDraftJsonSchema } from "@/lib/deck/brief-schema";
 import type { BundleCoordinates, InternalBriefSources } from "@/lib/deck/load-internal-brief-sources";
 
 /** Default model tier — the SHARED config, not a brief-specific constant. */
 export const DEFAULT_BRIEF_MODEL = SONNET_MODEL;
+
+/** Max output tokens for brief generation. A CONSERVATIVE first ceiling for the
+ *  canary: the staging run proved >8000 are needed (stop_reason:"max_tokens")
+ *  but not the exact size. 16000 is well within Sonnet 4.6's output capacity; it
+ *  is NOT guaranteed to complete — assertParseableResponse makes an insufficient
+ *  ceiling fail safely (private truncation diagnostic) rather than crash parsing. */
+const BRIEF_MAX_TOKENS = 16000;
 
 export type InternalBriefResult =
   | { ok: true; buffer: Buffer; filename: string; bundleVersion: string; modelId: string; diagnostics: RenderDiagnostic[] }
@@ -128,6 +136,9 @@ export type BriefFailureStage =
   | "cover_build"
   | "anthropic_request"
   | "json_parsing"
+  | "model_output_truncated"      // PRIVATE diagnostic: stop_reason === "max_tokens"
+  | "model_refusal"               // PRIVATE diagnostic: stop_reason === "refusal"
+  | "model_incomplete_response"   // PRIVATE diagnostic: any other non-"end_turn" stop
   | "brief_validation"
   | "assembly_or_other"
   | "powerpoint_rendering";
@@ -196,9 +207,33 @@ function asAnthropicError(error: unknown): AnthropicShape | null {
   };
 }
 
+/** Thrown when the response did NOT end normally, so it must not be parsed:
+ *  max_tokens ⇒ partial JSON; refusal ⇒ HTTP 200 with non-schema output; any
+ *  other stop reason ⇒ not a complete structured object. Carries only the (safe)
+ *  stop-reason enum for the PRIVATE diagnostic — never any response content. */
+export class BriefUnparseableResponseError extends Error {
+  readonly stopReason: string | null;
+  constructor(stopReason: string | null) {
+    super("model_response_unparseable");
+    this.name = "BriefUnparseableResponseError";
+    this.stopReason = stopReason;
+  }
+}
+
+/** Parse ONLY after a normal completion. Throws for max_tokens / refusal / any
+ *  other non-"end_turn" stop reason. Pure + exported for tests. */
+export function assertParseableResponse(stopReason: string | null | undefined): void {
+  if (stopReason !== "end_turn") throw new BriefUnparseableResponseError(stopReason ?? null);
+}
+
 /** Infer the failure stage from a thrown error without logging its content. */
 export function inferBriefStage(error: unknown): BriefFailureStage {
   if (asAnthropicError(error)) return "anthropic_request";
+  if (error instanceof BriefUnparseableResponseError) {
+    return error.stopReason === "max_tokens" ? "model_output_truncated"
+      : error.stopReason === "refusal" ? "model_refusal"
+      : "model_incomplete_response";
+  }
   if (error instanceof SyntaxError) return "json_parsing"; // parseBriefDraft (JSON.parse) throws
   if (error instanceof Error && error.message === COVER_BUILD_ERROR) return "cover_build";
   return "assembly_or_other";
@@ -233,6 +268,12 @@ function logBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs:
   console.warn(`[internal-brief:diagnostic] ${JSON.stringify(sanitizeBriefDiagnostic(stage, error, elapsedMs, signal))}`);
 }
 
+/** Stages where the model DID return a response — the sanitized response signal
+ *  (stop_reason + shape) is meaningful and gets attached to the diagnostic. */
+const MODEL_RESPONDED_STAGES: ReadonlySet<BriefFailureStage> = new Set<BriefFailureStage>([
+  "json_parsing", "model_output_truncated", "model_refusal", "model_incomplete_response",
+]);
+
 export async function generateInternalBrief(args: GenerateInternalBriefArgs): Promise<InternalBriefResult> {
   const bundle = computeBundleVersion(args.sources.coords);
   const capturedAt = args.capturedAt ?? args.sources.execution.generatedAt;
@@ -258,10 +299,13 @@ export async function generateInternalBrief(args: GenerateInternalBriefArgs): Pr
     // response is unchanged — still model_generation_failed. Never leaks prompt,
     // evidence, model output, credentials, headers, or the raw error object.
     const stage = inferBriefStage(error);
-    // On a parse failure the model DID respond — attach the client's sanitized
-    // response signal (stop_reason + shape) to localize truncation vs. fence vs. prose.
-    const signal = stage === "json_parsing" ? (args.modelClient as BriefModelClientWithSignal).lastResponseSignal : undefined;
+    // When the model DID respond (parse failure, truncation, refusal, other
+    // incomplete stop) attach the client's sanitized response signal (stop_reason
+    // + shape) to localize the cause. PRIVATE diagnostic only.
+    const signal = MODEL_RESPONDED_STAGES.has(stage)
+      ? (args.modelClient as BriefModelClientWithSignal).lastResponseSignal : undefined;
     logBriefDiagnostic(stage, error, Date.now() - modelStartedAt, signal);
+    // Public code stays GENERIC regardless of private stage — no client-contract change.
     return { ok: false, code: "model_generation_failed" };
   }
   if (!gen.ok) {
@@ -305,15 +349,22 @@ export function createSonnetBriefClient(model: string = DEFAULT_BRIEF_MODEL): Br
   const briefClient = createJsonBriefClient(async (system, user) => {
     const res = await client.messages.create({
       model,
-      max_tokens: 8000,
+      max_tokens: BRIEF_MAX_TOKENS,
       system,
       messages: [{ role: "user", content: user }],
+      // Structured Outputs: constrain the model to a fence-free JSON object of the
+      // brief shape (removes the ```json wrapper that broke JSON.parse).
+      output_config: { format: { type: "json_schema", schema: BriefDraftJsonSchema } },
     });
     const text = res.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
       .map((b) => b.text)
       .join("");
     briefClient.lastResponseSignal = computeResponseSignal(text, res.stop_reason);
+    // Parse ONLY after a normal end_turn. Truncated (max_tokens), refused, or
+    // otherwise incomplete responses are partial/non-schema even under Structured
+    // Outputs — fail here so parseBriefDraft/JSON.parse is never reached.
+    assertParseableResponse(res.stop_reason);
     return text;
   }) as BriefModelClientWithSignal;
   return briefClient;

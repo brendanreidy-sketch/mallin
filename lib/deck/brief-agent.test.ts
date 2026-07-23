@@ -58,6 +58,15 @@ describe("generateExecutiveBrief", () => {
     expect("brief" in res).toBe(false);
   });
 
+  it("captures validation codes per attempt (initial vs repair) on failure", async () => {
+    const res = await generateExecutiveBrief(request, clientReturning(invalidDraft(), invalidDraft()));
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.codesByAttempt.length).toBe(2); // [0]=initial, [1]=repair
+    expect(res.codesByAttempt[0]).toContain("confidence_raised"); // initial draft
+    expect(res.codesByAttempt[1]).toContain("confidence_raised"); // repair repeated the mistake
+  });
+
   it("parses the repair response through the same strict schema", async () => {
     const schemaBad = makeValidDraft() as unknown as Record<string, unknown>;
     (schemaBad.executiveSummary as Record<string, unknown>[])[0].bogusField = true; // schema-invalid

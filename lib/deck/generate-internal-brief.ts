@@ -186,6 +186,18 @@ export interface BriefDiagnostic {
   modelStopReason?: string;
   responseHasCodeFence?: boolean;
   responseFirstNonWsClass?: FirstNonWsClass;
+  // ── validation code diagnostics (brief_validation stage) — enum CODE names +
+  //    counts ONLY, split by draft. Never messages, ids, values, or content. ──
+  validationAttempts?: number;
+  validationInitialCodeCounts?: Record<string, number>;
+  validationRepairCodeCounts?: Record<string, number>;
+}
+
+/** Count occurrences of each validation error CODE (enum name). Pure. */
+export function countValidationCodes(codes: readonly string[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const c of codes) out[c] = (out[c] ?? 0) + 1;
+  return out;
 }
 
 type AnthropicShape = { name?: string; status?: number; type?: string; requestId?: string };
@@ -265,7 +277,14 @@ export function inferBriefStage(error: unknown): BriefFailureStage {
 
 /** Build a sanitized diagnostic record — structured fields ONLY, never any
  *  provider- or error-message text. Pure + exported for tests. */
-export function sanitizeBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number, signal?: ModelResponseSignal): BriefDiagnostic {
+/** Codes-only validation diagnostic: the enum CODES per attempt ([0]=initial
+ *  draft, [1]=repair draft). Never messages, ids, values, or model content. */
+export interface ValidationCodeDiagnostic {
+  attempts: number;
+  codesByAttempt: readonly (readonly string[])[];
+}
+
+export function sanitizeBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number, signal?: ModelResponseSignal, validation?: ValidationCodeDiagnostic): BriefDiagnostic {
   const d: BriefDiagnostic = { stage, elapsedMs };
   const api = asAnthropicError(error);
   if (api) {
@@ -284,12 +303,18 @@ export function sanitizeBriefDiagnostic(stage: BriefFailureStage, error: unknown
     if (typeof signal.hasCodeFence === "boolean") d.responseHasCodeFence = signal.hasCodeFence;
     if (signal.firstNonWsClass) d.responseFirstNonWsClass = signal.firstNonWsClass;
   }
+  // Validation CODE counts, split by draft — enum names + counts ONLY.
+  if (validation) {
+    d.validationAttempts = validation.attempts;
+    d.validationInitialCodeCounts = countValidationCodes(validation.codesByAttempt[0] ?? []);
+    if (validation.codesByAttempt[1]) d.validationRepairCodeCounts = countValidationCodes(validation.codesByAttempt[1]);
+  }
   return d;
 }
 
-function logBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number, signal?: ModelResponseSignal): void {
+function logBriefDiagnostic(stage: BriefFailureStage, error: unknown, elapsedMs: number, signal?: ModelResponseSignal, validation?: ValidationCodeDiagnostic): void {
   // Structured + sanitized. NEVER the raw error object (no console.error(error)).
-  console.warn(`[internal-brief:diagnostic] ${JSON.stringify(sanitizeBriefDiagnostic(stage, error, elapsedMs, signal))}`);
+  console.warn(`[internal-brief:diagnostic] ${JSON.stringify(sanitizeBriefDiagnostic(stage, error, elapsedMs, signal, validation))}`);
 }
 
 /** Stages where the model DID return a response — the sanitized response signal
@@ -333,7 +358,12 @@ export async function generateInternalBrief(args: GenerateInternalBriefArgs): Pr
     return { ok: false, code: "model_generation_failed" };
   }
   if (!gen.ok) {
-    logBriefDiagnostic("brief_validation", undefined, Date.now() - modelStartedAt);
+    // Codes-only validation diagnostic: which enum codes fired on the initial vs
+    // repair draft (to see if the repair improved or repeated the same mistakes).
+    logBriefDiagnostic("brief_validation", undefined, Date.now() - modelStartedAt, undefined, {
+      attempts: gen.attempts,
+      codesByAttempt: gen.codesByAttempt,
+    });
     return { ok: false, code: "brief_failed_validation" };
   }
 

@@ -121,14 +121,20 @@ describe("generateInternalBrief — sanitized diagnostics", () => {
     warn.mockRestore();
   });
 
-  it("logs stage brief_validation and returns brief_failed_validation on an invalid draft", async () => {
+  it("logs stage brief_validation + codes-only counts (split by attempt) and returns brief_failed_validation", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const bad = validDraft();
     bad.whatChanged = [{ id: "wc", contentType: "what_changed", text: "x", section: "what_changed", assertionMode: "unresolved", evidenceIds: [], sourceFactKeys: [], factBindings: [], provenance: [], confidence: "none", assurance: "unresolved", appendixEligible: true }];
     const res = await generateInternalBrief({ sources: sources(), cover: { dealName: "Cedar", asOf: "2026-06-16" }, modelClient: async () => bad });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.code).toBe("brief_failed_validation");
-    expect(warn.mock.calls.map((c) => c.join(" ")).join("\n")).toContain('"stage":"brief_validation"');
+    const logged = warn.mock.calls.map((c) => c.join(" ")).join("\n");
+    expect(logged).toContain('"stage":"brief_validation"');
+    expect(logged).toContain('"validationAttempts":2'); // initial + repair
+    expect(logged).toContain('"validationInitialCodeCounts"');
+    expect(logged).toContain('"validationRepairCodeCounts"');
+    // codes-only: no messages, ids, values, or content leaked
+    expect(logged).not.toMatch(/"message"|Cedar Dynamics|Dana|northwind/i);
     warn.mockRestore();
   });
 
@@ -327,5 +333,31 @@ describe("prepareModelText — guard runs BEFORE normalization/parsing; zod runs
     expect(error).not.toHaveBeenCalled();
     expect(log).not.toHaveBeenCalled();
     warn.mockRestore(); error.mockRestore(); log.mockRestore();
+  });
+});
+
+// ── pure: codes-only validation diagnostic (split initial vs repair) ──────────
+describe("sanitizeBriefDiagnostic — codes-only validation counts", () => {
+  it("splits initial vs repair CODE counts (names + counts only)", () => {
+    const d = sanitizeBriefDiagnostic("brief_validation", undefined, 1234, undefined, {
+      attempts: 2,
+      codesByAttempt: [["unbound_fact", "unbound_fact", "confidence_raised"], ["unbound_fact"]],
+    });
+    expect(d.validationAttempts).toBe(2);
+    expect(d.validationInitialCodeCounts).toEqual({ unbound_fact: 2, confidence_raised: 1 });
+    expect(d.validationRepairCodeCounts).toEqual({ unbound_fact: 1 });
+    // only enum code names + numbers — nothing that could be content
+    const s = JSON.stringify(d);
+    expect(s).not.toMatch(/message|value|excerpt|ev:|sf:/i);
+  });
+  it("omits repair counts when there was only one attempt", () => {
+    const d = sanitizeBriefDiagnostic("brief_validation", undefined, 10, undefined, { attempts: 1, codesByAttempt: [["schema_invalid"]] });
+    expect(d.validationInitialCodeCounts).toEqual({ schema_invalid: 1 });
+    expect(d.validationRepairCodeCounts).toBeUndefined();
+  });
+  it("attaches nothing when no validation arg is passed (other stages unaffected)", () => {
+    const d = sanitizeBriefDiagnostic("json_parsing", new SyntaxError("x"), 5);
+    expect(d.validationAttempts).toBeUndefined();
+    expect(d.validationInitialCodeCounts).toBeUndefined();
   });
 });

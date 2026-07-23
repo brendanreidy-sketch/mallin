@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { parseBriefDraftStrict } from "./brief-schema";
+import { parseBriefDraftStrict, BRIEF_CAPS } from "./brief-schema";
 import { makeValidDraft } from "./fixtures/brief-mock-drafts";
+import type { BriefContentItem, BriefDraft } from "./brief-model";
 
 describe("parseBriefDraftStrict", () => {
   it("accepts a well-formed draft", () => {
@@ -57,5 +58,66 @@ describe("parseBriefDraftStrict", () => {
     const d = makeValidDraft();
     (d.executiveSummary[0].factBindings[0] as unknown as Record<string, unknown>).extra = 1;
     expect(parseBriefDraftStrict(d).ok).toBe(false);
+  });
+});
+
+// ── Executive-deck hard caps (BRIEF_CAPS) enforced at the schema ──────────────
+describe("BriefDraftSchema — executive-deck hard caps", () => {
+  const clone = (base: BriefContentItem, id: string): BriefContentItem => ({ ...structuredClone(base), id });
+  const items = (n: number, prefix: string): BriefContentItem[] =>
+    Array.from({ length: n }, (_, i) => clone(makeValidDraft().executiveSummary[0], `${prefix}${i}`));
+
+  it("accepts the at-cap valid fixture", () => {
+    expect(parseBriefDraftStrict(makeValidDraft()).ok).toBe(true);
+  });
+
+  it("rejects each section one item over its cap", () => {
+    const overBy1: Array<[keyof BriefDraft, number]> = [
+      ["executiveSummary", BRIEF_CAPS.executiveSummary],
+      ["whatChanged", BRIEF_CAPS.whatChanged],
+      ["customerPriorities", BRIEF_CAPS.customerPriorities],
+      ["stakeholders", BRIEF_CAPS.stakeholders],
+      ["decisionProcess", BRIEF_CAPS.decisionProcess],
+      ["risks", BRIEF_CAPS.risks],
+    ];
+    for (const [key, cap] of overBy1) {
+      const d = makeValidDraft();
+      (d[key] as BriefContentItem[]) = items(cap + 1, String(key));
+      expect(parseBriefDraftStrict(d).ok, String(key)).toBe(false);
+    }
+  });
+
+  it("rejects an action bucket over 3, and a combined total over 8", () => {
+    const d1 = makeValidDraft();
+    d1.actionPlan.sellerActions = items(BRIEF_CAPS.actionBucket + 1, "sa");
+    expect(parseBriefDraftStrict(d1).ok).toBe(false);
+
+    const d2 = makeValidDraft(); // 3 + 3 + 3 = 9 > 8, each bucket ≤ 3
+    d2.actionPlan.customerCommitments = items(3, "cc");
+    d2.actionPlan.sellerActions = items(3, "sx");
+    d2.actionPlan.mallinRecommendations = items(3, "mr");
+    d2.actionPlan.inferredCustomerCommitments = [];
+    d2.actionPlan.unresolvedActions = [];
+    expect(parseBriefDraftStrict(d2).ok).toBe(false);
+  });
+
+  it("rejects a non-empty appendix", () => {
+    const d = makeValidDraft();
+    d.appendix = items(1, "ap");
+    expect(parseBriefDraftStrict(d).ok).toBe(false);
+  });
+
+  it("rejects per-item over-limits (text, evidenceIds, sourceFactKeys, factBindings, provenance)", () => {
+    const okAfter = (mut: (it: BriefContentItem) => void): boolean => {
+      const d = makeValidDraft();
+      mut(d.executiveSummary[0]);
+      return parseBriefDraftStrict(d).ok;
+    };
+    const binding = { evidenceId: "ev:x", sourceFactKey: "sf:x", payloadKind: "risk", fieldPath: "severity", value: "high" };
+    expect(okAfter((it) => (it.text = "x".repeat(BRIEF_CAPS.itemText + 1)))).toBe(false);
+    expect(okAfter((it) => (it.evidenceIds = Array(BRIEF_CAPS.evidenceIds + 1).fill("ev:x")))).toBe(false);
+    expect(okAfter((it) => (it.sourceFactKeys = Array(BRIEF_CAPS.sourceFactKeys + 1).fill("sf:x")))).toBe(false);
+    expect(okAfter((it) => (it.factBindings = Array(BRIEF_CAPS.factBindings + 1).fill(binding) as BriefContentItem["factBindings"]))).toBe(false);
+    expect(okAfter((it) => (it.provenance = Array(BRIEF_CAPS.provenance + 1).fill("customer_stated") as BriefContentItem["provenance"]))).toBe(false);
   });
 });

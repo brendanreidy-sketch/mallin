@@ -67,6 +67,13 @@ function bindingsFor(item: EvidenceItem, changeId?: string): FactBinding[] {
   });
 }
 
+/** Under the executive-deck cap (≤2 factBindings/item), bind the values the text
+ *  actually references (so entity checks pass), then take at most two. */
+function pickBindings(all: FactBinding[], text: string): FactBinding[] {
+  const relevant = all.filter((b) => text.includes(b.value));
+  return (relevant.length ? relevant : all).slice(0, 2);
+}
+
 export const one = (lk: string): EvidenceItem => packet.items.find((i) => i.logicalKey === lk)!;
 const all = (lk: string): EvidenceItem[] => packet.items.filter((i) => i.logicalKey === lk);
 export const factKeyOf = (lk: string): string => one(lk).sourceFactKey;
@@ -88,10 +95,10 @@ export function fromItems(
     section,
     text,
     assertionMode,
-    evidenceIds: items.map((i) => i.evidenceId),
-    sourceFactKeys: [...new Set(items.map((i) => i.sourceFactKey))],
-    factBindings: items.flatMap((i) => bindingsFor(i)),
-    provenance: deriveProvenanceUnion(items),
+    evidenceIds: [...new Set(items.map((i) => i.evidenceId))].slice(0, 3),
+    sourceFactKeys: [...new Set(items.map((i) => i.sourceFactKey))].slice(0, 3),
+    factBindings: pickBindings(items.flatMap((i) => bindingsFor(i)), text),
+    provenance: deriveProvenanceUnion(items).slice(0, 3),
     confidence: deriveConfidenceCeiling(items),
     assurance: deriveAssurance(items),
     appendixEligible: true,
@@ -129,10 +136,10 @@ function changeItem(id: string, type: string, text: string, assertionMode: Asser
     section: "what_changed",
     text,
     assertionMode,
-    evidenceIds: [...c.previousEvidenceIds, ...c.currentEvidenceIds],
-    sourceFactKeys: c.sourceFactKeys,
-    factBindings: bindings,
-    provenance,
+    evidenceIds: [...new Set([...c.previousEvidenceIds, ...c.currentEvidenceIds])].slice(0, 3),
+    sourceFactKeys: c.sourceFactKeys.slice(0, 3),
+    factBindings: pickBindings(bindings, text),
+    provenance: provenance.slice(0, 3),
     confidence: deriveConfidenceCeiling(resolvable),
     assurance: c.assurance,
     appendixEligible: true,
@@ -151,8 +158,6 @@ export function makeValidDraft(): BriefDraft {
       changeItem("wc1", "stage_change", "Stage advanced from Discovery to Evaluation.", "sourced_fact"),
       changeItem("wc2", "close_date_change", "Close date moved to 2026-11-15.", "sourced_fact"),
       changeItem("wc3", "posture_change", "Deal posture shifted from advancing to at_risk.", "supported_synthesis"),
-      changeItem("wc4", "commitment_completed", "Security review packet was completed.", "sourced_fact"),
-      changeItem("wc5", "commitment_removed", "A prior redline commitment is no longer on the list; status unresolved.", "unresolved"),
     ],
     customerPriorities: [
       packetItem("cp1", "customer_priority", "priorities", ["intel:priority:peak-season-reliability"], "Reducing peak-season dispatch errors is the stated top operational priority.", "sourced_fact"),

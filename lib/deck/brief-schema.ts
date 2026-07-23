@@ -81,16 +81,37 @@ const commitmentClaimSchema = z.strictObject({
   status: z.enum(["completed", "missed", "open", "removed"]),
 });
 
+// Executive-deck HARD LIMITS — enforced structurally so the model cannot
+// over-produce. These keep model output well under the token ceiling and yield
+// a concise 7–9 slide deck with NO appendix. validateBriefDraft runs this schema
+// first (parseBriefDraftStrict), so any violation surfaces as "schema_invalid".
+export const BRIEF_CAPS = {
+  executiveSummary: 4,
+  whatChanged: 3,
+  customerPriorities: 4,
+  stakeholders: 5,
+  decisionProcess: 4,
+  risks: 4,
+  actionBucket: 3, // max per single action bucket
+  actionTotal: 8, // max across all five action buckets combined
+  appendix: 0, // no appendix in the executive deck
+  itemText: 250,
+  evidenceIds: 3,
+  sourceFactKeys: 3,
+  factBindings: 2,
+  provenance: 3,
+} as const;
+
 const contentItemSchema = z.strictObject({
   id: z.string().min(1),
   contentType: contentTypeSchema,
-  text: z.string().min(1),
+  text: z.string().min(1).max(BRIEF_CAPS.itemText),
   section: sectionSchema,
   assertionMode: assertionModeSchema,
-  evidenceIds: z.array(evidenceIdSchema).max(64),
-  sourceFactKeys: z.array(sourceFactKeySchema).max(64),
-  factBindings: z.array(factBindingSchema).max(64),
-  provenance: z.array(provenanceSchema).max(5),
+  evidenceIds: z.array(evidenceIdSchema).max(BRIEF_CAPS.evidenceIds),
+  sourceFactKeys: z.array(sourceFactKeySchema).max(BRIEF_CAPS.sourceFactKeys),
+  factBindings: z.array(factBindingSchema).max(BRIEF_CAPS.factBindings),
+  provenance: z.array(provenanceSchema).max(BRIEF_CAPS.provenance),
   confidence: confidenceSchema,
   assurance: assuranceSchema,
   appendixEligible: z.boolean(),
@@ -98,41 +119,44 @@ const contentItemSchema = z.strictObject({
   nextActionClaim: z.boolean().optional(),
 });
 
-// Structural guardrail caps (NOT display budgets — overflow → appendix later).
-const SECTION_CAP = 40;
-const APPENDIX_CAP = 300;
-
 const actionPlanSchema = z.strictObject({
-  customerCommitments: z.array(contentItemSchema).max(SECTION_CAP),
-  inferredCustomerCommitments: z.array(contentItemSchema).max(SECTION_CAP),
-  sellerActions: z.array(contentItemSchema).max(SECTION_CAP),
-  mallinRecommendations: z.array(contentItemSchema).max(SECTION_CAP),
-  unresolvedActions: z.array(contentItemSchema).max(SECTION_CAP),
+  customerCommitments: z.array(contentItemSchema).max(BRIEF_CAPS.actionBucket),
+  inferredCustomerCommitments: z.array(contentItemSchema).max(BRIEF_CAPS.actionBucket),
+  sellerActions: z.array(contentItemSchema).max(BRIEF_CAPS.actionBucket),
+  mallinRecommendations: z.array(contentItemSchema).max(BRIEF_CAPS.actionBucket),
+  unresolvedActions: z.array(contentItemSchema).max(BRIEF_CAPS.actionBucket),
 });
+
+const ACTION_BUCKETS = ["customerCommitments", "inferredCustomerCommitments", "sellerActions", "mallinRecommendations", "unresolvedActions"] as const;
 
 export const BriefDraftSchema = z
   .strictObject({
-    executiveSummary: z.array(contentItemSchema).max(SECTION_CAP),
-    whatChanged: z.array(contentItemSchema).max(SECTION_CAP),
-    customerPriorities: z.array(contentItemSchema).max(SECTION_CAP),
-    stakeholders: z.array(contentItemSchema).max(SECTION_CAP),
-    decisionProcess: z.array(contentItemSchema).max(SECTION_CAP),
-    risks: z.array(contentItemSchema).max(SECTION_CAP),
+    executiveSummary: z.array(contentItemSchema).max(BRIEF_CAPS.executiveSummary),
+    whatChanged: z.array(contentItemSchema).max(BRIEF_CAPS.whatChanged),
+    customerPriorities: z.array(contentItemSchema).max(BRIEF_CAPS.customerPriorities),
+    stakeholders: z.array(contentItemSchema).max(BRIEF_CAPS.stakeholders),
+    decisionProcess: z.array(contentItemSchema).max(BRIEF_CAPS.decisionProcess),
+    risks: z.array(contentItemSchema).max(BRIEF_CAPS.risks),
     actionPlan: actionPlanSchema,
-    appendix: z.array(contentItemSchema).max(APPENDIX_CAP),
+    appendix: z.array(contentItemSchema).max(BRIEF_CAPS.appendix),
   })
   .superRefine((draft, ctx) => {
     const ids: string[] = [];
     for (const key of ["executiveSummary", "whatChanged", "customerPriorities", "stakeholders", "decisionProcess", "risks", "appendix"] as const) {
       for (const item of draft[key]) ids.push(item.id);
     }
-    for (const bucket of ["customerCommitments", "inferredCustomerCommitments", "sellerActions", "mallinRecommendations", "unresolvedActions"] as const) {
+    for (const bucket of ACTION_BUCKETS) {
       for (const item of draft.actionPlan[bucket]) ids.push(item.id);
     }
     const seen = new Set<string>();
     for (const id of ids) {
       if (seen.has(id)) ctx.addIssue({ code: "custom", message: `Duplicate content id "${id}".` });
       seen.add(id);
+    }
+    // Combined action-plan budget across ALL buckets (per-bucket cap is above).
+    const actionTotal = ACTION_BUCKETS.reduce((n, b) => n + draft.actionPlan[b].length, 0);
+    if (actionTotal > BRIEF_CAPS.actionTotal) {
+      ctx.addIssue({ code: "custom", message: `actionPlan has ${actionTotal} items; the executive deck allows at most ${BRIEF_CAPS.actionTotal} across all buckets.` });
     }
   });
 

@@ -226,14 +226,16 @@ export interface BriefBudgets {
   actions: number; // total across the four action buckets
 }
 
+// Executive-deck display budgets — aligned to BRIEF_CAPS in brief-schema.ts, so
+// the schema rejects any model output beyond these before assembly ever runs.
 export const DEFAULT_BUDGETS: BriefBudgets = {
   executiveSummary: 4,
-  whatChanged: 5,
+  whatChanged: 3,
   priorities: 4,
-  stakeholders: 6,
-  decisionProcess: 6,
-  risks: 5,
-  actions: 6,
+  stakeholders: 5,
+  decisionProcess: 4,
+  risks: 4,
+  actions: 8, // total across the four action buckets
 };
 
 // ── Deterministic inheritance helpers (the validator's source of truth) ─────

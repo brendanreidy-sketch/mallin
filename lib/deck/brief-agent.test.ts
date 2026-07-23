@@ -23,7 +23,7 @@ describe("generateExecutiveBrief", () => {
     expect(res.movedToAppendix).toEqual([]);
     expect(res.brief.executiveSummary.length).toBeGreaterThan(0);
     expect(res.brief.cover.classification).toBe("INTERNAL & CONFIDENTIAL");
-    expect(res.brief.whatChanged?.length).toBe(5);
+    expect(res.brief.whatChanged?.length).toBe(3);
   });
 
   it("is deterministic — same mocked output yields the same brief", async () => {
@@ -32,15 +32,13 @@ describe("generateExecutiveBrief", () => {
     expect(a).toEqual(b);
   });
 
-  it("moves supported overflow into the appendix rather than dropping it", async () => {
+  it("rejects a draft that exceeds a section cap (hard caps, not appendix overflow)", async () => {
+    // Executive-deck hard caps: an over-budget section is REJECTED by the strict
+    // schema (no overflow-to-appendix). makeOverBudgetDraft has 7 risks > cap 4.
     const res = await generateExecutiveBrief(request, clientReturning(makeOverBudgetDraft()));
-    expect(res.ok).toBe(true);
-    if (!res.ok) return;
-    expect(res.brief.risks.length).toBe(5); // budget
-    expect(res.movedToAppendix.length).toBe(2); // 7 - 5
-    for (const id of res.movedToAppendix) {
-      expect(res.brief.appendix.some((a) => a.id === id)).toBe(true);
-    }
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.errors.some((e) => e.code === "schema_invalid")).toBe(true);
   });
 
   it("permits exactly one constrained repair, then succeeds", async () => {

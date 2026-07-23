@@ -231,8 +231,14 @@ export function buildBriefAgentInput(request: BriefRequest, cover: CoverMetadata
 export function buildBriefPrompt(input: BriefAgentInput, repair?: RepairContext): { system: string; user: string } {
   const system = [
     "You produce an INTERNAL executive deal brief as STRUCTURED JSON (a BriefDraft), never free-form prose.",
-    "Sections: executiveSummary, whatChanged, customerPriorities, stakeholders, decisionProcess, risks, actionPlan{customerCommitments,sellerActions,mallinRecommendations,unresolvedActions}, appendix.",
+    "Sections: executiveSummary, whatChanged, customerPriorities, stakeholders, decisionProcess, risks, actionPlan{customerCommitments,inferredCustomerCommitments,sellerActions,mallinRecommendations,unresolvedActions}. Do NOT emit an appendix.",
     "Each content item: {id, contentType, text, section, evidenceIds, sourceFactKeys, provenance[], confidence, assurance, appendixEligible, commitmentClaim?, nextActionClaim?}.",
+    "HARD OUTPUT LIMITS — a response exceeding ANY of these is REJECTED, so stay within them:",
+    "- Max items per section: executiveSummary 4, whatChanged 3, customerPriorities 4, stakeholders 5, decisionProcess 4, risks 4.",
+    "- actionPlan: at most 8 items TOTAL across all buckets, and at most 3 in any single bucket.",
+    "- appendix: empty — produce NONE.",
+    "- Per item: text ≤ 250 characters (one concise sentence); at most 3 evidenceIds, 3 sourceFactKeys, 2 factBindings, 3 provenance.",
+    "- Select only the MOST material items and the strongest 1–2 evidence bindings per item. Never restate a fact already covered in another section — keep each fact in its single most relevant section.",
     "RULES:",
     ...input.rules.map((r, n) => `${n + 1}. ${r}`),
   ].join("\n");
